@@ -265,7 +265,7 @@ export default function App() {
 
   useEffect(() => {
     if (stage === 'splash') {
-      const timer = setTimeout(() => setStage('login'), 2500);
+      const timer = setTimeout(() => setStage('login'), 5000);
       return () => clearTimeout(timer);
     }
   }, [stage]);
