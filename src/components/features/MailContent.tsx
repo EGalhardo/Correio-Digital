@@ -4,8 +4,52 @@
  */
 
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Send, ShieldCheck, Mail, Plus, Clock, Search } from 'lucide-react';
-import { Message } from '../../types';
+import { 
+  ArrowLeft, 
+  Send, 
+  ShieldCheck, 
+  Mail, 
+  Plus, 
+  Clock, 
+  Search, 
+  Fingerprint,
+  Bell,
+  Scroll,
+  ShieldAlert,
+  Receipt,
+  Megaphone,
+  FolderOpen,
+  Landmark,
+  CheckSquare,
+  Key,
+  Award,
+  User,
+  Coins,
+  Scale,
+  FileText,
+  Lock
+} from 'lucide-react';
+import { Message, SENSITIVITY_LEVELS, PRIORITY_CONFIGS } from '../../types';
+import { getCategoryMetadata } from '../../utils/protocolGenerator';
+
+function renderCategoryIcon(iconName: string, size = 10) {
+  switch (iconName) {
+    case 'Bell': return <Bell size={size} />;
+    case 'Scroll': return <Scroll size={size} />;
+    case 'ShieldAlert': return <ShieldAlert size={size} />;
+    case 'Receipt': return <Receipt size={size} />;
+    case 'Megaphone': return <Megaphone size={size} />;
+    case 'FolderOpen': return <FolderOpen size={size} />;
+    case 'Landmark': return <Landmark size={size} />;
+    case 'CheckSquare': return <CheckSquare size={size} />;
+    case 'Key': return <Key size={size} />;
+    case 'Award': return <Award size={size} />;
+    case 'User': return <User size={size} />;
+    case 'Coins': return <Coins size={size} />;
+    case 'Scale': return <Scale size={size} />;
+    default: return <FileText size={size} />;
+  }
+}
 
 interface MailContentProps {
   isComposing: boolean;
@@ -274,6 +318,48 @@ export function MailContent({
                         <p className="text-slate-700 text-[11px] md:text-sm font-medium line-clamp-2 md:line-clamp-1 leading-relaxed">
                           {item.preview}
                         </p>
+                        {item.protocol && (
+                          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                            <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-100/60 text-indigo-700 font-mono text-[9px] font-black px-2 py-0.5 rounded-md">
+                              <Fingerprint size={10} className="text-indigo-500 animate-pulse" />
+                              {item.protocol.protocolNumber}
+                            </div>
+                            {(() => {
+                              const meta = getCategoryMetadata(item.protocol.category);
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-wider ${meta.colorClass}`}>
+                                  {renderCategoryIcon(meta.icon, 10)}
+                                  {meta.name}
+                                </span>
+                              );
+                            })()}
+                            {(() => {
+                              const level = item.sensitivity || 'Público';
+                              const config = SENSITIVITY_LEVELS[level];
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-wider ${config.textColor} ${config.badgeBg} ${config.borderColor} shadow-xs`}>
+                                  <Lock size={9} />
+                                  {level}
+                                </span>
+                              );
+                            })()}
+                            {(() => {
+                              const prio = item.priorityScale || 'Normal';
+                              const pConfig = PRIORITY_CONFIGS[prio];
+                              return (
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-wider ${pConfig.textColor} ${pConfig.badgeBg} ${pConfig.borderColor} shadow-xs`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${pConfig.dotColor}`} />
+                                  {prio}
+                                </span>
+                              );
+                            })()}
+                            {item.deadlineHoursRemaining !== undefined && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border border-amber-200 bg-amber-50/70 text-amber-800 shadow-xs uppercase tracking-wider">
+                                Prazo restante: {item.deadlineHoursRemaining} horas
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                     

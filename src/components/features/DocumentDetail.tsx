@@ -4,9 +4,10 @@
  */
 
 import { motion } from 'motion/react';
-import { ArrowLeft, Download, ShieldCheck, QrCode, Info, ExternalLink, Printer } from 'lucide-react';
+import { ArrowLeft, Download, ShieldCheck, QrCode, Info, ExternalLink, Printer, Fingerprint } from 'lucide-react';
 import { Document } from '../../types';
 import { USER_PROFILE_PHOTO } from '../../constants/data';
+import { generateProtocol } from '../../utils/protocolGenerator';
 
 interface DocumentDetailProps {
   selectedDoc: Document;
@@ -21,6 +22,13 @@ export function DocumentDetail({
   setTab,
   logSecurityEvent,
 }: DocumentDetailProps) {
+  const protocol = selectedDoc.protocol || generateProtocol(
+    selectedDoc.issuer || 'GOV',
+    'document',
+    selectedDoc.code || selectedDoc.number,
+    selectedDoc.name
+  );
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.98 }}
@@ -152,7 +160,87 @@ export function DocumentDetail({
               </div>
            </div>
 
-           <div className="bg-primary/5 border border-primary/10 rounded-[28px] p-5 flex gap-4">
+            {/* National Digital Protocol Registry */}
+            <div className="bg-slate-900 text-white border border-slate-800 rounded-[32px] p-6 shadow-xl space-y-6">
+               <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                  <div className="flex items-center gap-3 text-left">
+                     <Fingerprint size={22} className="text-amber-400" />
+                     <div>
+                        <h4 className="text-xs font-black tracking-widest text-slate-400 uppercase font-mono">Registo de Protocolo</h4>
+                        <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest font-mono">Core Digital Ativo</p>
+                     </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-black text-slate-400 bg-white/5 px-2.5 py-1 rounded-md">100% Autêntico</span>
+               </div>
+
+               <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 text-xs text-left">
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">ID Interno</span>
+                     <span className="font-mono font-bold text-slate-300">{protocol.internalId}</span>
+                  </div>
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Nº Protocolo</span>
+                     <span className="font-mono font-black text-amber-400">{protocol.protocolNumber}</span>
+                  </div>
+                  <div className="col-span-2">
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Instituição Emissora</span>
+                     <span className="font-bold text-slate-300 line-clamp-1">{protocol.issuerInstitution}</span>
+                  </div>
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Data de Emissão</span>
+                     <span className="font-bold text-slate-350">{protocol.officialIssueDate}</span>
+                  </div>
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Hora de Emissão</span>
+                     <span className="font-mono font-bold text-slate-350">{protocol.officialTime}</span>
+                  </div>
+                  <div className="col-span-2">
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Responsável</span>
+                     <span className="font-bold text-slate-300 line-clamp-1">{protocol.issuerResponsible}</span>
+                  </div>
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Categoria</span>
+                     <span className="font-bold text-indigo-400">{protocol.category}</span>
+                  </div>
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Documento</span>
+                     <span className="font-bold text-slate-300 line-clamp-1">{protocol.documentType}</span>
+                  </div>
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Estado</span>
+                     <span className="font-bold text-emerald-400">{protocol.currentState}</span>
+                  </div>
+                  <div>
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Prioridade</span>
+                     <span className={`font-bold ${protocol.priority === 'Alta' ? 'text-rose-400' : 'text-slate-300'}`}>{protocol.priority}</span>
+                  </div>
+                  <div className="col-span-2">
+                     <span className="text-[9px] text-white/40 font-bold block uppercase tracking-wider mb-0.5">Data Limite</span>
+                     <span className="font-bold text-slate-300">{protocol.deadlineDate}</span>
+                  </div>
+               </div>
+
+               <div className="pt-4 border-t border-white/5 space-y-3">
+                  <div className="flex justify-between items-center gap-2">
+                     <div className="flex-1 min-w-0 text-left">
+                        <span className="text-[8px] text-white/40 font-bold uppercase tracking-wider block">Assinatura Digital</span>
+                        <div className="font-mono text-[9px] break-all p-2 bg-black/40 rounded-lg text-slate-400 border border-white/5 block">
+                           {protocol.digitalSignature}
+                        </div>
+                     </div>
+                     <div className="shrink-0 p-1.5 bg-white rounded-xl shadow-sm">
+                        <img 
+                          src={protocol.qrCodeUrl} 
+                          alt="QR Document Protocolo"
+                          className="w-12 h-12 object-contain"
+                          referrerPolicy="no-referrer"
+                        />
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <div className="bg-primary/5 border border-primary/10 rounded-[28px] p-5 flex gap-4">
               <Info size={20} className="text-primary shrink-0" />
               <p className="text-[11px] md:text-xs text-primary font-bold leading-relaxed">
                  O uso de documentos digitais é facultativo, mas possui a mesma força probatória que os documentos físicos originais.

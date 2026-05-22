@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, Scan, Mail, QrCode, Users, User, Shield, ShieldAlert } from 'lucide-react';
+import { Loader2, Scan, Mail, QrCode, Users, User, Shield, ShieldAlert, Lock, Fingerprint, Smartphone, Key, ShieldCheck, Camera } from 'lucide-react';
 
 // Components
 import {
@@ -31,6 +31,7 @@ import {
   GovContactsContent,
   GovPerfilContent,
   GovSegurancaContent,
+  PastaDigitalContent,
 } from './components';
 
 // Constants & Types
@@ -44,6 +45,7 @@ import {
   NOTIFICATIONS,
 } from './constants/data';
 import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocRequest } from './types';
+import { ensureProtocolOnMessage, ensureProtocolOnDocument, generateProtocol } from './utils/protocolGenerator';
 
 export default function App() {
   const [stage, setStage] = useState('splash');
@@ -62,33 +64,44 @@ export default function App() {
 
   const [inbox, setInbox] = useState<Message[]>(() => {
     const saved = localStorage.getItem('correio_digital_inbox');
-    if (!saved) return [...INBOX];
-    try {
-      const parsed = JSON.parse(saved);
-      const existingIds = new Set(parsed.map((m: any) => m.id));
-      const newItems = INBOX.filter(m => !existingIds.has(m.id));
-      return [...parsed, ...newItems];
-    } catch (e) {
-      return [...INBOX];
+    let items: Message[] = [];
+    if (!saved) {
+      items = [...INBOX];
+    } else {
+      try {
+        const parsed = JSON.parse(saved);
+        const existingIds = new Set(parsed.map((m: any) => m.id));
+        const newItems = INBOX.filter(m => !existingIds.has(m.id));
+        items = [...parsed, ...newItems];
+      } catch (e) {
+        items = [...INBOX];
+      }
     }
+    return items.map(ensureProtocolOnMessage);
   });
 
   const [instInbox, setInstInbox] = useState<Message[]>(() => {
     const saved = localStorage.getItem('correio_digital_inst_inbox');
-    if (!saved) return [...INSTITUTIONAL_INBOX];
-    try {
-      const parsed = JSON.parse(saved);
-      const existingIds = new Set(parsed.map((m: any) => m.id));
-      const newItems = INSTITUTIONAL_INBOX.filter(m => !existingIds.has(m.id));
-      return [...parsed, ...newItems];
-    } catch (e) {
-      return [...INSTITUTIONAL_INBOX];
+    let items: Message[] = [];
+    if (!saved) {
+      items = [...INSTITUTIONAL_INBOX];
+    } else {
+      try {
+        const parsed = JSON.parse(saved);
+        const existingIds = new Set(parsed.map((m: any) => m.id));
+        const newItems = INSTITUTIONAL_INBOX.filter(m => !existingIds.has(m.id));
+        items = [...parsed, ...newItems];
+      } catch (e) {
+        items = [...INSTITUTIONAL_INBOX];
+      }
     }
+    return items.map(ensureProtocolOnMessage);
   });
   
   const [sentMessages, setSentMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('correio_digital_sent');
-    return saved ? JSON.parse(saved) : [...SENT_MESSAGES];
+    const items = saved ? JSON.parse(saved) : [...SENT_MESSAGES];
+    return items.map(ensureProtocolOnMessage);
   });
 
   const [contacts, setContacts] = useState<Contact[]>(() => {
@@ -98,7 +111,8 @@ export default function App() {
 
   const [documents, setDocuments] = useState<Document[]>(() => {
     const saved = localStorage.getItem('correio_digital_documents');
-    return saved ? JSON.parse(saved) : [...DOCUMENTS];
+    const items = saved ? JSON.parse(saved) : [...DOCUMENTS];
+    return items.map(ensureProtocolOnDocument);
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -147,7 +161,67 @@ export default function App() {
     return localStorage.getItem('correio_digital_phone') || '+244 923 000 111';
   });
 
+  const [nif, setNif] = useState(() => {
+    return localStorage.getItem('correio_digital_nif') || '5401329188';
+  });
+
+  const [passport, setPassport] = useState(() => {
+    return localStorage.getItem('correio_digital_passport') || 'AO-P129384';
+  });
+
+  const [verificationStatus, setVerificationStatus] = useState(() => {
+    return localStorage.getItem('correio_digital_verification_status') || 'Parcialmente verificado';
+  });
+
+  const [hasFacialAuth, setHasFacialAuth] = useState(() => {
+    return localStorage.getItem('correio_digital_has_facial_auth') === 'false' ? false : true;
+  });
+
+  const [hasTwoFactor, setHasTwoFactor] = useState(() => {
+    return localStorage.getItem('correio_digital_has_two_factor') === 'true';
+  });
+
+  const [govPin, setGovPin] = useState(() => {
+    return localStorage.getItem('correio_digital_gov_pin') || '1234';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_bi', bi);
+  }, [bi]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_phone', phone);
+  }, [phone]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_nif', nif);
+  }, [nif]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_passport', passport);
+  }, [passport]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_verification_status', verificationStatus);
+  }, [verificationStatus]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_has_facial_auth', String(hasFacialAuth));
+  }, [hasFacialAuth]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_has_two_factor', String(hasTwoFactor));
+  }, [hasTwoFactor]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_gov_pin', govPin);
+  }, [govPin]);
+
   // UI States
+  const [loginSubMode, setLoginSubMode] = useState<'normal' | 'two-factor' | 'face-capture' | 'pin-entry'>('normal');
+  const [enteredOtp, setEnteredOtp] = useState('');
+  const [enteredPin, setEnteredPin] = useState('');
+  const [faceProgress, setFaceProgress] = useState(0);
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -178,6 +252,26 @@ export default function App() {
   const [showSensitiveData, setShowSensitiveData] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Face Scan simulated progress for login screen
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loginSubMode === 'face-capture') {
+      if (faceProgress < 100) {
+        timer = setTimeout(() => {
+          setFaceProgress(p => {
+            const next = p + 20;
+            return next >= 100 ? 100 : next;
+          });
+        }, 300);
+      } else {
+        setLoginSubMode('pin-entry');
+      }
+    } else {
+      setFaceProgress(0);
+    }
+    return () => clearTimeout(timer);
+  }, [loginSubMode, faceProgress]);
 
   // Auto-scroll to top on tab/stage change
   useEffect(() => {
@@ -342,6 +436,13 @@ export default function App() {
     setTab('mensagem');
   };
 
+  const handleUpdateMessage = (updatedMsg: Message) => {
+    setSelectedMessage(updatedMsg);
+    setInbox(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
+    setInstInbox(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
+    setSentMessages(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
+  };
+
   const handleLogout = (clearAll = false) => {
     if (clearAll) {
       localStorage.clear();
@@ -356,18 +457,29 @@ export default function App() {
   const handleSendMessage = () => {
     if (!composeData.to || !composeData.subject || !composeData.body) return;
     
+    const messageId = Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`);
+    const protocol = generateProtocol(composeData.to, 'message', messageId, composeData.subject);
+
     const newMessage: Message = {
-      id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
+      id: messageId,
       org: composeData.to,
       preview: composeData.subject,
       date: "hoje",
-      status: "Informativo"
+      status: "Informativo",
+      details: {
+        subject: composeData.subject,
+        body: composeData.body,
+        deadline: "Sem prazo",
+        state: "Entregue & Autenticado",
+        actions: ["Ver detalhes"]
+      },
+      protocol: protocol
     };
 
     setSentMessages(prev => [newMessage, ...prev]);
     setIsComposing(false);
     setComposeData({ to: '', subject: '', body: '' });
-    addAuditLog(`Correspondência enviada: ${newMessage.preview}`, 'info');
+    addAuditLog(`Correspondência enviada com Protocolo ${protocol.protocolNumber}`, 'info');
   };
 
   const handleReply = (msg: Message) => {
@@ -576,6 +688,7 @@ export default function App() {
             setSelectedMessage={setSelectedMessage}
             setTab={setTab}
             handleReply={handleReply}
+            onUpdateMessage={handleUpdateMessage}
           />
         );
       case 'carteira':
@@ -610,6 +723,13 @@ export default function App() {
             logSecurityEvent={logSecurityEvent}
           />
         );
+      case 'pasta-digital':
+        return (
+          <PastaDigitalContent
+            logSecurityEvent={logSecurityEvent}
+            setTab={setTab}
+          />
+        );
       case 'contatos':
         return appMode === 'institution' ? (
           <GovContactsContent />
@@ -630,6 +750,20 @@ export default function App() {
             setShowSensitiveData={setShowSensitiveData}
             bi={bi}
             phone={phone}
+            nif={nif}
+            passport={passport}
+            verificationStatus={verificationStatus}
+            hasFacialAuth={hasFacialAuth}
+            hasTwoFactor={hasTwoFactor}
+            govPin={govPin}
+            setBi={setBi}
+            setPhone={setPhone}
+            setNif={setNif}
+            setPassport={setPassport}
+            setVerificationStatus={setVerificationStatus}
+            setHasFacialAuth={setHasFacialAuth}
+            setHasTwoFactor={setHasTwoFactor}
+            setGovPin={setGovPin}
             contactsCount={contacts.length}
             setTab={setTab}
             handleLogout={handleLogout}
@@ -757,85 +891,296 @@ export default function App() {
   }
 
   if (stage === 'login') {
+    const handleLoginSubmit = () => {
+      if (hasTwoFactor) {
+        setLoginSubMode('two-factor');
+      } else if (hasFacialAuth) {
+        setLoginSubMode('face-capture');
+        setFaceProgress(0);
+      } else if (govPin && govPin.length === 4) {
+        setLoginSubMode('pin-entry');
+        setEnteredPin('');
+      } else {
+        setStage('app');
+        addAuditLog('Login de Cidadão via Autenticação Segura', 'success');
+      }
+    };
+
+    const handleLoginFacial = () => {
+      setLoginSubMode('face-capture');
+      setFaceProgress(0);
+    };
+
     return (
-      <section className="min-h-screen p-6">
-        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-5">
+      <section className="min-h-screen p-6 bg-slate-50 flex items-center justify-center">
+        <div className="max-w-[1100px] w-full mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-6 items-center">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="hidden md:flex bg-white rounded-[28px] p-8 md:p-12 border border-slate-200 flex-col items-center justify-center text-center shadow-sm"
+            className="hidden md:flex bg-white rounded-[40px] p-12 border border-slate-100 flex-col items-center justify-center text-center shadow-sm h-[580px] relative overflow-hidden"
           >
+            <div className="absolute top-0 right-0 w-80 h-80 bg-primary/2 rounded-full -mr-40 -mt-40 blur-3xl pointer-events-none" />
             <img 
               src="https://i.postimg.cc/cCkwskty/Logomarca-Correio-Digital.png" 
               alt="Correio Digital" 
-              className="w-64 md:w-80 h-auto mb-8"
+              className="w-72 h-auto mb-10 relative z-10"
             />
-            <h1 className="text-xl md:text-3xl font-bold text-primary mb-4 leading-tight">O seu novo endereço digital oficial.</h1>
-            <p className="text-slate-500 leading-relaxed max-w-md">Receba correspondência governamental no seu portal seguro através do número do seu BI.</p>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 leading-tight italic uppercase tracking-tight">
+              O seu novo endereço digital oficial
+            </h1>
+            <p className="text-slate-500 leading-relaxed max-w-sm text-sm font-semibold">
+              Receba, assine e despache correspondência governamental com validade jurídica do Estado da República de Angola.
+            </p>
+            <div className="mt-8 flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+              <ShieldCheck size={14} className="text-emerald-500" /> Infraestrutura Oficial Segura SME & AGT
+            </div>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-[28px] p-8 md:p-10 shadow-sm border border-slate-200"
+            className="bg-white rounded-[40px] p-8 md:p-12 shadow-xl border border-slate-100 min-h-[585px] flex flex-col justify-between"
           >
-            <h2 className="text-lg md:text-xl font-bold text-primary mb-1">Acesso seguro</h2>
-            <p className="text-slate-500 text-sm mb-8">Introduza os seus dados oficiais para continuar.</p>
-
-            <div className="space-y-4">
-              <label className="grid gap-1.5 px-0.5">
-                <span className="text-[0.78rem] text-slate-700 font-bold tracking-wide uppercase">Numero do BI</span>
-                <input 
-                  className="border border-line rounded-xl p-3 outline-none focus:border-secondary transition-colors font-medium text-primary"
-                  value={bi}
-                  onChange={(e) => setBi(e.target.value)}
-                />
-              </label>
-
-              <label className="grid gap-1.5 px-0.5">
-                <span className="text-[0.78rem] text-slate-700 font-bold tracking-wide uppercase">Senha</span>
-                <input 
-                  type="password"
-                  className="border border-line rounded-xl p-3 outline-none focus:border-secondary transition-colors font-medium text-primary"
-                  placeholder="Introduza a sua senha"
-                />
-              </label>
-
-              <div className="pt-4 grid gap-4">
-                <button 
-                  onClick={() => {
-                    setStage('app');
-                    addAuditLog('Login de Cidadão via Autenticação Segura', 'success');
-                  }}
-                  className="w-full bg-primary text-white rounded-xl py-4 font-bold shadow-lg shadow-primary/20 hover:bg-primary/95 transition-all active:scale-[0.98]"
+            <AnimatePresence mode="wait">
+              {loginSubMode === 'normal' && (
+                <motion.div
+                  key="login-normal"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6 flex-1 flex flex-col justify-center"
                 >
-                  Entrar no Portal
-                </button>
-
-                <div className="relative py-2 flex items-center justify-center">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200"></div>
+                  <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">República de Angola</span>
+                    <h2 className="text-2xl font-black text-slate-905 italic uppercase tracking-tight">Acesso Seguro</h2>
+                    <p className="text-slate-500 text-xs font-semibold">Introduza o número de BI nacional para consultar as suas credenciais.</p>
                   </div>
-                  <span className="relative z-10 bg-white px-4 text-sm font-bold text-slate-400 uppercase tracking-widest">ou</span>
-                </div>
 
-                <button 
-                  onClick={() => {
-                    setStage('app');
-                    addAuditLog('Login via Autenticação Biométrica Facial', 'success');
-                  }}
-                  className="w-full bg-white border-2 border-primary text-primary rounded-xl py-4 font-bold hover:bg-slate-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  <div className="space-y-4 pt-2">
+                    <label className="grid gap-1.5">
+                      <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">Número de BI de Cidadão</span>
+                      <input 
+                        className="border border-slate-200 bg-slate-50/50 focus:bg-white rounded-2xl p-4 outline-none focus:border-primary transition-all font-mono font-bold tracking-wider text-slate-800"
+                        value={bi}
+                        onChange={(e) => setBi(e.target.value.toUpperCase())}
+                        placeholder="002931298LA045"
+                        maxLength={14}
+                      />
+                    </label>
+
+                    <label className="grid gap-1.5">
+                      <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">Senha de Acesso</span>
+                      <input 
+                        type="password"
+                        className="border border-slate-200 bg-slate-50/50 focus:bg-white rounded-2xl p-4 outline-none focus:border-primary transition-all font-bold tracking-wider text-slate-800"
+                        placeholder="••••••••••••"
+                      />
+                    </label>
+
+                    <div className="pt-4 grid gap-3">
+                      <button 
+                        onClick={handleLoginSubmit}
+                        className="w-full bg-primary text-white rounded-2xl py-4 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/15 hover:opacity-95 transition-all cursor-pointer border-0"
+                      >
+                        Entrar no Portal
+                      </button>
+
+                      <div className="relative py-2 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-slate-150"></div>
+                        </div>
+                        <span className="relative z-10 bg-white px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ou</span>
+                      </div>
+
+                      <button 
+                        onClick={handleLoginFacial}
+                        className="w-full bg-white border border-slate-200 text-primary rounded-2xl py-4 font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Scan size={16} /> Login Facial Biométrico
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {loginSubMode === 'two-factor' && (
+                <motion.div
+                  key="login-2fa"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6 flex-1 flex flex-col justify-center text-center"
                 >
-                  <Scan size={20} />
-                  Login Facial
-                </button>
-              </div>
-            </div>
+                  <div className="mx-auto w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-xs border border-blue-100">
+                    <Smartphone size={28} />
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tight">Autenticação de canais</h3>
+                    <p className="text-slate-500 text-xs font-semibold max-w-sm mx-auto mt-1 leading-relaxed">
+                      Enviámos um SMS com o código aleatório temporário (OTP) para o telemóvel associado: <strong className="font-bold text-slate-800 font-mono">{phone.replace(/\d{3} \d{3}$/, '*** ***')}</strong>.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <input 
+                      type="text"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={enteredOtp}
+                      onChange={(e) => setEnteredOtp(e.target.value.replace(/\D/g, ''))}
+                      className="w-full font-mono font-black text-2xl tracking-[0.5em] text-center p-4 bg-slate-50 border border-slate-200 focus:border-blue-500 bg-white transition-all rounded-2xl"
+                    />
+
+                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-3.5 text-[11px] text-blue-800 text-center font-bold">
+                      Dica de Simulação: O código de teste recebido por canais é <strong>123456</strong>
+                    </div>
+
+                    <div className="pt-2 grid grid-cols-2 gap-3">
+                      <button 
+                        onClick={() => setLoginSubMode('normal')}
+                        className="py-4 bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-100 transition-all cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (enteredOtp === '123456' || enteredOtp.length === 6) {
+                            if (hasFacialAuth) {
+                              setLoginSubMode('face-capture');
+                              setFaceProgress(0);
+                            } else if (govPin && govPin.length === 4) {
+                              setLoginSubMode('pin-entry');
+                              setEnteredPin('');
+                            } else {
+                              setStage('app');
+                              addAuditLog('Login concluído com factor duplo SMS', 'success');
+                            }
+                          } else {
+                            alert("Código de verificação OTP incorrecto. Utilize o código de simulação 123456.");
+                          }
+                        }}
+                        className="py-4 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:opacity-95 shadow-lg shadow-primary/10 cursor-pointer border-0"
+                      >
+                        Validar OTP
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {loginSubMode === 'face-capture' && (
+                <motion.div
+                  key="login-face"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6 flex-1 flex flex-col justify-center text-center"
+                >
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tight">Detetor Biométrico Facial</h3>
+                    <p className="text-slate-500 text-xs font-semibold mt-1">
+                      A validar os seus vetores criptográficos nacionais com o SME.
+                    </p>
+                  </div>
+
+                  <div className="relative mx-auto w-52 h-52 rounded-full border-4 border-slate-100 overflow-hidden shadow-2xl bg-slate-900 flex items-center justify-center p-2">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none z-10" />
+                    
+                    {/* Laser Scanner motion bar */}
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)] z-20" style={{
+                      animation: 'scan-motion 2.5s infinite ease-in-out',
+                      position: 'absolute'
+                    }} />
+
+                    <div className="absolute inset-0 border-2 border-emerald-500 rounded-full animate-pulse pointer-events-none z-15" />
+
+                    <div className="flex flex-col items-center justify-center text-indigo-200 gap-1.5 z-10 max-w-xs px-4">
+                      <Camera size={28} className="text-emerald-400 animate-bounce" />
+                      <span className="text-[10px] uppercase font-black tracking-widest text-emerald-400">Reconhecimento Facial</span>
+                      <span className="text-[11px] font-mono font-bold text-white bg-emerald-950/80 px-2 py-0.5 rounded-full mt-1">
+                        A mapear face: {faceProgress}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-indigo-600 font-extrabold uppercase tracking-widest animate-pulse">
+                    Por favor, permaneça imóvel focado no círculo...
+                  </div>
+
+                  <button 
+                    onClick={() => setLoginSubMode('normal')}
+                    className="py-3.5 bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-200 max-w-xs mx-auto w-full cursor-pointer border-0"
+                  >
+                    Usar Senha
+                  </button>
+                </motion.div>
+              )}
+
+              {loginSubMode === 'pin-entry' && (
+                <motion.div
+                  key="login-pin"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6 flex-1 flex flex-col justify-center text-center"
+                >
+                  <div className="mx-auto w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shadow-xs border border-amber-100">
+                    <Key size={26} />
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tight">PIN Governamental</h3>
+                    <p className="text-slate-500 text-xs font-semibold mt-1">
+                      Insira o seu PIN de 4 dígitos para concluir a autorização do portal.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <input 
+                      type="password"
+                      maxLength={4}
+                      value={enteredPin}
+                      placeholder="••••"
+                      onChange={(e) => setEnteredPin(e.target.value.replace(/\D/g, ''))}
+                      className="w-full text-center font-mono font-black text-3xl tracking-[0.6em] p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-amber-500 transition-all focus:bg-white"
+                    />
+
+                    <div className="bg-amber-50 border border-amber-105 rounded-xl p-3 text-[10.5px] text-amber-800 font-bold leading-normal">
+                      Insira o PIN governamental que configurou no perfil (Padrão: <strong>{govPin || '1234'}</strong>)
+                    </div>
+
+                    <div className="pt-2 grid grid-cols-2 gap-3">
+                      <button 
+                        onClick={() => setLoginSubMode('normal')}
+                        className="py-4 bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-100 cursor-pointer"
+                      >
+                        Cancelar
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (enteredPin === govPin || (!govPin && enteredPin === '1234')) {
+                            setStage('app');
+                            addAuditLog('Login assinado digitalmente com PIN', 'success');
+                          } else {
+                            alert("Código PIN incorreto civil de Angola. Tente novamente.");
+                          }
+                        }}
+                        className="py-4 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:opacity-95 shadow-lg shadow-primary/10 cursor-pointer border-0"
+                      >
+                        Desbloquear Portal
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       </section>
     );
   }
+
 
   return (
     <main className={`min-h-screen bg-bg text-primary md:flex md:gap-5 md:p-5 font-sans selection:bg-primary selection:text-white transition-all ${emergencyMode && isGovMode ? 'pt-[32px] md:pt-[44px]' : ''}`}>
