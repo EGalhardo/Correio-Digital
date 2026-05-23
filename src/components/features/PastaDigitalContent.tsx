@@ -371,7 +371,7 @@ export function PastaDigitalContent({ logSecurityEvent, setTab }: PastaDigitalCo
         doc.institution.toLowerCase().includes(search.toLowerCase()) ||
         doc.code.toLowerCase().includes(search.toLowerCase()) ||
         doc.issuer.toLowerCase().includes(search.toLowerCase()) ||
-        Object.values(doc.meta).some(val => val.toLowerCase().includes(search.toLowerCase()));
+        Object.values(doc.meta).some(val => typeof val === 'string' && val.toLowerCase().includes(search.toLowerCase()));
 
       // Category matches
       const matchesCategory = categoryFilter === 'todas' || doc.category === categoryFilter;

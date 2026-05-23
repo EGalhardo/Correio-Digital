@@ -49,10 +49,13 @@ import {
   Share2,
   Paperclip,
   Send,
-  RefreshCw
+  RefreshCw,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import { Message, SENSITIVITY_LEVELS, SensitivityConfig, PRIORITY_CONFIGS } from '../../types';
 import { generateProtocol, generateTimelineEvents, getCategoryMetadata } from '../../utils/protocolGenerator';
+import { GovernmentAIPanel } from './GovernmentAIPanel';
 
 const STATE_STYLING: Record<string, { bg: string; text: string; border: string; bgDot: string; textIcon: string }> = {
   'Recebida': { bg: 'bg-slate-50', text: 'text-slate-800', border: 'border-slate-200', bgDot: 'bg-slate-150', textIcon: 'text-slate-600' },
@@ -238,6 +241,7 @@ export function MessageDetail({
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [showQRValidation, setShowQRValidation] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
 
   // States for the 8 official government actions requested
   const [activeOfficialAction, setActiveOfficialAction] = useState<string | null>(null);
@@ -1556,31 +1560,126 @@ export function MessageDetail({
                         );
                       })()}
                       
-                      {/* SEÇÃO DOCUMENTO VERIFICADO */}
-                      <div className="w-full mt-6 pt-5 border-t border-slate-150 text-left space-y-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-emerald-500 text-white flex items-center justify-center shadow">
-                            <ShieldCheck size={14} />
+                      {/* ESTABILIDADE JURÍDICA E COMPROVATIVOS DE VALIDADE */}
+                      <div className="w-full mt-6 pt-5 border-t border-slate-150 text-left space-y-4">
+                        {/* Legal Validity Banner */}
+                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5 shadow-sm">
+                          <ShieldCheck size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                          <div className="space-y-0.5">
+                            <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wide block">
+                              DOCUMENTO LEGALMENTE VÁLIDO
+                            </span>
+                            <span className="text-[10px] text-emerald-700/90 font-bold block leading-relaxed">
+                              Este documento possui validade legal. Em conformidade com a regulamentação ICP-Angola, este ato administrativo detém força probatória plena.
+                            </span>
                           </div>
-                          <div>
-                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-900 leading-none">Documento Verificado</h4>
-                            <p className="text-[9px] text-emerald-850 font-bold mt-0.5">Assinatura Digital Ativa</p>
-                          </div>
-                          <span className="ml-auto bg-emerald-100/80 text-emerald-800 text-[8px] font-bold px-1.5 py-0.5 rounded border border-emerald-250 uppercase leading-none">
-                            VÁLIDO
-                          </span>
                         </div>
+
+                        {/* 4 Differentiated States and Proofs */}
+                        <div className="space-y-3">
+                          <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">
+                            Rastreabilidade e Comprovativos Oficiais
+                          </span>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {/* State 1: Entregue */}
+                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">1. Estado Transmissão</span>
+                                <span className="bg-blue-100/80 text-blue-800 text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border border-blue-200">
+                                  Entregue
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-[10.5px] font-bold text-slate-800 block">Comprovativo de Entrega</span>
+                                <span className="text-[9.5px] text-slate-500 font-semibold block leading-tight">
+                                  Gateway: Central Mailer [{protocol.internalId}]
+                                </span>
+                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
+                                  Carimbo: {selectedMessage.date || '08:15 UTC'} - Verificado
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* State 2: Visualizado */}
+                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">2. Estado Leitura</span>
+                                <span className="bg-teal-100/80 text-teal-805 text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border border-teal-200">
+                                  Visualizado
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-[10.5px] font-bold text-slate-800 block">Comprovativo de Leitura</span>
+                                <span className="text-[9.5px] text-slate-500 font-semibold block leading-tight">
+                                  Dispositivo: Terminal BI-Digital Cripto
+                                </span>
+                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
+                                  Carimbo: Leitura registada em tempo real
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* State 3: Confirmado */}
+                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">3. Confirmação Oficial</span>
+                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border ${
+                                  selectedMessage.details?.state?.toLowerCase().includes('pendente') 
+                                    ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse' 
+                                    : 'bg-indigo-100/80 text-indigo-800 border-indigo-200'
+                                }`}>
+                                  Confirmado
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-[10.5px] font-bold text-slate-800 block">Confirmação Oficial</span>
+                                <span className="text-[9.5px] text-slate-500 font-semibold block leading-tight truncate">
+                                  Protocolo: {protocol.protocolNumber}
+                                </span>
+                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
+                                  Carimbo Secundário: Selado com sucesso
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* State 4: Assinado */}
+                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">4. Integridade da Assinatura</span>
+                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border ${
+                                  (selectedMessage.details?.state?.toLowerCase().includes('pendente') || selectedMessage.details?.state === 'Pagamento pendente')
+                                    ? 'bg-slate-100 text-slate-505 border-slate-200' 
+                                    : 'bg-emerald-100/80 text-emerald-800 border-emerald-200'
+                                }`}>
+                                  {(selectedMessage.details?.state?.toLowerCase().includes('pendente') || selectedMessage.details?.state === 'Pagamento pendente') ? 'Pendente' : 'Assinado'}
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                <span className="text-[10.5px] font-bold text-slate-800 block">Assinatura Eletrônica</span>
+                                <span className="text-[9.5px] text-slate-550 font-semibold block leading-none font-mono truncate">
+                                  ID: {protocol.digitalSignature.substring(0, 15)}...
+                                </span>
+                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
+                                  Carimbo Temporal: Sincronizado ICP
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* SEÇÃO DETALHES DE AUTENTICAÇÃO */}
                         <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-[10px] font-medium text-slate-600">
                           <div>
-                            <span className="text-[9px] font-bold text-slate-400 block uppercase">Selo Digital</span>
-                            <span className="font-mono text-slate-700 break-all">{protocol.digitalSeal}</span>
+                            <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Selo Digital Institucional</span>
+                            <span className="font-mono text-slate-705 break-all text-[9.5px]">{protocol.digitalSeal}</span>
                           </div>
                           <div>
-                            <span className="text-[9px] font-bold text-slate-400 block uppercase">Certificado Emissor</span>
-                            <span className="text-slate-700 font-bold">{protocol.institutionalCertificate}</span>
+                            <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Certificado Emissor Homologado</span>
+                            <span className="text-slate-705 font-bold text-[9.5px]">{protocol.institutionalCertificate}</span>
                           </div>
                           <div>
-                            <span className="text-[9px] font-bold text-slate-400 block uppercase">Hash SHA-256</span>
+                            <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Hash SHA-256 de Custódia</span>
                             <span className="font-mono text-[9px] text-slate-700 break-all block truncate">{protocol.documentHash}</span>
                           </div>
                         </div>
@@ -1639,6 +1738,55 @@ export function MessageDetail({
                       </div>
                     </div>
                   </div>
+
+                  {/* Government AI Assistance Expansion Button */}
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setShowAIPanel(!showAIPanel);
+                      addAuditLogToMessage(`Activou IA Governamental para mensagem: ${selectedMessage.details?.subject || selectedMessage.preview}`);
+                    }}
+                    className={`w-full mt-6 p-4 md:p-5 rounded-[24px] border transition-all flex items-center justify-between shadow-lg active:scale-98 ${
+                      showAIPanel 
+                        ? 'bg-primary text-white border-primary shadow-primary/25' 
+                        : 'bg-gradient-to-r from-indigo-50/70 to-[#eff6ff] border-blue-200/60 hover:border-blue-300 text-primary shadow-blue-900/5'
+                    }`}
+                  >
+                     <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${showAIPanel ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>
+                           <Sparkles size={18} className={showAIPanel ? 'animate-spin' : 'animate-pulse'} />
+                        </div>
+                        <div className="text-left font-sans">
+                           <span className="font-extrabold text-xs md:text-sm uppercase tracking-wider block">Resumo Inteligente (IA)</span>
+                           <span className={`text-[9px] md:text-xs font-bold block ${showAIPanel ? 'text-white/75' : 'text-slate-500'}`}>
+                              {showAIPanel ? 'Ocultar Análise de IA' : 'Resumir, Explicar termos, Auto-Classificar e Detetar Urgência'}
+                           </span>
+                        </div>
+                     </div>
+                     <ArrowRight size={18} className={`transition-transform duration-300 ${showAIPanel ? 'rotate-90' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showAIPanel && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden mt-6"
+                      >
+                        <GovernmentAIPanel 
+                          documentTitle={selectedMessage.details?.subject || selectedMessage.preview}
+                          rawText={`ASSUNTO CONTEÚDO OFICIAL: ${selectedMessage.details?.subject || selectedMessage.preview}
+Orgão Emissor: ${selectedMessage.org}
+Estado Oficial Declarado: ${selectedMessage.status}
+Detalhamento de Corpo de Mensagem:
+${selectedMessage.details?.body || ''}`}
+                          contextType="message"
+                          onLogMsg={(action, type) => addAuditLogToMessage(action)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <div className="pt-2 border-t border-slate-100 mt-6 pt-6">
                     <div className="flex items-center gap-2 mb-4">

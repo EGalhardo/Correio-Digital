@@ -40,7 +40,7 @@ const institutionItems: MenuItem[] = [
 
 const adminItems: MenuItem[] = [
   { id: 'gov-dashboard', label: 'Painel', icon: BarChart3 },
-  { id: 'gov-contatos', label: 'Interop', icon: Activity },
+  { id: 'gov-interoperabilidade', label: 'Interop', icon: Activity },
   { id: 'gov-perfil', label: 'SOC', icon: Shield },
   { id: 'gov-seguranca', label: 'Facial', icon: Scan },
 ];

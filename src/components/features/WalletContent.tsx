@@ -62,7 +62,8 @@ export function WalletContent({
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => setIsRequestModalOpen(true)}
+            id="btn-solicitar-doc-wizard"
+            onClick={() => setTab('solicitar-documento')}
             className="bg-primary text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
           >
             <Plus size={18} /> Solicitar Documento

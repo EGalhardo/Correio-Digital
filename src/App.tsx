@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, Scan, Mail, QrCode, Users, User, Shield, ShieldAlert, Lock, Fingerprint, Smartphone, Key, ShieldCheck, Camera } from 'lucide-react';
+import { Loader2, Scan, Mail, QrCode, Users, User, Shield, ShieldAlert, Lock, Fingerprint, Smartphone, Key, ShieldCheck, Camera, Wifi, WifiOff, Database, RefreshCw, Signal, AlertTriangle, X } from 'lucide-react';
 
 // Components
 import {
@@ -32,6 +32,7 @@ import {
   GovPerfilContent,
   GovSegurancaContent,
   PastaDigitalContent,
+  SolicitarDocumentoContent,
 } from './components';
 
 // Constants & Types
@@ -46,6 +47,7 @@ import {
 } from './constants/data';
 import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocRequest } from './types';
 import { ensureProtocolOnMessage, ensureProtocolOnDocument, generateProtocol } from './utils/protocolGenerator';
+import { OfflineManager, OfflineAction } from './utils/offlineManager';
 
 export default function App() {
   const [stage, setStage] = useState('splash');
@@ -253,6 +255,13 @@ export default function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Offline and Local Caching states
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [simulatedOffline, setSimulatedOffline] = useState(() => localStorage.getItem('gov_simulated_offline') === 'true');
+  const [offlineQueue, setOfflineQueue] = useState<OfflineAction[]>(() => OfflineManager.getQueue());
+  const [activeFallback, setActiveFallback] = useState<{ channel: 'SMS' | 'USSD' | 'PUSH'; message: string; protocol: string } | null>(null);
+  const [showOfflineManagerWidget, setShowOfflineManagerWidget] = useState(false);
+
   // Face Scan simulated progress for login screen
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -309,6 +318,74 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('correio_digital_notifications', JSON.stringify(notifications));
   }, [notifications]);
+
+  // Network Offline Observer with Simulated Controls and Auto-Sync
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      const liveOn = navigator.onLine;
+      const finalOn = liveOn && !simulatedOffline;
+      setIsOnline(finalOn);
+      
+      if (finalOn) {
+        // Trigger background auto sync when connection returns
+        handleAutomaticSync();
+      }
+    };
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // Initial check
+    updateOnlineStatus();
+
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, [simulatedOffline]);
+
+  // Automatic Local Caching of messages & documents as requested: "Cache local" & "Leitura offline"
+  useEffect(() => {
+    if (inbox.length > 0) {
+      OfflineManager.cacheMessages(inbox);
+    }
+  }, [inbox]);
+
+  useEffect(() => {
+    if (documents.length > 0) {
+      OfflineManager.cacheDocuments(documents);
+    }
+  }, [documents]);
+
+  const handleAutomaticSync = () => {
+    const queue = OfflineManager.getQueue();
+    if (queue.length === 0) return;
+
+    addAuditLog(`Sincronização em segundo plano iniciada (${queue.length} acções na fila)`, 'info');
+    
+    // In a real application, we would call API endpoints for each queued action.
+    // For this prototype, all actions are successfully processed into the active states.
+    setTimeout(() => {
+      OfflineManager.setQueue([]);
+      setOfflineQueue([]);
+      
+      // Auto backup
+      OfflineManager.createAutomaticBackup();
+      
+      addAuditLog(`Sincronização concluída: ${queue.length} acções propagadas com o Registo de Identidade Digital`, 'success');
+      
+      // Notify citizen user
+      const newNotif: AppNotification = {
+        id: Date.now(),
+        type: 'success',
+        title: 'Sincronização Finalizada',
+        message: `${queue.length} acções offline foram consolidadas com a base central. Backup de emergência v1.2 atualizado.`,
+        time: 'Agora',
+        targetTab: 'home'
+      };
+      setNotifications(prev => [newNotif, ...prev]);
+    }, 1500);
+  };
 
   useEffect(() => {
     localStorage.setItem('correio_digital_bi', bi);
@@ -479,7 +556,19 @@ export default function App() {
     setSentMessages(prev => [newMessage, ...prev]);
     setIsComposing(false);
     setComposeData({ to: '', subject: '', body: '' });
-    addAuditLog(`Correspondência enviada com Protocolo ${protocol.protocolNumber}`, 'info');
+
+    if (!isOnline) {
+      const q = OfflineManager.queueAction('SEND_MESSAGE', { messageId, to: composeData.to, subject: composeData.subject });
+      setOfflineQueue(OfflineManager.getQueue());
+      
+      const fallback = OfflineManager.triggerFallback('SMS', `Enviar Correspondência: ${composeData.subject}`);
+      setActiveFallback({ channel: 'SMS', message: fallback.message, protocol: fallback.protocol });
+      
+      addAuditLog(`Ação Offline: Mensagem guardada em fila local. Canal SMS ativo.`, 'warning');
+    } else {
+      addAuditLog(`Correspondência enviada com Protocolo ${protocol.protocolNumber}`, 'info');
+      OfflineManager.createAutomaticBackup();
+    }
   };
 
   const handleReply = (msg: Message) => {
@@ -495,7 +584,18 @@ export default function App() {
   const handleDeleteContact = () => {
     if (contactToDelete) {
       setContacts(prev => prev.filter(c => c.id !== contactToDelete.id));
-      addAuditLog(`Contacto removido: ${contactToDelete.name}`, 'warning');
+      
+      if (!isOnline) {
+        OfflineManager.queueAction('DELETE_CONTACT', { id: contactToDelete.id, name: contactToDelete.name });
+        setOfflineQueue(OfflineManager.getQueue());
+        const fallback = OfflineManager.triggerFallback('PUSH', `Remover Contacto: ${contactToDelete.name}`);
+        setActiveFallback({ channel: 'PUSH', message: fallback.message, protocol: fallback.protocol });
+        addAuditLog(`Ação Offline: Remoção de contacto guardada. Fallback Push ativo.`, 'warning');
+      } else {
+        addAuditLog(`Contacto removido: ${contactToDelete.name}`, 'warning');
+        OfflineManager.createAutomaticBackup();
+      }
+      
       setContactToDelete(null);
     }
   };
@@ -512,7 +612,18 @@ export default function App() {
       },
       ...prev
     ]);
-    addAuditLog(`Novo contacto adicionado: ${contactForm.name}`, 'success');
+
+    if (!isOnline) {
+      OfflineManager.queueAction('ADD_CONTACT', { name: contactForm.name, bi: contactForm.bi });
+      setOfflineQueue(OfflineManager.getQueue());
+      const fallback = OfflineManager.triggerFallback('USSD', `Adicionar Contacto: ${contactForm.name}`);
+      setActiveFallback({ channel: 'USSD', message: fallback.message, protocol: fallback.protocol });
+      addAuditLog(`Ação Offline: Adição de contacto guardada em fila. Canal USSD ativo (*141*9#).`, 'warning');
+    } else {
+      addAuditLog(`Novo contacto adicionado: ${contactForm.name}`, 'success');
+      OfflineManager.createAutomaticBackup();
+    }
+
     setIsAddingContact(false);
     setContactForm({ name: '', bi: '', relation: '' });
   };
@@ -546,7 +657,16 @@ export default function App() {
       (req.bi === doc.number && doc.name.toLowerCase().includes(req.type.toLowerCase())) ? { ...req, status: 'concluido' } : req
     ));
 
-    addAuditLog(`Emissão de Acto: ${doc.name} para ${doc.holder} (BI: ${doc.number})`, 'success');
+    if (!isOnline) {
+      OfflineManager.queueAction('EMIT_DOCUMENT', { docId: doc.code, name: doc.name, holder: doc.holder });
+      setOfflineQueue(OfflineManager.getQueue());
+      const fallback = OfflineManager.triggerFallback('PUSH', `Emissão de Acto: ${doc.name}`);
+      setActiveFallback({ channel: 'PUSH', message: fallback.message, protocol: fallback.protocol });
+      addAuditLog(`Ação Offline: Emissão de ${doc.name} enfileirada. Fallback Push ativo.`, 'warning');
+    } else {
+      addAuditLog(`Emissão de Acto: ${doc.name} para ${doc.holder} (BI: ${doc.number})`, 'success');
+      OfflineManager.createAutomaticBackup();
+    }
   };
 
   const handleCreateRequest = (type: string, priority: 'Alta' | 'Média' | 'Baixa' = 'Média') => {
@@ -560,16 +680,28 @@ export default function App() {
       bi: bi
     };
     setUserRequests(prev => [newReq, ...prev]);
-    addAuditLog(`Nova solicitação de ${type} enviada à AGT`, 'info');
-    
-    setNotifications(prev => [{
+
+    // Format new notification correctly satisfying AppNotification type
+    const newNotif: AppNotification = {
       id: Date.now(),
       title: 'Solicitação Enviada',
       message: `O seu pedido de ${type} foi enviado à AGT.`,
       time: 'Agora',
       type: 'info',
       targetTab: 'home'
-    }, ...prev]);
+    };
+    setNotifications(prev => [newNotif, ...prev]);
+
+    if (!isOnline) {
+      OfflineManager.queueAction('CREATE_REQUEST', { type, priority });
+      setOfflineQueue(OfflineManager.getQueue());
+      const fallback = OfflineManager.triggerFallback('USSD', `Solicitar ${type} via USSD (*141*9#)`);
+      setActiveFallback({ channel: 'USSD', message: fallback.message, protocol: fallback.protocol });
+      addAuditLog(`Ação Offline: Pedido de ${type} anexado ao buffer. Fallback USSD físico iniciado (*141*9#).`, 'warning');
+    } else {
+      addAuditLog(`Nova solicitação de ${type} enviada à AGT`, 'info');
+      OfflineManager.createAutomaticBackup();
+    }
   };
 
   const logSecurityEvent = (action: string, type: 'info' | 'warning' | 'critical' | 'success' = 'info') => {
@@ -723,6 +855,17 @@ export default function App() {
             logSecurityEvent={logSecurityEvent}
           />
         );
+      case 'solicitar-documento':
+        return (
+          <SolicitarDocumentoContent
+            setTab={setTab}
+            bi={bi}
+            nif={nif}
+            onEmitDocument={handleEmitDocument}
+            isOnline={isOnline}
+            addAuditLog={addAuditLog}
+          />
+        );
       case 'pasta-digital':
         return (
           <PastaDigitalContent
@@ -778,6 +921,7 @@ export default function App() {
             appMode={appMode} 
             userRequests={userRequests}
             isMobile={isMobile}
+            logSecurityEvent={logSecurityEvent}
           />
         );
       case 'gov-emissao':
@@ -838,6 +982,8 @@ export default function App() {
         );
       case 'gov-stats':
         return null; // Removido ou integrado no painel principal
+      case 'gov-interoperabilidade':
+        return <GovInteroperabilidadeContent onLog={addAuditLog} />;
       case 'gov-seguranca':
         return <GovSegurancaContent />;
 
@@ -1231,6 +1377,12 @@ export default function App() {
             setIsChatOpen={setIsChatOpen}
             appMode={appMode}
             emergencyMode={emergencyMode}
+            isOnline={isOnline}
+            onClickConnectivity={() => {
+              setOfflineQueue(OfflineManager.getQueue());
+              setShowOfflineManagerWidget(!showOfflineManagerWidget);
+            }}
+            offlineQueueLength={offlineQueue.length}
             NotificationDropdown={() => (
               <NotificationDropdown 
                 showNotifications={showNotifications} 
@@ -1286,6 +1438,179 @@ export default function App() {
         setContactToDelete={setContactToDelete} 
         handleDeleteContact={handleDeleteContact} 
       />
+
+      {/* --- OFFLINE & FALLBACK INTERACTIVE MANAGER WIDGET --- */}
+      <div className="fixed bottom-20 md:bottom-6 right-6 z-[9999] flex flex-col items-end gap-3 pointer-events-none select-none">
+        {/* Active Fallback Alert Overlay */}
+        <AnimatePresence>
+          {activeFallback && (
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className="bg-slate-900 border border-amber-500/30 text-white rounded-2xl p-4 shadow-2xl max-w-sm pointer-events-auto"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-amber-500/15 text-amber-500 rounded-xl">
+                  {activeFallback.channel === 'SMS' ? <Mail size={18} /> : activeFallback.channel === 'USSD' ? <Signal size={18} /> : <Smartphone size={18} />}
+                </div>
+                <div className="flex-1 min-w-0 font-sans">
+                  <span className="font-extrabold text-[10px] uppercase tracking-widest text-amber-500 block">Canal Alternativo Acionado ({activeFallback.channel})</span>
+                  <p className="text-xs text-slate-200 mt-1 leading-relaxed font-semibold">{activeFallback.message}</p>
+                  <div className="mt-2.5 flex items-center justify-between border-t border-slate-800 pt-2 text-[10px] text-slate-400 font-mono">
+                    <span>Protocolo: {activeFallback.protocol}</span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveFallback(null)}
+                      className="text-amber-500 hover:underline font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      Dispensar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </div>
+
+      {/* Connectivity Central Modal */}
+      <AnimatePresence>
+        {showOfflineManagerWidget && (
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-[32px] border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden text-left"
+            >
+              <div className="p-5 bg-slate-950 text-white flex justify-between items-center">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-primary/20 text-primary rounded-xl">
+                    <Database size={18} />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-[12px] uppercase tracking-wider text-white font-sans">Gestor Híbrido de Conectividade</h4>
+                    <span className="text-[9px] uppercase tracking-widest text-slate-400 block font-sans">Cache Local, Redundância SMS & USSD</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowOfflineManagerWidget(false)}
+                  className="text-white/60 hover:text-white p-1 rounded-full hover:bg-white/10"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Simulated Switch toggle */}
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-center justify-between">
+                  <div className="font-sans block text-left">
+                    <span className="font-bold text-xs text-slate-800 block">Simular Perda de Internet</span>
+                    <span className="text-[10px] text-slate-400 leading-tight block mt-0.5">Simula emulador de offline para testar cache, fallbacks SMS/USSD e sincronização.</span>
+                  </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={simulatedOffline}
+                      onChange={(e) => {
+                        const val = e.target.checked;
+                        setSimulatedOffline(val);
+                        localStorage.setItem('gov_simulated_offline', String(val));
+                        addAuditLog(val ? 'Modo de Conectividade: Simulação Offline Ativada' : 'Modo de Conectividade: Voltando ao estado Online', val ? 'warning' : 'success');
+                      }}
+                      className="sr-only peer" 
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+
+                {/* Queue details */}
+                <div className="space-y-2 text-left">
+                  <div className="flex justify-between items-center font-sans">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Fila de Ações Locais ({offlineQueue.length})</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        OfflineManager.setQueue([]);
+                        setOfflineQueue([]);
+                        addAuditLog('Fila de ações offline limpa manualmente', 'warning');
+                      }}
+                      className="text-[9px] font-bold text-rose-600 hover:underline uppercase tracking-wide cursor-pointer"
+                    >
+                      Limpar Fila
+                    </button>
+                  </div>
+
+                  {offlineQueue.length === 0 ? (
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center text-slate-400 font-sans">
+                      <Database className="mx-auto text-slate-300 mb-2" size={24} />
+                      <p className="text-xs font-semibold">Nenhuma ação pendente na fila.</p>
+                      <p className="text-[10px] mt-0.5 leading-relaxed">Qualquer ação efetuada (mensagens, solicitações, contactos) enquanto offline será enfileirada aqui para posterior sincronização.</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-40 overflow-y-auto space-y-1.5 border border-slate-100 bg-slate-50 rounded-2xl p-2.5">
+                      {offlineQueue.map((item) => (
+                        <div key={item.id} className="p-2 bg-white rounded-lg border border-slate-150 flex items-center justify-between text-left font-sans">
+                          <div>
+                            <span className="text-[10px] font-bold text-slate-800 block uppercase font-mono">{item.type}</span>
+                            <span className="text-[9px] text-slate-400 block mt-0.5">{new Date(item.timestamp).toLocaleTimeString('pt-AO')} &bull; ID: {item.id.substring(0, 10)}</span>
+                          </div>
+                          <span className="text-[8px] bg-amber-100 border border-amber-200 text-amber-800 font-extrabold uppercase px-1.5 py-0.5 rounded-full font-mono">Pendente</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Channel Redundancy Info */}
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 font-sans text-left">
+                  <span className="text-xs font-extrabold text-[#1e293b] flex items-center gap-1.5 uppercase tracking-wide">
+                    <Signal size={14} className="text-primary animate-pulse" /> Canais Redundantes Governamentais
+                  </span>
+                  <p className="text-[10px] text-slate-500 leading-relaxed mt-1.5 font-semibold">
+                    Caso a internet móvel (Unitel/Movicel) falhe durante o preenchimento de documentos:
+                  </p>
+                  <ul className="text-[10px] text-slate-500 font-bold space-y-1.5 mt-2 list-disc pl-4 leading-normal">
+                    <li><strong className="text-primary">Sms Fallback:</strong> Os dados são compactados em payload seguro e direcionados para o número curto governamental.</li>
+                    <li><strong className="text-primary">Código USSD (*141*9#):</strong> Permite verificar certidões e assinar trâmites com chave física sem qualquer plano de internet ativo.</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Action feet */}
+              <div className="p-4 bg-slate-50 border-t border-slate-150 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowOfflineManagerWidget(false)}
+                  className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold text-xs uppercase rounded-xl hover:bg-slate-100 cursor-pointer"
+                >
+                  Fechar
+                </button>
+                <button
+                  type="button"
+                  disabled={offlineQueue.length === 0}
+                  onClick={() => {
+                    handleAutomaticSync();
+                    setShowOfflineManagerWidget(false);
+                  }}
+                  className={`flex-1 py-2.5 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-1 cursor-pointer border-0 ${
+                    offlineQueue.length > 0 
+                      ? 'bg-primary text-white hover:opacity-95 shadow-md' 
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  <RefreshCw size={14} className="animate-spin" />
+                  Sincronizar Agora
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

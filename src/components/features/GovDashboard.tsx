@@ -21,8 +21,14 @@ import {
   Fingerprint,
   Lock,
   ShieldAlert,
+  UserCheck,
+  Plus,
+  FolderArchive,
+  Ban,
+  Share2,
+  Search,
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -58,7 +64,145 @@ interface GovDashboardProps {
   emergencyMode?: boolean;
   userRequests?: UserRequest[];
   isMobile?: boolean;
+  logSecurityEvent?: (action: string, type: 'info' | 'warning' | 'critical' | 'success') => void;
 }
+
+export interface QueueItem {
+  id: string;
+  citizenName: string;
+  biNumber: string;
+  documentType: string;
+  institution: string;
+  date: string;
+  status: 'Pendente' | 'Assinado' | 'Aprovado' | 'Rejeitado' | 'Encaminhado' | 'Arquivado' | 'Expirado';
+  priority: 'normal' | 'urgente' | 'critica' | 'expirada';
+  description: string;
+}
+
+const INITIAL_QUEUE_ITEMS: QueueItem[] = [
+  {
+    id: "OP-PEN-101",
+    citizenName: "Domingos Kassanga",
+    biNumber: "00987123LA098",
+    documentType: "Certificado de Residência",
+    institution: "Administração Geral Tributária",
+    date: "23/05/2026",
+    status: "Pendente",
+    priority: "normal",
+    description: "Solicitação pendente de validação de morada fiscal para isenção de IPU residência primária."
+  },
+  {
+    id: "OP-PEN-102",
+    citizenName: "Amélia Chinguto",
+    biNumber: "00456789BO011",
+    documentType: "Alvará Comercial Simplificado",
+    institution: "Ministério do Comércio",
+    date: "22/05/2026",
+    status: "Pendente",
+    priority: "normal",
+    description: "Alvará para micro-empresa de distribuição de hortícolas no mercado integrado do Lobito."
+  },
+  {
+    id: "OP-URG-201",
+    citizenName: "Manuel Diogo",
+    biNumber: "00224411HU045",
+    documentType: "Emissão Especial de Passaporte",
+    institution: "SME",
+    date: "23/05/2026",
+    status: "Pendente",
+    priority: "urgente",
+    description: "Urgência por motivo de evacuação médica internacional urgente. Validação imediata solicitada."
+  },
+  {
+    id: "OP-URG-202",
+    citizenName: "Filomena de Sousa",
+    biNumber: "00778811LA022",
+    documentType: "Declaração de Isenção IRT",
+    institution: "MINFIN",
+    date: "23/05/2026",
+    status: "Pendente",
+    priority: "urgente",
+    description: "Revisão tributária prioritária para portadores de incapacidade severa em trâmite ministerial."
+  },
+  {
+    id: "OP-CRI-301",
+    citizenName: "Desconhecido (#SpoofTentative)",
+    biNumber: "00000000LA000",
+    documentType: "Alerta de Liveness Detetado",
+    institution: "SME Core Neural",
+    date: "23/05/2026",
+    status: "Pendente",
+    priority: "critica",
+    description: "Aviso crítico! Múltiplas falhas consecutivas de validação biométrica facial com vetor facial estático suspeito."
+  },
+  {
+    id: "OP-CRI-302",
+    citizenName: "Sebastião Gouveia",
+    biNumber: "00889922BE056",
+    documentType: "Substituição de Certificado Digital Raiz",
+    institution: "Registo Civil",
+    date: "22/05/2026",
+    status: "Pendente",
+    priority: "critica",
+    description: "Conflito de par de chaves públicas no assento de óbito lavrado por conservador não autorizado."
+  },
+  {
+    id: "OP-EXP-401",
+    citizenName: "Isabel Valente",
+    biNumber: "00115599LN004",
+    documentType: "Licença Temporária de Condução",
+    institution: "Polícia Nacional",
+    date: "14/03/2026",
+    status: "Expirado",
+    priority: "expirada",
+    description: "Licença provisória emitida pré-renovação da carta física. Vencida em março sem prorrogação registrada."
+  },
+  {
+    id: "OP-EXP-402",
+    citizenName: "Mateus Pedro",
+    biNumber: "00334466LA011",
+    documentType: "Certidão de Não Devedor",
+    institution: "AGT",
+    date: "10/04/2026",
+    status: "Expirado",
+    priority: "expirada",
+    description: "Certidão de conformidade aduaneira para desembaraço expirada após prazo regulamentar de 180 dias."
+  }
+];
+
+export type GovRole = 'supervisor' | 'operador' | 'auditor' | 'administrador';
+
+export interface PermMatrix {
+  create: boolean;
+  sign: boolean;
+  approve: boolean;
+  reject: boolean;
+  forward: boolean;
+  archive: boolean;
+}
+
+const ROLE_PERMISSIONS: Record<GovRole, { label: string; desc: string; perms: PermMatrix }> = {
+  operador: {
+    label: "Operador",
+    desc: "Suporta criação inicial de processos e encaminhamento setorial governamental.",
+    perms: { create: true, sign: false, approve: false, reject: false, forward: true, archive: false }
+  },
+  supervisor: {
+    label: "Supervisor",
+    desc: "Despacha decisões, aplica assinaturas criptográficas oficiais e julga aprovações.",
+    perms: { create: false, sign: true, approve: true, reject: true, forward: true, archive: false }
+  },
+  auditor: {
+    label: "Auditor",
+    desc: "Acompanha a legalidade, emite perícias, audita ocorrências e arquiva expedientes.",
+    perms: { create: false, sign: false, approve: false, reject: false, forward: false, archive: true }
+  },
+  administrador: {
+    label: "Administrador",
+    desc: "Gestor principal. Detém autorização integral regulamentar do Estado.",
+    perms: { create: true, sign: true, approve: true, reject: true, forward: true, archive: true }
+  }
+};
 
 export function GovDashboard({
   onNavigate,
@@ -67,6 +211,7 @@ export function GovDashboard({
   appMode = "admin",
   userRequests = [],
   isMobile = false,
+  logSecurityEvent,
 }: GovDashboardProps & { appMode?: AppMode }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -75,6 +220,22 @@ export function GovDashboard({
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null);
   const [matchingThreshold, setMatchingThreshold] = useState(85);
   const [antiSpoofingEnforced, setAntiSpoofingEnforced] = useState(true);
+
+  // Operational State Hooks
+  const [activeRole, setActiveRole] = useState<GovRole>('administrador');
+  const [activeQueue, setActiveQueue] = useState<'pendentes' | 'urgentes' | 'criticas' | 'expiradas'>('pendentes');
+  const [queueSearch, setQueueSearch] = useState('');
+  const [queueItems, setQueueItems] = useState<QueueItem[]>(INITIAL_QUEUE_ITEMS);
+  const [selectedQueueItemId, setSelectedQueueItemId] = useState<string>("OP-PEN-101");
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // New item form states
+  const [newCitizenName, setNewCitizenName] = useState('');
+  const [newBiNumber, setNewBiNumber] = useState('');
+  const [newDocType, setNewDocType] = useState('Certificado de Residência');
+  const [newQueue, setNewQueue] = useState<'pendentes' | 'urgentes' | 'criticas' | 'expiradas'>('pendentes');
+  const [newDescription, setNewDescription] = useState('');
 
   const mapPins = useMemo(
     () => [
@@ -238,6 +399,122 @@ export function GovDashboard({
     ],
     [],
   );
+
+  const handleRoleChange = (role: GovRole) => {
+    setActiveRole(role);
+    logSecurityEvent?.(`OPERACIONAL: Alterado perfil activo para ${ROLE_PERMISSIONS[role].label}`, 'info');
+  };
+
+  const handleCreateItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCitizenName || !newBiNumber || !newDescription) {
+      alert("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    const newItem: QueueItem = {
+      id: `OP-${newQueue.toUpperCase().slice(0, 3)}-${100 + queueItems.length + 1}`,
+      citizenName: newCitizenName,
+      biNumber: newBiNumber,
+      documentType: newDocType,
+      institution: "Administração Central",
+      date: new Date().toLocaleDateString('pt-PT'),
+      status: 'Pendente',
+      priority: newQueue === 'pendentes' ? 'normal' : newQueue === 'urgentes' ? 'urgente' : newQueue === 'criticas' ? 'critica' : 'expirada',
+      description: newDescription
+    };
+
+    setQueueItems(prev => [newItem, ...prev]);
+    setSelectedQueueItemId(newItem.id);
+    setIsCreateModalOpen(false);
+    
+    // Reset fields
+    setNewCitizenName('');
+    setNewBiNumber('');
+    setNewDescription('');
+
+    logSecurityEvent?.(`OPERACIONAL: Criado novo expediente ${newItem.id} (${newItem.documentType}) para ${newItem.citizenName}`, 'success');
+  };
+
+  const updateItemStatus = (id: string, newStatus: QueueItem['status'], reason?: string, targetDept?: string) => {
+    setQueueItems(prev => prev.map(item => {
+      if (item.id === id) {
+        let updatedInstitution = item.institution;
+        if (targetDept) {
+          updatedInstitution = targetDept;
+        }
+        return {
+          ...item,
+          status: newStatus,
+          description: reason ? `${item.description} (Motivo: ${reason})` : item.description,
+          institution: updatedInstitution
+        };
+      }
+      return item;
+    }));
+  };
+
+  const handleActionSign = (item: QueueItem) => {
+    updateItemStatus(item.id, 'Assinado');
+    logSecurityEvent?.(`OPERACIONAL: Assinado digitalmente o expediente ${item.id} (${item.documentType}) de ${item.citizenName}`, 'success');
+  };
+
+  const handleActionApprove = (item: QueueItem) => {
+    updateItemStatus(item.id, 'Aprovado');
+    logSecurityEvent?.(`OPERACIONAL: Aprovado o expediente ${item.id} (${item.documentType}) de ${item.citizenName}`, 'success');
+  };
+
+  const handleActionReject = (item: QueueItem) => {
+    if (!rejectionReason) {
+      alert("Por favor, indique um motivo para a rejeição.");
+      return;
+    }
+    updateItemStatus(item.id, 'Rejeitado', rejectionReason);
+    logSecurityEvent?.(`OPERACIONAL: Rejeitado o expediente ${item.id} (${item.documentType}) de ${item.citizenName}. Motivo: ${rejectionReason}`, 'warning');
+    setRejectionReason('');
+  };
+
+  const handleActionForward = (item: QueueItem, target: string) => {
+    updateItemStatus(item.id, 'Encaminhado', undefined, target);
+    logSecurityEvent?.(`OPERACIONAL: Encaminhado o expediente ${item.id} (${item.documentType}) para ${target}`, 'info');
+  };
+
+  const handleActionArchive = (item: QueueItem) => {
+    updateItemStatus(item.id, 'Arquivado');
+    logSecurityEvent?.(`OPERACIONAL: Arquivado o expediente ${item.id} (${item.documentType}) no registo permanente`, 'info');
+  };
+
+  const filteredQueueItems = useMemo(() => {
+    return queueItems.filter(item => {
+      // Filter by current active queue tab
+      const matchesQueue = 
+        (activeQueue === 'pendentes' && item.priority === 'normal') ||
+        (activeQueue === 'urgentes' && item.priority === 'urgente') ||
+        (activeQueue === 'criticas' && item.priority === 'critica') ||
+        (activeQueue === 'expiradas' && item.priority === 'expirada');
+      
+      const matchesSearch = 
+        item.citizenName.toLowerCase().includes(queueSearch.toLowerCase()) ||
+        item.id.toLowerCase().includes(queueSearch.toLowerCase()) ||
+        item.documentType.toLowerCase().includes(queueSearch.toLowerCase()) ||
+        item.description.toLowerCase().includes(queueSearch.toLowerCase());
+
+      return matchesQueue && matchesSearch;
+    });
+  }, [queueItems, activeQueue, queueSearch]);
+
+  const selectedQueueItem = useMemo(() => {
+    return queueItems.find(item => item.id === selectedQueueItemId) || filteredQueueItems[0] || null;
+  }, [queueItems, selectedQueueItemId, filteredQueueItems]);
+
+  const queueCounts = useMemo(() => {
+    return {
+      pendentes: queueItems.filter(i => i.priority === 'normal').length,
+      urgentes: queueItems.filter(i => i.priority === 'urgente').length,
+      criticas: queueItems.filter(i => i.priority === 'critica').length,
+      expiradas: queueItems.filter(i => i.priority === 'expirada').length,
+    };
+  }, [queueItems]);
 
   const handleForceSync = () => {
     setIsSyncing(true);
@@ -573,6 +850,505 @@ export function GovDashboard({
             </div>
           </div>
         </section>
+
+        {/* Gestão Operacional & Filas de Trabalho (User requested operational dashboard) */}
+        <section
+          id="gov-operativo-section"
+          className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6"
+        >
+          {/* Header Card inside section */}
+          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-red-650 rounded-full" />
+              <div className="flex flex-col">
+                <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
+                  Gestão Operacional & Fluxo de Expedientes
+                </h2>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                  Selecione o perfil de operação governamental para executar ações de validação
+                </span>
+              </div>
+            </div>
+
+            {/* Profile selectors */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-2xl w-full xl:w-auto">
+              {(Object.keys(ROLE_PERMISSIONS) as GovRole[]).map((roleKey) => {
+                const roleDef = ROLE_PERMISSIONS[roleKey];
+                const isActive = activeRole === roleKey;
+                return (
+                  <button
+                    key={roleKey}
+                    onClick={() => handleRoleChange(roleKey)}
+                    className={`flex-1 xl:flex-none px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                      isActive 
+                        ? "bg-slate-900 text-white shadow-sm font-black" 
+                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-205"
+                    }`}
+                  >
+                    {roleDef.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-6 md:gap-8">
+            {/* Left Column: Role Details & Permissions Matrix */}
+            <div className="space-y-5 bg-slate-50/70 border border-slate-150/70 rounded-[24px] p-5 flex flex-col justify-between">
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">Perfil Ativo</span>
+                  <h4 className="text-base font-black text-slate-950 uppercase tracking-tight italic flex items-center gap-2">
+                    <UserCheck size={18} className="text-red-600" />
+                    {ROLE_PERMISSIONS[activeRole].label}
+                  </h4>
+                  <p className="text-[11px] text-slate-600 leading-relaxed font-bold uppercase">
+                    {ROLE_PERMISSIONS[activeRole].desc}
+                  </p>
+                </div>
+
+                <div className="border-t border-slate-200/60 pt-4 space-y-3.5">
+                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">Matriz de Permissões Regulatórias</span>
+                  
+                  <div className="space-y-2.5">
+                    {[
+                      { key: 'create', label: 'Criar Documento', desc: 'Emissão e autuação de novos expedientes' },
+                      { key: 'sign', label: 'Assinar Digitalmente', desc: 'Aposição de chaves e carimbos PKI' },
+                      { key: 'approve', label: 'Aprovar Pedido', desc: 'Despacho deferido com validade' },
+                      { key: 'reject', label: 'Rejeitar Pedido', desc: 'Indeferimento com justificativa' },
+                      { key: 'forward', label: 'Encaminhar Órgão', desc: 'Trâmite inter-operacional setorial' },
+                      { key: 'archive', label: 'Arquivar Termo', desc: 'Depósito e guarda de processo' },
+                    ].map((perm) => {
+                      const hasPerm = ROLE_PERMISSIONS[activeRole].perms[perm.key as keyof PermMatrix];
+                      return (
+                        <div key={perm.key} className="flex items-start gap-2.5">
+                          <span className={`shrink-0 mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border text-[9px] font-black ${
+                            hasPerm 
+                              ? "bg-emerald-50 border-emerald-100 text-emerald-600" 
+                              : "bg-red-50/50 border-red-100/50 text-red-500 opacity-60"
+                          }`}>
+                            {hasPerm ? "✓" : "✗"}
+                          </span>
+                          <div>
+                            <span className={`block text-[11px] font-black uppercase tracking-tight leading-none ${hasPerm ? "text-slate-800" : "text-slate-400 font-medium"}`}>
+                              {perm.label}
+                            </span>
+                            <span className="block text-[8px] text-slate-450 font-mono tracking-wider mt-0.5 uppercase">
+                              {perm.desc}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200/60 mt-4 text-[9px] text-slate-400 font-mono font-black tracking-wider uppercase flex items-center gap-1.5 justify-center">
+                <Lock size={12} className="text-red-500 animate-pulse" /> SEGURANÇA OPERACIONAL RIGOROSA
+              </div>
+            </div>
+
+            {/* Right Column: Work Queue and Operations Desk */}
+            <div className="space-y-4">
+              {/* Queue Navigation Tabs */}
+              <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1.5 border-b border-slate-100">
+                {[
+                  { id: 'pendentes', label: 'Pendentes', priority: 'normal', color: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700' },
+                  { id: 'urgentes', label: 'Urgentes', priority: 'urgente', color: 'bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700' },
+                  { id: 'criticas', label: 'Críticas', priority: 'critica', color: 'bg-red-50 hover:bg-red-100 border-red-200 text-red-700 animate-pulse' },
+                  { id: 'expiradas', label: 'Expiradas', priority: 'expirada', color: 'bg-slate-100 hover:bg-slate-200 border-slate-250 text-slate-700' },
+                ].map((queue) => {
+                  const isActive = activeQueue === queue.id;
+                  const count = queueCounts[queue.id as keyof typeof queueCounts];
+                  return (
+                    <button
+                      key={queue.id}
+                      onClick={() => {
+                        setActiveQueue(queue.id as any);
+                        const firstFiltered = queueItems.find(i => {
+                          const itemPriority = queue.id === 'pendentes' ? 'normal' : queue.id === 'urgentes' ? 'urgente' : queue.id === 'criticas' ? 'critica' : 'expirada';
+                          return i.priority === itemPriority;
+                        });
+                        if (firstFiltered) {
+                          setSelectedQueueItemId(firstFiltered.id);
+                        }
+                      }}
+                      className={`px-4.5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                        isActive 
+                          ? queue.id === 'pendentes' ? 'bg-indigo-650 text-white border-indigo-650 shadow-sm' :
+                            queue.id === 'urgentes' ? 'bg-orange-650 text-white border-orange-650 shadow-sm' :
+                            queue.id === 'criticas' ? 'bg-red-650 text-white border-red-650 shadow-sm animate-pulse' :
+                            'bg-slate-900 text-white border-slate-900 shadow-sm'
+                          : `${queue.color}`
+                      }`}
+                    >
+                      {queue.label}
+                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono leading-none font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200/60 text-slate-800'}`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                {/* Create action button */}
+                {ROLE_PERMISSIONS[activeRole].perms.create && (
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="ml-auto px-4 py-2.5 bg-slate-950 hover:bg-slate-850 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Plus size={14} /> Autuar Expediente
+                  </button>
+                )}
+              </div>
+
+              {/* Workspace Split Layout: Left is list, Right is actions */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
+                
+                {/* Left Side: Queue Items list */}
+                <div className="space-y-3">
+                  {/* Internal Queue Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                    <input
+                      type="text"
+                      placeholder="Pesquisar nesta fila..."
+                      value={queueSearch}
+                      onChange={(e) => setQueueSearch(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-slate-350 focus:bg-white rounded-xl pl-9 pr-4 py-2.5 text-xs font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  {/* List Container */}
+                  <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1 select-none custom-scrollbar">
+                    {filteredQueueItems.length === 0 ? (
+                      <div className="p-8 text-center bg-slate-50 border border-slate-100 rounded-2xl flex flex-col items-center justify-center gap-2">
+                        <span className="text-slate-450 font-mono text-xs">✗</span>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-normal">
+                          Sem expedientes nesta fila de trabalho
+                        </p>
+                      </div>
+                    ) : (
+                      filteredQueueItems.map((item) => {
+                        const isItemSelected = selectedQueueItem?.id === item.id;
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => setSelectedQueueItemId(item.id)}
+                            className={`p-4 border rounded-2xl transition-all cursor-pointer flex flex-col gap-2 relative ${
+                              isItemSelected 
+                                ? "bg-slate-900 border-slate-900 text-white shadow-md transform translate-x-1" 
+                                : "bg-white border-slate-150 hover:bg-slate-50 text-slate-600"
+                            }`}
+                          >
+                            <div className="flex justify-between items-start gap-2">
+                              <div>
+                                <span className={`text-[8.5px] font-mono font-black px-1.5 py-0.5 rounded leading-none ${
+                                  isItemSelected ? "bg-white/10 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                                }`}>
+                                  {item.id}
+                                </span>
+                                <h5 className={`font-extrabold text-xs md:text-sm mt-1.5 ${isItemSelected ? "text-white" : "text-slate-900"}`}>
+                                  {item.documentType}
+                                </h5>
+                                <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isItemSelected ? "text-slate-300" : "text-slate-450"}`}>
+                                  Interessado: {item.citizenName} &bull; BI: {item.biNumber}
+                                </p>
+                              </div>
+                              <span className={`px-2 py-0.5 text-[8px] font-black rounded uppercase tracking-wider border shrink-0 ${
+                                item.status === 'Pendente' ? 'bg-indigo-50 border-indigo-100 text-indigo-750' :
+                                item.status === 'Assinado' ? 'bg-blue-50 border-blue-100 text-blue-750' :
+                                item.status === 'Aprovado' ? 'bg-emerald-50 border-emerald-100 text-emerald-750' :
+                                item.status === 'Rejeitado' ? 'bg-red-50 border-red-100 text-red-650' :
+                                item.status === 'Encaminhado' ? 'bg-orange-50 border-orange-100 text-orange-650 animate-pulse' :
+                                'bg-slate-100 border-slate-200 text-slate-600'
+                              }`}>
+                                {item.status}
+                              </span>
+                            </div>
+
+                            <p className={`text-[10.5px] line-clamp-2 leading-relaxed ${isItemSelected ? "text-slate-300" : "text-slate-500 font-medium"}`}>
+                              {item.description}
+                            </p>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Side: Action Console Desk */}
+                <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 flex flex-col justify-between min-h-[460px]">
+                  {selectedQueueItem ? (
+                    <div className="space-y-4">
+                      {/* Desk Header */}
+                      <div className="border-b border-slate-200/60 pb-3">
+                        <span className="text-[8px] font-mono font-black tracking-widest text-slate-400 uppercase">Mesa de Análise Regulamentar</span>
+                        <h4 className="text-sm font-black text-slate-950 uppercase italic mt-1 leading-snug">
+                          {selectedQueueItem.documentType}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider font-mono">ID: {selectedQueueItem.id}</span>
+                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider font-mono">&bull;</span>
+                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider font-mono">Entrada: {selectedQueueItem.date}</span>
+                        </div>
+                      </div>
+
+                      {/* Desk Metadata */}
+                      <div className="space-y-2.5">
+                        <div className="p-3.5 bg-white border border-slate-150 rounded-xl">
+                          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Cidadão Interessado</span>
+                          <span className="block text-xs font-black text-slate-800 uppercase leading-none">{selectedQueueItem.citizenName}</span>
+                          <span className="block text-[9px] font-mono text-slate-500 font-bold mt-1.5 uppercase">BI de Origem: {selectedQueueItem.biNumber}</span>
+                        </div>
+
+                        <div className="p-3.5 bg-white border border-slate-150 rounded-xl leading-relaxed text-xs">
+                          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Descrição Circunstancial</span>
+                          <span className="text-slate-700 font-medium font-sans block leading-normal">{selectedQueueItem.description}</span>
+                          <span className="block text-[8.5px] text-slate-400 font-mono tracking-wider mt-2.5 uppercase font-bold">Lotação Atual: {selectedQueueItem.institution}</span>
+                        </div>
+                      </div>
+
+                      {/* Decisive Action controls depending on Permissions */}
+                      <div className="border-t border-slate-200/60 pt-4 space-y-3">
+                        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">Ações Disponíveis ({ROLE_PERMISSIONS[activeRole].label})</span>
+
+                        <div className="flex flex-col gap-2">
+                          {/* Sign action */}
+                          <button
+                            disabled={!ROLE_PERMISSIONS[activeRole].perms.sign || selectedQueueItem.status === 'Assinado' || selectedQueueItem.status === 'Aprovado' || selectedQueueItem.status === 'Arquivado'}
+                            onClick={() => handleActionSign(selectedQueueItem)}
+                            className={`w-full py-2.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 cursor-pointer ${
+                              ROLE_PERMISSIONS[activeRole].perms.sign && selectedQueueItem.status !== 'Assinado' && selectedQueueItem.status !== 'Aprovado' && selectedQueueItem.status !== 'Arquivado'
+                                ? "bg-indigo-600 hover:bg-indigo-750 text-white shadow-sm font-black border-0" 
+                                : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
+                            }`}
+                          >
+                            {!ROLE_PERMISSIONS[activeRole].perms.sign && <Lock size={11} />}
+                            Assinar Expediente (PKI)
+                          </button>
+
+                          {/* Approve and Reject Row */}
+                          <div className="grid grid-cols-2 gap-2">
+                            {/* Approve */}
+                            <button
+                              disabled={!ROLE_PERMISSIONS[activeRole].perms.approve || selectedQueueItem.status === 'Aprovado' || selectedQueueItem.status === 'Arquivado'}
+                              onClick={() => handleActionApprove(selectedQueueItem)}
+                              className={`py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+                                ROLE_PERMISSIONS[activeRole].perms.approve && selectedQueueItem.status !== 'Aprovado' && selectedQueueItem.status !== 'Arquivado'
+                                  ? "bg-emerald-600 hover:bg-emerald-750 text-white shadow-sm font-black border-0" 
+                                  : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
+                              }`}
+                            >
+                              {!ROLE_PERMISSIONS[activeRole].perms.approve && <Lock size={11} />}
+                              Deferir
+                            </button>
+
+                            {/* Reject */}
+                            <button
+                              disabled={!ROLE_PERMISSIONS[activeRole].perms.reject || selectedQueueItem.status === 'Rejeitado' || selectedQueueItem.status === 'Arquivado'}
+                              onClick={() => handleActionReject(selectedQueueItem)}
+                              className={`py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+                                ROLE_PERMISSIONS[activeRole].perms.reject && selectedQueueItem.status !== 'Rejeitado' && selectedQueueItem.status !== 'Arquivado'
+                                  ? "bg-red-600 hover:bg-red-750 text-white shadow-sm font-black border-0" 
+                                  : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-305"
+                              }`}
+                            >
+                              {!ROLE_PERMISSIONS[activeRole].perms.reject && <Lock size={11} />}
+                              Indeferir
+                            </button>
+                          </div>
+
+                          {/* Rejection reason nested input if Reject action is empowered */}
+                          {ROLE_PERMISSIONS[activeRole].perms.reject && selectedQueueItem.status !== 'Rejeitado' && selectedQueueItem.status !== 'Arquivado' && (
+                            <input
+                              type="text"
+                              placeholder="Indique o motivo fundamentado do indeferimento..."
+                              value={rejectionReason}
+                              onChange={(e) => setRejectionReason(e.target.value)}
+                              className="bg-white border border-slate-250 focus:border-red-400 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-800 outline-none placeholder:font-semibold placeholder:text-slate-400"
+                            />
+                          )}
+
+                          {/* Forward to department custom select action */}
+                          <div className="border-t border-slate-200/60 pt-2.5 grid grid-cols-1 gap-2">
+                            <span className="text-[8px] font-mono font-black tracking-widest text-slate-400 uppercase font-bold">Tramitar para Órgão Coadjuvante</span>
+                            <div className="flex gap-1.5">
+                              <select 
+                                disabled={!ROLE_PERMISSIONS[activeRole].perms.forward || selectedQueueItem.status === 'Arquivado'}
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    handleActionForward(selectedQueueItem, e.target.value);
+                                    e.target.value = '';
+                                  }
+                                }}
+                                className={`flex-1 min-w-0 px-3 py-2 border rounded-xl text-[10px] uppercase font-black tracking-widest outline-none transition-all appearance-none cursor-pointer text-slate-700 ${
+                                  ROLE_PERMISSIONS[activeRole].perms.forward && selectedQueueItem.status !== 'Arquivado'
+                                    ? "bg-white border-slate-250 hover:border-slate-350"
+                                    : "bg-slate-200 text-slate-400 cursor-not-allowed border-slate-300"
+                                }`}
+                              >
+                                <option value="">Proceder ao encaminhamento...</option>
+                                <option value="SME">Serviço de Migração e Estrangeiros (SME)</option>
+                                <option value="AGT">Administração Geral Tributária (AGT)</option>
+                                <option value="MINJUS">Ministério da Justiça (MINJUS)</option>
+                                <option value="MED">Ministério da Educação (MED)</option>
+                              </select>
+                              <span className="p-2 shrink-0 bg-slate-100 text-slate-500 rounded-xl border border-slate-200 pointer-events-none flex items-center justify-center select-none">
+                                <Send size={11} />
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Archive action */}
+                          <button
+                            disabled={!ROLE_PERMISSIONS[activeRole].perms.archive || selectedQueueItem.status === 'Arquivado'}
+                            onClick={() => handleActionArchive(selectedQueueItem)}
+                            className={`w-full py-2.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 cursor-pointer mt-1 border-0 ${
+                              ROLE_PERMISSIONS[activeRole].perms.archive && selectedQueueItem.status !== 'Arquivado'
+                                ? "bg-slate-900 hover:bg-slate-850 text-white shadow-sm font-black" 
+                                : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
+                            }`}
+                          >
+                            {!ROLE_PERMISSIONS[activeRole].perms.archive && <Lock size={11} />}
+                            <FolderArchive size={12} /> Guardar & Arquivar Termo
+                          </button>
+
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="min-h-[290px] flex flex-col justify-center items-center text-center gap-3">
+                      <span className="text-slate-300 text-xl font-bold font-mono">✗</span>
+                      <p className="italic text-[10px] text-slate-400 mx-auto leading-relaxed max-w-[200px] font-sans font-bold uppercase tracking-wider">
+                        Selecione um expediente na fila para abrir a mesa de análise.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Create Expediente Modal */}
+        <AnimatePresence>
+          {isCreateModalOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsCreateModalOpen(false)}
+                className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[600]"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 30 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-md bg-white rounded-[40px] shadow-3xl z-[601] overflow-hidden flex flex-col border border-slate-100"
+              >
+                <div className="bg-slate-900 p-6 md:p-8 text-white relative">
+                  <span className="text-[10px] font-mono font-black text-red-500 uppercase tracking-widest block font-bold">Operação Governamental Integrada</span>
+                  <h3 className="text-base md:text-lg font-black uppercase italic tracking-tight mt-1 mb-0 pb-0 text-white">Instaurar Novo Expediente</h3>
+                  <button
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="absolute right-6 top-6 bg-white/10 hover:bg-white/20 text-white rounded-full p-2.5 transition-colors border-0 cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateItem} className="p-6 md:p-8 space-y-4 font-sans text-xs">
+                  <div className="space-y-1.5 animate-fadeIn">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome do Cidadão Contribuinte *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newCitizenName}
+                      onChange={(e) => setNewCitizenName(e.target.value)}
+                      placeholder="Manuel de Vasconcelos"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NIF / BI de Identidade *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newBiNumber}
+                      onChange={(e) => setNewBiNumber(e.target.value)}
+                      placeholder="00114422LA098"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-mono font-bold text-slate-800 outline-none focus:border-slate-800 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Documento</label>
+                      <select
+                        value={newDocType}
+                        onChange={(e) => setNewDocType(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-[11px] font-bold outline-none focus:border-slate-800 appearance-none cursor-pointer text-slate-700 focus:bg-white"
+                      >
+                        <option value="Certificado de Residência">Certidão de Morada</option>
+                        <option value="Bilhete de Identidade">Bilhete Eletrónico</option>
+                        <option value="Certidão de Não Devedor">Certidão Fiscal AGT</option>
+                        <option value="Passaporte Nacional">Passaporte SME</option>
+                        <option value="Alvará Comercial Simplificado">Alvará Comercial</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">Fila de Trâmite</label>
+                      <select
+                        value={newQueue}
+                        onChange={(e) => setNewQueue(e.target.value as any)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-[11px] font-bold outline-none focus:border-slate-800 appearance-none cursor-pointer text-slate-700 focus:bg-white"
+                      >
+                        <option value="pendentes">Pendentes (Normal)</option>
+                        <option value="urgentes">Urgentes</option>
+                        <option value="criticas">Críticas (Alta prioridade)</option>
+                        <option value="expiradas">Expiradas</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Justificação Administrativa *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={newDescription}
+                      onChange={(e) => setNewDescription(e.target.value)}
+                      placeholder="Forneça detalhes que motivam a emissão do presente expediente..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold text-slate-800 leading-relaxed outline-none focus:border-slate-800 resize-none focus:bg-white"
+                    />
+                  </div>
+
+                  {/* Submit buttons */}
+                  <div className="flex gap-3 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateModalOpen(false)}
+                      className="flex-1 bg-white border border-slate-250 text-slate-700 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all cursor-pointer"
+                    >
+                      Anular
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 bg-slate-900 border-0 text-white hover:bg-slate-850 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-md"
+                    >
+                      Instaurar & Emitir
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Main Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">

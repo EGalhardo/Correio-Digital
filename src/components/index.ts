@@ -26,3 +26,4 @@ export * from './features/GovContactsContent';
 export * from './features/GovPerfilContent';
 export * from './features/GovSegurancaContent';
 export * from './features/PastaDigitalContent';
+export * from './features/SolicitarDocumentoContent';

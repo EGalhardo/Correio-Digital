@@ -8,9 +8,11 @@ import {
   BadgeCheck, EyeOff, Eye, ShieldCheck, Lock, Fingerprint, History, Settings, 
   Languages, Bell, Users, LogOut, Trash2, Scan, IdCard, Plane, Shield, 
   Key, Smartphone, Camera, Check, X, ChevronRight, UserCheck, AlertTriangle, 
-  RefreshCw, Award, Landmark, CheckCircle2, CircleDot
+  RefreshCw, Award, Landmark, CheckCircle2, CircleDot, Globe, Cpu, Server, 
+  Laptop, WifiOff, Clock
 } from 'lucide-react';
 import { USER_PROFILE_PHOTO } from '../../constants/data';
+import { OfflineManager } from '../../utils/offlineManager';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface ProfileContentProps {
@@ -64,6 +66,43 @@ export function ProfileContent({
   const [isVerifying, setIsVerifying] = useState(false);
   const [isConfiguringSecurity, setIsConfiguringSecurity] = useState(false);
 
+  // Citizen Preferences states
+  const [isPrefsOpen, setIsPrefsOpen] = useState(false);
+  const [prefSubTab, setPrefSubTab] = useState<'geral' | 'notificacoes' | 'conectividade' | 'privacidade'>('geral');
+  const [prefLanguage, setPrefLanguage] = useState(() => localStorage.getItem('gov_pref_language') || 'pt');
+  const [prefNotificationSMS, setPrefNotificationSMS] = useState(() => localStorage.getItem('gov_pref_notif_sms') !== 'false');
+  const [prefNotificationEmail, setPrefNotificationEmail] = useState(() => localStorage.getItem('gov_pref_notif_email') !== 'false');
+  const [prefNotificationPush, setPrefNotificationPush] = useState(() => localStorage.getItem('gov_pref_notif_push') !== 'false');
+  const [prefNotificationApp, setPrefNotificationApp] = useState(() => localStorage.getItem('gov_pref_notif_app') !== 'false');
+  const [prefPreferredHours, setPrefPreferredHours] = useState(() => localStorage.getItem('gov_pref_hours') || 'business'); // 'any' | 'business' | 'night'
+  const [prefBiometricsEnabled, setPrefBiometricsEnabled] = useState(() => localStorage.getItem('gov_pref_biometrics') !== 'false');
+  const [prefPrivacyLevel, setPrefPrivacyLevel] = useState(() => localStorage.getItem('gov_pref_privacy') || 'standard'); // 'standard' | 'maximum'
+  const [prefPrivacyLogs, setPrefPrivacyLogs] = useState(() => localStorage.getItem('gov_pref_privacy_logs') !== 'false');
+  const [prefEcoMode, setPrefEcoMode] = useState(() => localStorage.getItem('gov_pref_eco_mode') === 'true');
+  const [prefOfflineUse, setPrefOfflineUse] = useState(() => localStorage.getItem('gov_pref_offline') === 'true');
+  const [prefCommChannel, setPrefCommChannel] = useState(() => localStorage.getItem('gov_pref_comm_channel') || 'Notificação Push'); // 'SMS' | 'E-mail' | 'Notificação Push' | 'Correio Físico'
+  
+  // Dynamic arrays for Sessions and Devices that can be removed/updated
+  const [activeSessions, setActiveSessions] = useState(() => {
+    const cached = localStorage.getItem('gov_pref_sessions');
+    if (cached) return JSON.parse(cached);
+    return [
+      { id: 'sess-1', device: 'iPhone 15 Pro Max', location: 'Luanda, AO', ip: '197.231.42.10', date: 'Ativo agora', isCurrent: true },
+      { id: 'sess-2', device: 'Chrome / Windows 11', location: 'Talatona, AO', ip: '102.219.16.42', date: 'Hoje às 08:14', isCurrent: false },
+      { id: 'sess-3', device: 'Safari / iPad Air', location: 'Benguela, AO', ip: '197.231.15.55', date: '21 Mai, 16:45', isCurrent: false }
+    ];
+  });
+
+  const [connectedDevices, setConnectedDevices] = useState(() => {
+    const cached = localStorage.getItem('gov_pref_devices');
+    if (cached) return JSON.parse(cached);
+    return [
+      { id: 'dev-1', name: 'iPhone de Edlasio (Telemóvel Principal)', icon: 'smartphone', date: 'Autorizado em 12/03/2026', authorized: true },
+      { id: 'dev-2', name: 'ThinkPad Lenovo X1 (Computador Fisco)', icon: 'laptop', date: 'Autorizado em 05/04/2026', authorized: true },
+      { id: 'dev-3', name: 'Huawei MatePad 11 (Tablet Casa)', icon: 'tablet', date: 'Pendente de assinatura PIN', authorized: false }
+    ];
+  });
+
   // Verification Wizard states
   const [verifyStep, setVerifyStep] = useState(1);
   const [tempBi, setTempBi] = useState(bi);
@@ -90,6 +129,8 @@ export function ProfileContent({
     { action: 'Sincronização com Registos SME', time: 'Ontem, 09:24' },
     { action: 'Verificação Parcial Validada', time: '12/05/2026' }
   ]);
+
+  const [backupsList, setBackupsList] = useState(() => OfflineManager.getBackups());
 
   // Handle webcam stream start
   const startWebcam = async () => {
@@ -403,25 +444,54 @@ export function ProfileContent({
 
         {/* Settings & Preferences */}
         <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 md:space-y-8 text-left">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
-              <Settings size={24} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
+                <Settings size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Preferências</h3>
+                <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Configuração do Sistema</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Preferências</h3>
-              <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Configuração do Sistema</p>
-            </div>
+            <button
+              onClick={() => { setPrefSubTab('geral'); setIsPrefsOpen(true); }}
+              className="px-3.5 py-2 bg-primary/10 text-primary hover:bg-primary/20 transition-all text-[10px] uppercase font-black tracking-widest rounded-xl cursor-pointer border-0"
+            >
+              Abrir Central
+            </button>
           </div>
 
           <div className="space-y-3">
             {[
-              { label: 'Idioma da Interface', value: 'Português', icon: <Languages size={20} /> },
-              { label: 'Notificações de Estado', value: 'Ativas', icon: <Bell size={20} /> },
-              { label: 'Segurança de Acesso', value: verificationStatus === 'Totalmente verificado' ? 'Máximo (Selo Nacional)' : 'Parcial', icon: <ShieldCheck size={20} /> },
-              { label: 'Círculo de Confiança', value: `${contactsCount} Membros`, icon: <Users size={20} />, action: () => setTab('contatos') },
+              { 
+                label: 'Idioma da Interface', 
+                value: prefLanguage === 'pt' ? 'Português' : prefLanguage === 'en' ? 'Inglês' : prefLanguage === 'ln' ? 'Kimbundu' : 'Umbundu', 
+                icon: <Languages size={20} />,
+                action: () => { setPrefSubTab('geral'); setIsPrefsOpen(true); }
+              },
+              { 
+                label: 'Notificações & Canal', 
+                value: prefCommChannel, 
+                icon: <Bell size={20} />,
+                action: () => { setPrefSubTab('notificacoes'); setIsPrefsOpen(true); }
+              },
+              { 
+                label: 'Privacidade & Biometria', 
+                value: prefPrivacyLevel === 'standard' ? 'Padrão' : 'Máxima Protecção', 
+                icon: <ShieldCheck size={20} />,
+                action: () => { setPrefSubTab('privacidade'); setIsPrefsOpen(true); }
+              },
+              { 
+                label: 'Sessões & Dispositivos', 
+                value: `${activeSessions.length} Activas`, 
+                icon: <Smartphone size={20} />,
+                action: () => { setPrefSubTab('conectividade'); setIsPrefsOpen(true); }
+              },
             ].map((item, i) => (
               <button 
                 key={i} 
+                type="button"
                 onClick={item.action}
                 className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/20 transition-all group cursor-pointer"
               >
@@ -430,7 +500,7 @@ export function ProfileContent({
                   <span className="text-sm font-bold text-slate-700 tracking-tight">{item.label}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.value}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#1e293b]/80">{item.value}</span>
                   <Settings className="text-slate-300 group-hover:rotate-90 transition-transform" size={14} />
                 </div>
               </button>
@@ -905,6 +975,494 @@ export function ProfileContent({
                   className="flex-1 py-3 bg-primary text-white font-extrabold text-xs uppercase rounded-xl hover:opacity-95 shadow-md cursor-pointer border-0 disabled:opacity-50"
                 >
                   Confirmar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- CENTRAL COMPLETA DE PREFERÊNCIAS DO CIDADÃO --- */}
+      <AnimatePresence>
+        {isPrefsOpen && (
+          <div className="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div 
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-100 text-left flex flex-col my-8 max-h-[90vh]"
+            >
+              {/* Head */}
+              <div className="p-6 bg-[#111A2E] text-white flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-primary/20 rounded-xl text-primary flex items-center justify-center">
+                    <Settings size={22} />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm md:text-base uppercase tracking-tight text-white leading-tight font-sans">Central de Preferências do Cidadão</h3>
+                    <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold font-sans">Correio Digital de Angola &bull; Governação Inteligente</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsPrefsOpen(false)}
+                  className="text-white/60 hover:text-white p-1 rounded-full hover:bg-white/10"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Tabs */}
+              <div className="bg-slate-50 px-6 border-b border-slate-150 flex gap-2 overflow-x-auto scrollbar-none py-2.5 select-none shrink-0">
+                {[
+                  { id: 'geral', label: 'Geral & Idioma', icon: <Languages size={14} /> },
+                  { id: 'notificacoes', label: 'Canais & Notifs', icon: <Bell size={14} /> },
+                  { id: 'privacidade', label: 'Privacidade & Biometria', icon: <ShieldCheck size={14} /> },
+                  { id: 'conectividade', label: 'Sessões & Dispositivos', icon: <Smartphone size={14} /> }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setPrefSubTab(tab.id as any)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 border transition-all cursor-pointer duration-155 shrink-0 select-none ${
+                      prefSubTab === tab.id
+                        ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Body */}
+              <div className="p-6 overflow-y-auto space-y-6 flex-1 min-h-[300px]">
+                {prefSubTab === 'geral' && (
+                  <div className="space-y-5">
+                    {/* Language select */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Selecione o Idioma da plataforma</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 'pt', label: 'Português (AO)' },
+                          { id: 'en', label: 'English (US)' },
+                          { id: 'ln', label: 'Kimbundu' },
+                          { id: 'umb', label: 'Umbundu' }
+                        ].map((lang) => (
+                          <button
+                            key={lang.id}
+                            type="button"
+                            onClick={() => setPrefLanguage(lang.id)}
+                            className={`p-3 rounded-xl border font-bold text-xs flex items-center justify-between transition-all cursor-pointer ${
+                              prefLanguage === lang.id
+                                ? 'bg-primary/5 border-primary text-primary shadow-xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>{lang.label}</span>
+                            {prefLanguage === lang.id && <Check size={14} className="text-primary" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Preferred time */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Horário Preferido para Receção de Mensagens</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {[
+                          { id: 'any', label: 'Qualquer hora', desc: 'Alertas sem restrição' },
+                          { id: 'business', label: 'Horário Laboral', desc: 'Seg-Sex, 8h às 18h' },
+                          { id: 'night', label: 'Período Noturno', desc: 'Fora do horário comercial' }
+                        ].map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setPrefPreferredHours(item.id)}
+                            className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between h-20 cursor-pointer ${
+                              prefPreferredHours === item.id
+                                ? 'bg-primary/5 border-primary text-primary shadow-xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="font-extrabold text-xs uppercase tracking-tight font-sans">{item.label}</span>
+                            <span className="text-[10px] text-slate-400 font-bold font-sans">{item.desc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Eco and Offline switches */}
+                    <div className="space-y-3 pt-2">
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="space-y-1 block text-left">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 font-sans">
+                            <Cpu size={14} className="text-primary" /> Modo Económico (Poupança de Dados)
+                          </span>
+                          <span className="text-[10px] text-slate-400 block font-medium font-sans leading-relaxed">Reduz animações pesadas e acelera ligações em conexões lentas de dados (GPRS/3G).</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={prefEcoMode}
+                            onChange={(e) => setPrefEcoMode(e.target.checked)}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="space-y-1 block text-left">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 font-sans">
+                            <WifiOff size={14} className="text-primary" /> Uso Offline de Documentos
+                          </span>
+                          <span className="text-[10px] text-slate-400 block font-medium font-sans leading-relaxed">Guarda réplicas seguras e cifradas das suas certidões e mensagens de forma local para leitura off-grid.</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={prefOfflineUse}
+                            onChange={(e) => setPrefOfflineUse(e.target.checked)}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {prefSubTab === 'notificacoes' && (
+                  <div className="space-y-5">
+                    {/* Preferred Comm method */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Canal Preferido de Comunicação do Estado</label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {['Notificação Push', 'SMS', 'E-mail', 'Correio Físico'].map((channel) => (
+                          <button
+                            key={channel}
+                            type="button"
+                            onClick={() => setPrefCommChannel(channel)}
+                            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-2 h-20 cursor-pointer ${
+                              prefCommChannel === channel
+                                ? 'bg-primary/5 border-primary text-primary shadow-xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="font-extrabold text-xs uppercase tracking-tight font-sans">{channel}</span>
+                            {prefCommChannel === channel && <span className="text-[8px] bg-primary text-white font-extrabold uppercase px-1.5 py-0.5 rounded-full font-sans">Activo</span>}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Fine-grained notifications checkboxes */}
+                    <div className="space-y-3 pt-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Notificações e Avisos de Estado</label>
+                      
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="space-y-0.5 text-left block">
+                          <span className="text-xs font-bold text-slate-800 block font-sans">Alertas por SMS de Urgência Nacional</span>
+                          <span className="text-[10px] text-slate-400 block font-medium font-sans">Receber avisos imediatos sobre notificações de trânsito urgentes e multas.</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={prefNotificationSMS} 
+                            onChange={(e) => setPrefNotificationSMS(e.target.checked)}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="space-y-0.5 text-left block">
+                          <span className="text-xs font-bold text-slate-800 block font-sans">E-mail Oficial Certificado</span>
+                          <span className="text-[10px] text-slate-400 block font-medium font-sans">Receber cópia certificada em formato PDF no seu email registado.</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={prefNotificationEmail} 
+                            onChange={(e) => setPrefNotificationEmail(e.target.checked)}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="space-y-0.5 text-left block">
+                          <span className="text-xs font-bold text-slate-800 block font-sans">Notificação Push no Telemóvel</span>
+                          <span className="text-[10px] text-slate-400 block font-medium font-sans">Alertas flutuantes rápidos de recepção segura no seu aplicativo.</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={prefNotificationPush} 
+                            onChange={(e) => setPrefNotificationPush(e.target.checked)}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {prefSubTab === 'privacidade' && (
+                  <div className="space-y-5">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Segurança Facial & Biometria</label>
+                      
+                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                        <div className="space-y-1 block text-left">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 font-sans">
+                            <Fingerprint size={15} className="text-primary" /> Habilitar Biometria nos Terminais
+                          </span>
+                          <span className="text-[10px] text-slate-400 block font-medium font-sans leading-relaxed">Usa a sua face digitalizada ou impressão para validar as consultas fiscais ao BI ou à AGT.</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={prefBiometricsEnabled} 
+                            onChange={(e) => setPrefBiometricsEnabled(e.target.checked)}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Nivel de Partilha de Dados e Privacidade</label>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {[
+                          { id: 'standard', label: 'Privacidade Padrão', desc: 'Sincronizar dados apenas SME e AGT nacionais.' },
+                          { id: 'maximum', label: 'Segurança Máxima', desc: 'Bloqueia consultas automáticas por terceiros.' }
+                        ].map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setPrefPrivacyLevel(item.id)}
+                            className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                              prefPrivacyLevel === item.id
+                                ? 'bg-primary/5 border-primary text-primary shadow-xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="font-extrabold text-xs uppercase tracking-tight font-sans">{item.label}</span>
+                            <span className="text-[10px] text-slate-400 font-bold mt-1 leading-normal font-sans">{item.desc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between">
+                      <div className="space-y-0.5 text-left block">
+                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1 font-sans">Wipe de Logs de Segurança</span>
+                        <span className="text-[10px] text-slate-400 block font-sans">Wipe automático dos seus logs locais a cada 15 dias para proteger o seu histórico pessoal.</span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={prefPrivacyLogs} 
+                          onChange={(e) => setPrefPrivacyLogs(e.target.checked)}
+                          className="sr-only peer" 
+                        />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      </label>
+                    </div>
+
+                    {/* CITIZEN BACKUP CENTER */}
+                    <div className="border border-slate-100 rounded-3xl p-4 bg-slate-50/50 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div className="text-left font-sans">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-800 block">Arquivos e Backups do Cidadão</span>
+                          <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Cópias cifradas redundantes de segurança local</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newBackup = OfflineManager.createAutomaticBackup();
+                            setBackupsList(OfflineManager.getBackups());
+                            setAuditLogs(prev => [{ action: `Backup de Segurança Criado (${newBackup.version})`, time: 'Agora mesmo' }, ...prev]);
+                            alert(`Chave de Cópia Virtual criada localmente: ${newBackup.version}\nDados compactados salvos com sucesso no browser do Cidadão.`);
+                          }}
+                          className="py-1.5 px-3 bg-primary text-white font-extrabold text-[9px] uppercase tracking-wider rounded-lg hover:opacity-90 transition-all border-0 cursor-pointer"
+                        >
+                          + Novo Backup
+                        </button>
+                      </div>
+
+                      {backupsList.length === 0 ? (
+                        <div className="text-center p-4 bg-white border border-slate-150 rounded-2xl text-slate-400 text-[10px] font-semibold">
+                          Nenhum backup arquivado na sandbox local do cidadão.
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                          {backupsList.map((bak) => (
+                            <div key={bak.timestamp} className="p-2.5 bg-white border border-slate-150 rounded-xl flex justify-between items-center text-left font-sans text-[10px]">
+                              <div>
+                                <span className="font-bold text-slate-800 block font-mono">ARQUIVO {bak.version}</span>
+                                <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">{new Date(bak.timestamp).toLocaleString('pt-AO')}</span>
+                              </div>
+                              <span className="text-[9px] bg-slate-100 px-2 py-0.5 font-bold uppercase rounded-full text-slate-600 font-mono">{(bak.dataSize / 1024).toFixed(2)} KB</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {prefSubTab === 'conectividade' && (
+                  <div className="space-y-5 text-left">
+                    {/* Active Sessions */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Sessões Ativas no Portal</label>
+                        <span className="text-[9px] bg-slate-150 px-2.5 py-1 text-[#1e293b] rounded-full font-black uppercase tracking-widest font-sans">{activeSessions.length} Activas</span>
+                      </div>
+
+                      <div className="space-y-2 divide-y divide-slate-100 bg-slate-50 border border-slate-150 rounded-xl p-3">
+                        {activeSessions.map((session: any) => (
+                          <div key={session.id} className="flex justify-between items-center py-2.5 first:pt-0 last:pb-0 font-medium font-sans">
+                            <div className="min-w-0">
+                              <span className="font-bold text-xs text-slate-800 flex items-center gap-1.5 truncate">
+                                <Clock size={12} className="text-primary" /> {session.device} 
+                                {session.isCurrent && <span className="text-[8px] bg-emerald-100 text-emerald-700 uppercase font-black px-1.5 py-0.5 rounded-full font-sans">Actual</span>}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block font-mono mt-0.5">Localização: {session.location} &bull; {session.ip} &bull; {session.date}</span>
+                            </div>
+                            
+                            {!session.isCurrent && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`Deseja revogar e terminar a sessão no dispositivo ${session.device}?`)) {
+                                    setActiveSessions((prev: any) => prev.filter((s: any) => s.id !== session.id));
+                                  }
+                                }}
+                                className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-rose-600 bg-white border border-rose-100 rounded-lg hover:bg-rose-50 cursor-pointer"
+                              >
+                                Revogar
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Connected Devices */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block font-sans">Dispositivos Autorizados Seguros</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const name = prompt("Insira o nome amigável do novo dispositivo a autorizar:");
+                            if (name) {
+                              const newDev = { id: `dev-${Date.now()}`, name, icon: 'smartphone', date: 'Autorizado ontem', authorized: true };
+                              setConnectedDevices((prev: any) => [...prev, newDev]);
+                            }
+                          }}
+                          className="text-[9px] text-primary hover:underline uppercase font-bold tracking-wider font-sans cursor-pointer"
+                        >
+                          + Adicionar Dispositivo
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 font-medium">
+                        {connectedDevices.map((dev: any) => (
+                          <div key={dev.id} className="p-3.5 bg-white border border-slate-150 rounded-xl flex justify-between items-center">
+                            <div className="flex items-center gap-2.5 select-none md:gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-indigo-50/50 flex items-center justify-center text-primary border border-slate-200">
+                                {dev.icon === 'laptop' ? <Laptop size={15} /> : <Smartphone size={15} />}
+                              </div>
+                              <div className="text-left font-sans">
+                                <span className="font-bold text-xs text-slate-800 block leading-tight">{dev.name}</span>
+                                <span className="text-[9px] text-slate-400 block font-bold uppercase mt-0.5">{dev.date}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 font-sans select-none">
+                              {dev.authorized ? (
+                                <span className="text-[9px] bg-emerald-50 text-emerald-600 font-extrabold uppercase px-2 py-0.5 rounded-full border border-emerald-100">
+                                  Confiável
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setConnectedDevices((prev: any) => prev.map((d: any) => d.id === dev.id ? { ...d, authorized: true, date: 'Autorizado agora' } : d));
+                                  }}
+                                  className="text-[9px] bg-amber-50 hover:bg-amber-100 text-amber-600 font-extrabold uppercase px-2 py-1 rounded-lg border border-amber-100 cursor-pointer"
+                                >
+                                  Autorizar PIN
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm(`Remover dispositivo ${dev.name}? Ele precisará de nova verificação de PIN.`)) {
+                                    setConnectedDevices((prev: any) => prev.filter((d: any) => d.id !== dev.id));
+                                  }
+                                }}
+                                className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-rose-500 rounded-lg cursor-pointer"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Foot */}
+              <div className="p-6 bg-slate-50 border-t border-slate-150 flex gap-3 shadow-xs">
+                <button 
+                  type="button"
+                  onClick={() => setIsPrefsOpen(false)}
+                  className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 font-extrabold text-xs uppercase rounded-xl hover:bg-slate-100 cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    // Save to local storage
+                    localStorage.setItem('gov_pref_language', prefLanguage);
+                    localStorage.setItem('gov_pref_notif_sms', String(prefNotificationSMS));
+                    localStorage.setItem('gov_pref_notif_email', String(prefNotificationEmail));
+                    localStorage.setItem('gov_pref_notif_push', String(prefNotificationPush));
+                    localStorage.setItem('gov_pref_notif_app', String(prefNotificationApp));
+                    localStorage.setItem('gov_pref_hours', prefPreferredHours);
+                    localStorage.setItem('gov_pref_biometrics', String(prefBiometricsEnabled));
+                    localStorage.setItem('gov_pref_privacy', prefPrivacyLevel);
+                    localStorage.setItem('gov_pref_privacy_logs', String(prefPrivacyLogs));
+                    localStorage.setItem('gov_pref_eco_mode', String(prefEcoMode));
+                    localStorage.setItem('gov_pref_offline', String(prefOfflineUse));
+                    localStorage.setItem('gov_pref_comm_channel', prefCommChannel);
+                    localStorage.setItem('gov_pref_sessions', JSON.stringify(activeSessions));
+                    localStorage.setItem('gov_pref_devices', JSON.stringify(connectedDevices));
+
+                    const newLog = { action: 'Preferenças do cidadão guardadas de forma segura', time: 'Agora mesmo' };
+                    setAuditLogs(prev => [newLog, ...prev]);
+
+                    setIsPrefsOpen(false);
+                    alert("Preferências do Cidadão salvas e propagadas no portal com sucesso!");
+                  }}
+                  className="flex-1 py-3 bg-primary text-white font-black text-xs uppercase rounded-xl hover:opacity-95 shadow-lg cursor-pointer border-0"
+                >
+                  Gravar Preferências <Check size={14} className="inline-block ml-1" />
                 </button>
               </div>
             </motion.div>

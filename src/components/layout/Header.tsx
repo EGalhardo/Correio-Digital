@@ -23,6 +23,9 @@ interface HeaderProps {
   setIsChatOpen: (open: boolean) => void;
   appMode: AppMode;
   emergencyMode?: boolean;
+  isOnline: boolean;
+  onClickConnectivity: () => void;
+  offlineQueueLength: number;
 }
 
 export function Header({ 
@@ -37,7 +40,10 @@ export function Header({
   isChatOpen,
   setIsChatOpen,
   appMode,
-  emergencyMode = false
+  emergencyMode = false,
+  isOnline,
+  onClickConnectivity,
+  offlineQueueLength
 }: HeaderProps) {
   const isGov = appMode !== 'user';
   const isAdmin = appMode === 'admin';
@@ -85,7 +91,26 @@ export function Header({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-1">
+          {/* Connectivity Pill Button Mobile */}
+          <button
+            type="button"
+            onClick={onClickConnectivity}
+            className={`flex items-center gap-1 px-2 py-1.5 rounded-full border text-[8px] font-black uppercase tracking-wider transition-all pointer-events-auto cursor-pointer shrink-0 ${
+              isOnline 
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100' 
+                : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100 animate-pulse'
+            }`}
+          >
+            <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <span>{isOnline ? 'Online' : 'Offline'}</span>
+            {offlineQueueLength > 0 && (
+              <span className="bg-amber-600 text-white font-mono rounded-full px-1 min-w-[12px] h-[12px] flex items-center justify-center text-[7px] leading-none shrink-0 font-bold">
+                {offlineQueueLength}
+              </span>
+            )}
+          </button>
+
           <button 
             onClick={handleMicClick}
             className={`relative flex items-center justify-center p-2 rounded-full transition-all focus:outline-none ${
@@ -154,6 +179,26 @@ export function Header({
         </div>
         
         <div className="hidden md:flex items-center gap-4">
+          {/* Connectivity Pill Button Desktop */}
+          <button
+            type="button"
+            onClick={onClickConnectivity}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wider transition-all pointer-events-auto cursor-pointer ${
+              isOnline 
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100' 
+                : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100 animate-pulse'
+            }`}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+            <span>{isOnline ? 'Online' : 'Offline'}</span>
+            {offlineQueueLength > 0 && (
+              <span className="bg-amber-600 text-white font-mono rounded-full px-1.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] leading-none shrink-0 font-bold">
+                {offlineQueueLength}
+              </span>
+            )}
+          </button>
+
           <button 
             onClick={handleMicClick}
             className={`relative flex items-center justify-center p-2 rounded-full transition-all focus:outline-none ${

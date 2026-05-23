@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { motion } from 'motion/react';
-import { ArrowLeft, Download, ShieldCheck, QrCode, Info, ExternalLink, Printer, Fingerprint } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, Download, ShieldCheck, QrCode, Info, ExternalLink, Printer, Fingerprint, Sparkles, ArrowRight } from 'lucide-react';
 import { Document } from '../../types';
 import { USER_PROFILE_PHOTO } from '../../constants/data';
 import { generateProtocol } from '../../utils/protocolGenerator';
+import { GovernmentAIPanel } from './GovernmentAIPanel';
 
 interface DocumentDetailProps {
   selectedDoc: Document;
@@ -22,6 +24,8 @@ export function DocumentDetail({
   setTab,
   logSecurityEvent,
 }: DocumentDetailProps) {
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  
   const protocol = selectedDoc.protocol || generateProtocol(
     selectedDoc.issuer || 'GOV',
     'document',
@@ -102,7 +106,7 @@ export function DocumentDetail({
              </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+          <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 font-mono">
              {[
                 { label: 'Baixar PDF', icon: <Download size={20} />, color: 'bg-primary text-white', action: () => logSecurityEvent?.(`Cidadão baixou cópia PDF: ${selectedDoc.name}`, 'info') },
                 { label: 'Imprimir', icon: <Printer size={20} />, color: 'bg-slate-100 text-slate-600', action: () => logSecurityEvent?.(`Cidadão enviou para impressão: ${selectedDoc.name}`, 'info') },
@@ -119,6 +123,60 @@ export function DocumentDetail({
                 </button>
              ))}
           </div>
+
+          {/* AI Assistance Toggle Button */}
+          <button 
+            type="button"
+            onClick={() => {
+              setShowAIPanel(!showAIPanel);
+              logSecurityEvent?.(`Cidadão accionou IA Governamental: ${selectedDoc.name}`, 'info');
+            }}
+            className={`w-full mt-6 p-4 md:p-5 rounded-[24px] border transition-all flex items-center justify-between shadow-lg active:scale-98 ${
+              showAIPanel 
+                ? 'bg-primary text-white border-primary shadow-primary/25' 
+                : 'bg-gradient-to-r from-indigo-50/70 to-[#eff6ff] border-blue-200/60 hover:border-blue-300 text-primary shadow-blue-900/5'
+            }`}
+          >
+             <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${showAIPanel ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>
+                   <Sparkles size={18} className={showAIPanel ? 'animate-spin' : 'animate-pulse'} />
+                </div>
+                <div className="text-left font-sans">
+                   <span className="font-extrabold text-xs md:text-sm uppercase tracking-wider block">Resumo Inteligente (IA)</span>
+                   <span className={`text-[9px] md:text-xs font-bold block ${showAIPanel ? 'text-white/75' : 'text-slate-500'}`}>
+                      {showAIPanel ? 'Ocultar Análise de IA' : 'Resumir, Explicar termos, Auto-Classificar e Detetar Urgência'}
+                   </span>
+                </div>
+             </div>
+             <ArrowRight size={18} className={`transition-transform duration-300 ${showAIPanel ? 'rotate-90' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {showAIPanel && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden mt-6"
+              >
+                <GovernmentAIPanel 
+                  documentTitle={selectedDoc.name}
+                  rawText={`DOCUMENTO OFICIAL: ${selectedDoc.name}
+Código Digital Único: ${selectedDoc.code}
+Número do Documento: ${selectedDoc.number}
+Titular do Documento: ${selectedDoc.holder}
+Emitido por: ${selectedDoc.issuer}
+Data de Emissão: ${selectedDoc.issuedAt}
+Validade: ${selectedDoc.validity}
+Protocolo de Autenticidade: ${protocol.protocolNumber}
+Selo de Validação ICP-AO: ${protocol.digitalSignature}
+Selo Governamental de Angola: Activo e Autêntico.`}
+                  contextType="document"
+                  onLogMsg={logSecurityEvent}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Info & Metadata */}

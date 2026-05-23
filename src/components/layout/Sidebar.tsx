@@ -42,6 +42,7 @@ const institutionItems: MenuItem[] = [
 
 const adminItems: MenuItem[] = [
   { id: 'gov-dashboard', label: 'Painel', icon: BarChart3 },
+  { id: 'gov-interoperabilidade', label: 'Interoperabilidade', icon: Activity },
   { id: 'gov-contatos', label: 'Usuário Geral', icon: Users },
   { id: 'gov-perfil', label: 'Instituição Geral', icon: Landmark },
   { id: 'gov-seguranca', label: 'Segurança Facial', icon: Scan },
