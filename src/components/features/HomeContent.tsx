@@ -166,7 +166,7 @@ export function HomeContent({
                </div>
                <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-black rounded-full shadow-sm animate-pulse">LERT</span>
             </div>
-            <div className="h-[180px] overflow-y-auto pr-1 space-y-3 custom-scrollbar flex-1">
+            <div className="h-[320px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
               {inbox.filter(m => m.unread).map(m => (
                 <div key={m.id} role="button" className="flex justify-between items-center text-[12px] md:text-sm border-b border-slate-50 pb-3 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer px-2 py-1.5 rounded-xl group/item" onClick={() => handleSelectMessage(m)}>
                   <div className="min-w-0 flex-1 truncate mr-3">
@@ -188,7 +188,7 @@ export function HomeContent({
              </div>
              <span className="text-[9px] font-black text-slate-400 tracking-widest uppercase">Histórico</span>
           </div>
-          <div className="h-[180px] overflow-y-auto pr-1 space-y-3 custom-scrollbar flex-1">
+          <div className="h-[320px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
             {inbox.filter(m => !m.unread).map(m => (
               <div key={m.id} role="button" className="flex justify-between items-center text-[12px] md:text-sm border-b border-slate-50 pb-3 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer px-2 py-1.5 rounded-xl group/item" onClick={() => handleSelectMessage(m)}>
                 <div className="min-w-0 flex-1 truncate mr-3">
@@ -209,7 +209,7 @@ export function HomeContent({
              </div>
              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
           </div>
-          <div className="h-[180px] overflow-y-auto pr-1 space-y-3 custom-scrollbar flex-1">
+          <div className="h-[320px] overflow-y-auto pr-1 space-y-3 custom-scrollbar">
             {sentMessages.map(m => (
               <div key={m.id} role="button" className="flex justify-between items-center text-[12px] md:text-sm border-b border-slate-50 pb-3 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer px-2 py-1.5 rounded-xl group/item" onClick={() => handleSelectMessage(m)}>
                 <div className="min-w-0 flex-1 truncate mr-3">

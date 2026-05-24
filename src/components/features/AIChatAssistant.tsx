@@ -42,7 +42,7 @@ export function AIChatAssistant({
         ? 'Saudações. Como posso ser útil na gestão do SOC hoje?'
         : isInst
         ? 'Olá. Em que posso ser útil com suas operações institucionais hoje?' 
-        : 'Olá! Sou seu Assistente Digital de Angola. Posso ajudar você a solicitar documentos à AGT, verificar sua carteira ou ler correspondências. Como posso ajudar?' 
+        : 'Olá! Sou o seu Assistente Digital de Angola. Posso ajudar você a ler a sua correspondência eletrónica governamental ou a gerir os seus contactos de emergência. Como posso ajudar?' 
     }
   ]);
   const [input, setInput] = useState('');

@@ -25,8 +25,6 @@ interface MobileNavBarProps {
 const userItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
-  { id: 'carteira', label: 'Docs', icon: QrCode },
-  { id: 'pasta-digital', label: 'Pasta', icon: Folder },
   { id: 'contatos', label: 'Contactos', icon: Users },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
@@ -34,7 +32,6 @@ const userItems: MenuItem[] = [
 const institutionItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
-  { id: 'carteira', label: 'Docs', icon: QrCode },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
 
@@ -74,7 +71,7 @@ export function MobileNavBar({
           onClick={() => {
             setTab(id);
             if (id !== 'correspondencias' && id !== 'mensagem') setSelectedMessage(null);
-            if (id !== 'carteira' && id !== 'documento') setSelectedDoc(null);
+            if (id !== 'documento') setSelectedDoc(null);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className={`flex flex-col items-center justify-center gap-0.5 transition-all px-1 h-full relative flex-1 ${

@@ -43,7 +43,7 @@ export function DocumentDetail({
         <button 
           onClick={() => {
             setSelectedDoc(null);
-            setTab('carteira');
+            setTab('home');
           }}
           className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-slate-600"
         >

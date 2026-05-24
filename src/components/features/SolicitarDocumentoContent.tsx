@@ -446,15 +446,15 @@ export function SolicitarDocumentoContent({
     const notif = {
       id: Date.now(),
       title: 'Novo Documento Oficial',
-      message: `A sua solicitação foi processada. O documento "${createdDoc.name}" já está na carteira.`,
+      message: `A sua solicitação foi processada. O documento "${createdDoc.name}" já está disponível na sua correspondência eletrónica.`,
       time: 'Agora',
       type: 'success',
-      targetTab: 'carteira'
+      targetTab: 'correspondencias'
     };
 
     onEmitDocument(createdDoc, notif);
-    addAuditLog(`DOCUMENT_ADDED_TO_WALLET: ${createdDoc.name} incorporado na Carteira digital do utente.`, 'success');
-    setTab('carteira');
+    addAuditLog(`DOCUMENT_EMITTED: ${createdDoc.name} emitido com sucesso e enviado para as correspondências do utente.`, 'success');
+    setTab('correspondencias');
   };
 
   const currentCategoryObj = CATEGORY_OPTIONS.find(o => o.id === docCategory);

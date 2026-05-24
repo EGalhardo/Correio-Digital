@@ -749,7 +749,7 @@ export default function App() {
           message: `O seu pedido de ${request.docType} foi aprovado e emitido.`,
           time: 'Agora',
           type: 'success',
-          targetTab: 'carteira'
+          targetTab: 'correspondencias'
         }, ...prev]);
       }
       
@@ -869,8 +869,12 @@ export default function App() {
       case 'pasta-digital':
         return (
           <PastaDigitalContent
-            logSecurityEvent={logSecurityEvent}
+            documents={documents}
+            docRequests={docRequests.filter(r => r.userBi === bi)}
+            onCreateRequest={handleCreateDocRequest}
+            setSelectedDoc={setSelectedDoc}
             setTab={setTab}
+            logSecurityEvent={logSecurityEvent}
           />
         );
       case 'contatos':
@@ -889,6 +893,7 @@ export default function App() {
       case 'perfil':
         return (
           <ProfileContent
+            isInst={isInstMode}
             showSensitiveData={showSensitiveData}
             setShowSensitiveData={setShowSensitiveData}
             bi={bi}

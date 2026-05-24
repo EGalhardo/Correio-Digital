@@ -229,7 +229,7 @@ export function MailContent({
         <div className="flex gap-1 p-1 bg-slate-50 rounded-2xl lg:min-w-[420px]">
           {[
             { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length, color: 'text-red-600', dot: 'bg-red-600' },
-            { id: 'lidas', label: 'Mensagens', count: inbox.filter(m => !m.unread).length, color: 'text-emerald-600', dot: 'bg-emerald-600' },
+            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length, color: 'text-emerald-600', dot: 'bg-emerald-600' },
             { id: 'enviadas', label: 'Enviadas', count: sentMessages.length, color: 'text-blue-600', dot: 'bg-blue-600' }
           ].map(t => (
             <button 
@@ -266,7 +266,7 @@ export function MailContent({
       </div>
 
       {/* Message List */}
-      <div className="space-y-3 md:space-y-4">
+      <div className="space-y-3 md:space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
         <AnimatePresence mode="popLayout">
           {filteredMessages.length > 0 ? (
             filteredMessages.map((item, index) => {
@@ -324,40 +324,10 @@ export function MailContent({
                               <Fingerprint size={10} className="text-indigo-500 animate-pulse" />
                               {item.protocol.protocolNumber}
                             </div>
-                            {(() => {
-                              const meta = getCategoryMetadata(item.protocol.category);
-                              return (
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-wider ${meta.colorClass}`}>
-                                  {renderCategoryIcon(meta.icon, 10)}
-                                  {meta.name}
-                                </span>
-                              );
-                            })()}
-                            {(() => {
-                              const level = item.sensitivity || 'Público';
-                              const config = SENSITIVITY_LEVELS[level];
-                              return (
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-wider ${config.textColor} ${config.badgeBg} ${config.borderColor} shadow-xs`}>
-                                  <Lock size={9} />
-                                  {level}
-                                </span>
-                              );
-                            })()}
-                            {(() => {
-                              const prio = item.priorityScale || 'Normal';
-                              const pConfig = PRIORITY_CONFIGS[prio];
-                              return (
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border uppercase tracking-wider ${pConfig.textColor} ${pConfig.badgeBg} ${pConfig.borderColor} shadow-xs`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${pConfig.dotColor}`} />
-                                  {prio}
-                                </span>
-                              );
-                            })()}
-                            {item.deadlineHoursRemaining !== undefined && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black border border-amber-200 bg-amber-50/70 text-amber-800 shadow-xs uppercase tracking-wider">
-                                Prazo restante: {item.deadlineHoursRemaining} horas
-                              </span>
-                            )}
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-black border border-rose-200 bg-rose-50 text-rose-800 shadow-xs uppercase tracking-wider">
+                              <Clock size={11} className="text-rose-500 animate-pulse" />
+                              Expiração: {item.details?.deadline || item.protocol?.deadlineDate || 'Sem prazo definido'}
+                            </span>
                           </div>
                         )}
                       </div>

@@ -289,7 +289,7 @@ export function GovEmissaoContent({
             </div>
 
             {/* Message List */}
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
               {filteredMessages.length > 0 ? (
                 filteredMessages.map((item, index) => {
                   const activeColorClass = 

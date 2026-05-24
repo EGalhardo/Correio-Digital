@@ -552,15 +552,6 @@ export const HIGHLIGHT_SLIDES: Slide[] = [
     action: "correspondencias"
   },
   {
-    id: 2,
-    title: "Documentos Sempre à Mão",
-    subtitle: "Consulte o seu BI, Carta de Condução e Passaporte com validade jurídica e verificação por QR Code.",
-    image: "https://i.postimg.cc/d3pp0vyD/2-Desktop.png",
-    mobileImage: "https://i.postimg.cc/rwGMPkbw/2.png",
-    btn: "Aceder Carteira",
-    action: "carteira"
-  },
-  {
     id: 3,
     title: "Segurança de Nível Estatal",
     subtitle: "Dados protegidos por criptografia de ponta a ponta e biometria para garantir a total privacidade do cidadão.",
@@ -652,9 +643,9 @@ export const GOV_HIGHLIGHT_SLIDES: Slide[] = [
 ];
 
 export const NOTIFICATIONS: AppNotification[] = [
-  { id: 1, title: 'BI Renovado', message: 'O seu Bilhete de Identidade foi renovado com sucesso.', time: '2h atrás', type: 'success', targetTab: 'carteira' },
+  { id: 1, title: 'BI Renovado', message: 'O seu Bilhete de Identidade foi renovado com sucesso.', time: '2h atrás', type: 'success', targetTab: 'correspondencias' },
   { id: 2, title: 'Alerta de Segurança', message: 'Novo acesso detectado a partir de um dispositivo Chrome em Luanda.', time: '5h atrás', type: 'warning', targetTab: 'perfil' },
-  { id: 3, title: 'Documento Recebido', message: 'O SME enviou um novo documento para a sua carteira.', time: 'Ontem', type: 'info', targetTab: 'carteira' },
+  { id: 3, title: 'Documento Recebido', message: 'O SME enviou um novo documento para a sua correspondência eletrónica.', time: 'Ontem', type: 'info', targetTab: 'correspondencias' },
 ];
 
 export const USER_PROFILE_PHOTO = "https://i.postimg.cc/sxWsYGX2/Foto-Edlasio.png";

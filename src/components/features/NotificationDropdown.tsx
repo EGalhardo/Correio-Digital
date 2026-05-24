@@ -52,9 +52,13 @@ export function NotificationDropdown({
                     <div 
                       key={n.id} 
                       onClick={() => {
-                        setTab(n.targetTab);
+                        let target = n.targetTab;
+                        if (target === 'carteira' || target === 'pasta-digital') {
+                          target = 'correspondencias';
+                        }
+                        setTab(target);
                         setShowNotifications(false);
-                        if (n.targetTab === 'carteira') setSelectedDoc(null);
+                        setSelectedDoc(null);
                       }}
                       className="p-4 md:p-5 hover:bg-slate-50 transition-colors cursor-pointer group"
                     >

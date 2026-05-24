@@ -27,8 +27,6 @@ interface SidebarProps {
 const userItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
-  { id: 'carteira', label: 'Doc. digitais', icon: QrCode },
-  { id: 'pasta-digital', label: 'Pasta digital', icon: Folder },
   { id: 'contatos', label: 'Contactos', icon: Users },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
@@ -36,7 +34,6 @@ const userItems: MenuItem[] = [
 const institutionItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
-  { id: 'carteira', label: 'Doc. digitais', icon: QrCode },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
 
@@ -81,7 +78,7 @@ export function Sidebar({
             onClick={() => {
               setTab(id);
               if (id !== 'correspondencias' && id !== 'mensagem') setSelectedMessage(null);
-              if (id !== 'carteira' && id !== 'documento') setSelectedDoc(null);
+              if (id !== 'documento') setSelectedDoc(null);
             }}
             className={`w-full flex items-center gap-3 px-2 py-2 rounded-xl font-bold transition-all ${
               tab === id 
@@ -103,7 +100,7 @@ export function Sidebar({
           <button
             onClick={() => {
               setAppMode('user');
-              if (!userItems.some(i => i.id === tab)) setTab('home');
+              setTab('home');
             }}
             className={`px-1.5 py-1 font-black text-[10px] uppercase tracking-wider transition-all ${
               appMode === 'user' 
@@ -118,7 +115,7 @@ export function Sidebar({
           <button
             onClick={() => {
               setAppMode('institution');
-              if (!institutionItems.some(i => i.id === tab)) setTab('home');
+              setTab('home');
             }}
             className={`px-1.5 py-1 font-black text-[10px] uppercase tracking-wider transition-all ${
               appMode === 'institution' 
@@ -133,7 +130,7 @@ export function Sidebar({
           <button
             onClick={() => {
               setAppMode('admin');
-              if (!adminItems.some(i => i.id === tab)) setTab('gov-dashboard');
+              setTab('gov-dashboard');
             }}
             className={`px-1.5 py-1 font-black text-[10px] uppercase tracking-wider transition-all ${
               appMode === 'admin' 
