@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   BadgeCheck, EyeOff, Eye, ShieldCheck, Lock, Fingerprint, History, Settings, 
   Languages, Bell, Users, LogOut, Trash2, Scan, IdCard, Plane, Shield, 
-  Key, Smartphone, Camera, Check, X, ChevronRight, UserCheck, AlertTriangle, 
+  Key, Smartphone, Camera, Check, X, ChevronRight, UserCheck, AlertTriangle, ShieldAlert, 
   RefreshCw, Award, Landmark, CheckCircle2, CircleDot, Globe, Cpu, Server, 
   Laptop, WifiOff, Clock
 } from 'lucide-react';
@@ -27,6 +27,10 @@ interface ProfileContentProps {
   hasFacialAuth: boolean;
   hasTwoFactor: boolean;
   govPin: string;
+  profileName?: string;
+  userBirthDate?: string;
+  userFiliation?: string;
+  userMaritalStatus?: string;
   setBi: (bi: string) => void;
   setPhone: (phone: string) => void;
   setNif: (nif: string) => void;
@@ -52,6 +56,10 @@ export function ProfileContent({
   hasFacialAuth,
   hasTwoFactor,
   govPin,
+  profileName = 'Edlasio Galhardo',
+  userBirthDate = '12/03/1995',
+  userFiliation = 'António Galhardo & Maria Conceição',
+  userMaritalStatus = 'Solteiro',
   setBi,
   setPhone,
   setNif,
@@ -240,14 +248,10 @@ export function ProfileContent({
             <div className={`absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-white p-2 md:p-3 rounded-2xl md:rounded-3xl shadow-xl border-4 border-white ${
               verificationStatus === 'Totalmente verificado' 
                 ? 'bg-emerald-500' 
-                : verificationStatus === 'Parcialmente verificado'
-                ? 'bg-amber-500'
                 : 'bg-red-500'
             }`}>
               {verificationStatus === 'Totalmente verificado' ? (
                 <BadgeCheck size={20} className="md:w-8 md:h-8" />
-              ) : verificationStatus === 'Parcialmente verificado' ? (
-                <Fingerprint size={20} className="md:w-8 md:h-8 animate-pulse" />
               ) : (
                 <Shield size={20} className="md:w-8 md:h-8" />
               )}
@@ -258,15 +262,11 @@ export function ProfileContent({
         <div className="flex-1 text-center md:text-left space-y-4 md:space-y-6">
           <div className="space-y-1">
             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 justify-center md:justify-start">
-              <h2 className="text-2xl md:text-5xl font-black text-slate-900 italic tracking-tighter uppercase mb-0">Edlasio Galhardo</h2>
+              <h2 className="text-2xl md:text-5xl font-black text-slate-900 italic tracking-tighter uppercase mb-0">{profileName}</h2>
               <div className="flex justify-center md:block">
                 {verificationStatus === 'Totalmente verificado' ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 shadow-2xs">
                     <CheckCircle2 size={12} className="text-emerald-500" /> Totalmente verificado
-                  </span>
-                ) : verificationStatus === 'Parcialmente verificado' ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-amber-100">
-                    <CircleDot size={12} className="text-amber-500" /> Parcialmente verificado
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-red-100 animate-pulse">
@@ -433,6 +433,76 @@ export function ProfileContent({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Ficha de Identidade Civil Regulamentada */}
+        {!isInst && (
+          <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 text-left col-span-1 lg:col-span-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
+                  <IdCard size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Ficha de Identidade Civil Regulamentada</h3>
+                  <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Base de Dados Central de Angola</p>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50/80 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-150 self-start md:self-auto">
+                <Lock size={12} /> Proteção Anti-Fraude Ativa
+              </div>
+            </div>
+
+            {/* Elegante Mensagem Oficial */}
+            <div className="p-5 bg-amber-50/75 border border-amber-200 rounded-2xl flex items-start gap-3.5 shadow-3xs">
+              <ShieldAlert className="text-amber-600 shrink-0 mt-0.5" size={20} />
+              <div>
+                <h5 className="font-sans text-[11px] font-black text-amber-950 uppercase tracking-wider mb-1">Aviso de Segurança Regulamentar (Prevenção de Fraudes)</h5>
+                <p className="text-[11px] md:text-xs text-amber-850 font-semibold leading-relaxed">
+                  Para sua segurança e prevenção de fraudes, a atualização de dados cadastrais apenas pode ser realizada presencialmente numa Instituição Pública Autorizada.
+                </p>
+              </div>
+            </div>
+
+            {/* Cadastro Fiel */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</span>
+                <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
+                  <span>{profileName}</span>
+                  <Lock size={12} className="text-slate-400" />
+                </div>
+              </div>
+              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Número de BI</span>
+                <div className="text-slate-905 font-mono font-bold text-sm tracking-widest flex items-center justify-between">
+                  <span>{bi}</span>
+                  <Lock size={12} className="text-slate-400" />
+                </div>
+              </div>
+              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Data de Nascimento</span>
+                <div className="text-slate-905 font-mono font-bold text-sm tracking-wider flex items-center justify-between">
+                  <span>{userBirthDate}</span>
+                  <Lock size={12} className="text-slate-400" />
+                </div>
+              </div>
+              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Estado Civil</span>
+                <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
+                  <span>{userMaritalStatus}</span>
+                  <Lock size={12} className="text-slate-400" />
+                </div>
+              </div>
+              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group sm:col-span-2">
+                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Filiação (Progenitores)</span>
+                <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
+                  <span>{userFiliation}</span>
+                  <Lock size={12} className="text-slate-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Security Center */}
         <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 md:space-y-8 text-left">
           <div className="flex items-center justify-between">
@@ -545,50 +615,7 @@ export function ProfileContent({
         </div>
       </div>
 
-      <div className="p-6 md:p-8 bg-blue-900 rounded-[28px] md:rounded-[32px] text-white flex flex-col md:flex-row items-center justify-between gap-5 md:gap-6 relative overflow-hidden shadow-xl mt-2 md:mt-0 text-left">
-         <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none">
-            <svg width="100%" height="100%"><pattern id="grid-profile" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" strokeWidth="0.5"/></pattern><rect width="100%" height="100%" fill="url(#grid-profile)" /></svg>
-         </div>
-         
-         <div className="flex items-center gap-4 md:gap-6 relative z-10 w-full md:w-auto">
-            <div className="w-11 h-11 md:w-16 md:h-16 bg-white/10 rounded-xl md:rounded-2xl flex items-center justify-center text-white border border-white/20 shrink-0">
-               <ShieldCheck size={24} className="md:w-7 md:h-7" />
-            </div>
-            <div>
-               <h4 className="text-base md:text-xl font-black mb-0.5 md:mb-1">
-                 {isInst ? 'Conformidade de Serviço & Auditoria' : 'Protecção de Dados Pessoais'}
-               </h4>
-               <p className="text-white/70 text-[10px] md:text-sm font-medium max-w-sm">
-                 {isInst 
-                   ? 'A sua actividade como agente do Estado é registada eletronicamente para salvaguardar a confidencialidade e integridade dos atos tributários.' 
-                   : 'Desta forma, os seus dados estão salvaguardados nos termos da Lei nº 22/11 da República de Angola.'}
-               </p>
-            </div>
-         </div>
-         
-         <button className="w-full md:w-auto bg-white text-primary px-8 py-3.5 md:py-4 rounded-xl md:rounded-2xl font-black text-xs md:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all relative z-10 cursor-pointer border-0">
-            {isInst ? 'Exportar Logs de Serviço' : 'Exportar Relatórios'}
-         </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mt-6">
-        <button
-          onClick={() => handleLogout(false)}
-          className="w-full flex items-center justify-center gap-2.5 px-6 py-4 md:py-5 bg-white border border-line rounded-2xl md:rounded-3xl font-black text-sm text-slate-600 active:bg-slate-50 transition-all shadow-sm cursor-pointer"
-        >
-          <LogOut size={18} className="text-slate-400" />
-          Sair da Conta
-        </button>
-        <button
-          onClick={() => {
-            if(confirm("Deseja apagar todos os dados locais e restaurar os padrões?")) handleLogout(true);
-          }}
-          className="w-full flex items-center justify-center gap-2.5 px-6 py-4 md:py-5 bg-red-50 border border-red-200 rounded-2xl md:rounded-3xl font-black text-sm text-red-600 hover:bg-red-100 active:bg-red-200 transition-all shadow-sm cursor-pointer"
-        >
-          <Trash2 size={18} />
-          Limpar Dados Locais
-        </button>
-      </div>
 
       {/* --- IDENTITY VERIFICATION WIZARD MODAL --- */}
       <AnimatePresence>

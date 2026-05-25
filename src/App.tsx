@@ -172,7 +172,7 @@ export default function App() {
   });
 
   const [verificationStatus, setVerificationStatus] = useState(() => {
-    return localStorage.getItem('correio_digital_verification_status') || 'Parcialmente verificado';
+    return localStorage.getItem('correio_digital_verification_status') || 'Totalmente verificado';
   });
 
   const [hasFacialAuth, setHasFacialAuth] = useState(() => {
@@ -185,6 +185,22 @@ export default function App() {
 
   const [govPin, setGovPin] = useState(() => {
     return localStorage.getItem('correio_digital_gov_pin') || '1234';
+  });
+
+  const [profileName, setProfileName] = useState(() => {
+    return localStorage.getItem('correio_digital_profile_name') || 'Edlasio Galhardo';
+  });
+
+  const [userBirthDate, setUserBirthDate] = useState(() => {
+    return localStorage.getItem('correio_digital_birth_date') || '12/03/1995';
+  });
+
+  const [userFiliation, setUserFiliation] = useState(() => {
+    return localStorage.getItem('correio_digital_filiation') || 'António Galhardo & Maria Conceição';
+  });
+
+  const [userMaritalStatus, setUserMaritalStatus] = useState(() => {
+    return localStorage.getItem('correio_digital_marital_status') || 'Solteiro';
   });
 
   useEffect(() => {
@@ -218,6 +234,22 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('correio_digital_gov_pin', govPin);
   }, [govPin]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_profile_name', profileName);
+  }, [profileName]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_birth_date', userBirthDate);
+  }, [userBirthDate]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_filiation', userFiliation);
+  }, [userFiliation]);
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_marital_status', userMaritalStatus);
+  }, [userMaritalStatus]);
 
   // UI States
   const [loginSubMode, setLoginSubMode] = useState<'normal' | 'two-factor' | 'face-capture' | 'pin-entry'>('normal');
@@ -879,7 +911,34 @@ export default function App() {
         );
       case 'contatos':
         return appMode === 'institution' ? (
-          <GovContactsContent />
+          <GovContactsContent
+            bi={bi}
+            setBi={setBi}
+            nif={nif}
+            setNif={setNif}
+            phone={phone}
+            setPhone={setPhone}
+            passport={passport}
+            setPassport={setPassport}
+            profileName={profileName}
+            setProfileName={setProfileName}
+            userBirthDate={userBirthDate}
+            setUserBirthDate={setUserBirthDate}
+            userFiliation={userFiliation}
+            setUserFiliation={setUserFiliation}
+            userMaritalStatus={userMaritalStatus}
+            setUserMaritalStatus={setUserMaritalStatus}
+            verificationStatus={verificationStatus}
+            setVerificationStatus={setVerificationStatus}
+            hasFacialAuth={hasFacialAuth}
+            setHasFacialAuth={setHasFacialAuth}
+            hasTwoFactor={hasTwoFactor}
+            setHasTwoFactor={setHasTwoFactor}
+            govPin={govPin}
+            setGovPin={setGovPin}
+            addAuditLog={addAuditLog}
+            auditLogs={auditLogs}
+          />
         ) : (
           <ContactsContent
             contacts={contacts}
@@ -904,6 +963,10 @@ export default function App() {
             hasFacialAuth={hasFacialAuth}
             hasTwoFactor={hasTwoFactor}
             govPin={govPin}
+            profileName={profileName}
+            userBirthDate={userBirthDate}
+            userFiliation={userFiliation}
+            userMaritalStatus={userMaritalStatus}
             setBi={setBi}
             setPhone={setPhone}
             setNif={setNif}
@@ -927,6 +990,17 @@ export default function App() {
             userRequests={userRequests}
             isMobile={isMobile}
             logSecurityEvent={logSecurityEvent}
+            bi={bi}
+            setBi={setBi}
+            profileName={profileName}
+            setProfileName={setProfileName}
+            userBirthDate={userBirthDate}
+            setUserBirthDate={setUserBirthDate}
+            userFiliation={userFiliation}
+            setUserFiliation={setUserFiliation}
+            userMaritalStatus={userMaritalStatus}
+            setUserMaritalStatus={setUserMaritalStatus}
+            addAuditLog={addAuditLog}
           />
         );
       case 'gov-emissao':
@@ -947,7 +1021,36 @@ export default function App() {
           />
         );
       case 'gov-contatos':
-        return <GovContactsContent />;
+        return (
+          <GovContactsContent
+            bi={bi}
+            setBi={setBi}
+            nif={nif}
+            setNif={setNif}
+            phone={phone}
+            setPhone={setPhone}
+            passport={passport}
+            setPassport={setPassport}
+            profileName={profileName}
+            setProfileName={setProfileName}
+            userBirthDate={userBirthDate}
+            setUserBirthDate={setUserBirthDate}
+            userFiliation={userFiliation}
+            setUserFiliation={setUserFiliation}
+            userMaritalStatus={userMaritalStatus}
+            setUserMaritalStatus={setUserMaritalStatus}
+            verificationStatus={verificationStatus}
+            setVerificationStatus={setVerificationStatus}
+            hasFacialAuth={hasFacialAuth}
+            setHasFacialAuth={setHasFacialAuth}
+            hasTwoFactor={hasTwoFactor}
+            setHasTwoFactor={setHasTwoFactor}
+            govPin={govPin}
+            setGovPin={setGovPin}
+            addAuditLog={addAuditLog}
+            auditLogs={auditLogs}
+          />
+        );
       case 'gov-perfil':
         return (
           <GovPerfilContent 

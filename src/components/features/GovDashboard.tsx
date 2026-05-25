@@ -65,6 +65,17 @@ interface GovDashboardProps {
   userRequests?: UserRequest[];
   isMobile?: boolean;
   logSecurityEvent?: (action: string, type: 'info' | 'warning' | 'critical' | 'success') => void;
+  bi?: string;
+  setBi?: (val: string) => void;
+  profileName?: string;
+  setProfileName?: (val: string) => void;
+  userBirthDate?: string;
+  setUserBirthDate?: (val: string) => void;
+  userFiliation?: string;
+  setUserFiliation?: (val: string) => void;
+  userMaritalStatus?: string;
+  setUserMaritalStatus?: (val: string) => void;
+  addAuditLog?: (action: string, type?: 'info' | 'warning' | 'critical' | 'success') => void;
 }
 
 export interface QueueItem {
@@ -212,6 +223,17 @@ export function GovDashboard({
   userRequests = [],
   isMobile = false,
   logSecurityEvent,
+  bi = '009874562LA041',
+  setBi,
+  profileName = 'Edlasio Galhardo',
+  setProfileName,
+  userBirthDate = '12/03/1995',
+  setUserBirthDate,
+  userFiliation = 'António Galhardo & Maria Conceição',
+  setUserFiliation,
+  userMaritalStatus = 'Solteiro',
+  setUserMaritalStatus,
+  addAuditLog,
 }: GovDashboardProps & { appMode?: AppMode }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -236,6 +258,82 @@ export function GovDashboard({
   const [newDocType, setNewDocType] = useState('Certificado de Residência');
   const [newQueue, setNewQueue] = useState<'pendentes' | 'urgentes' | 'criticas' | 'expiradas'>('pendentes');
   const [newDescription, setNewDescription] = useState('');
+
+  // Anti-fraud citizen panel state
+  const [searchBiQuery, setSearchBiQuery] = useState('');
+  const [searchedCitizen, setSearchedCitizen] = useState<{
+    name: string;
+    bi: string;
+    birthDate: string;
+    filiation: string;
+    maritalStatus: string;
+  } | null>(null);
+  const [searchAttempted, setSearchAttempted] = useState(false);
+
+  // Forms for updating
+  const [tempProfileName, setTempProfileName] = useState('');
+  const [tempBiField, setTempBiField] = useState('');
+  const [tempBirthField, setTempBirthField] = useState('');
+  const [tempMaritalField, setTempMaritalField] = useState('');
+  const [tempFiliationField, setTempFiliationField] = useState('');
+
+  // Seal receipt
+  const [lastUpdatedProtocol, setLastUpdatedProtocol] = useState<{
+    protocolCode: string;
+    time: string;
+  } | null>(null);
+
+  const handleQueryCitizen = () => {
+    setSearchAttempted(true);
+    if (searchBiQuery.trim() === bi) {
+      const citizen = {
+        name: profileName,
+        bi: bi,
+        birthDate: userBirthDate,
+        filiation: userFiliation,
+        maritalStatus: userMaritalStatus
+      };
+      setSearchedCitizen(citizen);
+      setTempProfileName(citizen.name);
+      setTempBiField(citizen.bi);
+      setTempBirthField(citizen.birthDate);
+      setTempMaritalField(citizen.maritalStatus);
+      setTempFiliationField(citizen.filiation);
+    } else {
+      setSearchedCitizen(null);
+    }
+  };
+
+  const handleUpdateRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchedCitizen || !setProfileName || !setBi || !setUserBirthDate || !setUserFiliation || !setUserMaritalStatus || !addAuditLog) return;
+
+    setProfileName(tempProfileName);
+    setBi(tempBiField);
+    setUserBirthDate(tempBirthField);
+    setUserFiliation(tempFiliationField);
+    setUserMaritalStatus(tempMaritalField);
+
+    const randomCode = Math.floor(100000 + Math.random() * 900000);
+    const protocolCode = `REG-UP-${randomCode}`;
+    const timestampStr = new Date().toLocaleString('pt-AO');
+
+    const logActionText = `[Selo: ${protocolCode}] Atualização de dados cadastrais autorizada e homologada pelo Operador #CDA-401 para o BI ${tempBiField} (Campos Alterados). Assinatura Eletrónica do Emissor válida.`;
+    addAuditLog(logActionText, 'success');
+
+    setLastUpdatedProtocol({
+      protocolCode,
+      time: timestampStr
+    });
+
+    setSearchedCitizen({
+      name: tempProfileName,
+      bi: tempBiField,
+      birthDate: tempBirthField,
+      filiation: tempFiliationField,
+      maritalStatus: tempMaritalField
+    });
+  };
 
   const mapPins = useMemo(
     () => [
@@ -1231,6 +1329,238 @@ export function GovDashboard({
             </div>
           </div>
         </section>
+
+        {/* Anti-Fraud Registry Updates - Exclusive for Operators */}
+        {activeRole === 'operador' && (
+          <section className="bg-gradient-to-tr from-white to-slate-50 border border-indigo-100 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-100/60 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+                <div>
+                  <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
+                    Serviço de Prevenção a Fraudes Cadastrais
+                  </h2>
+                  <span className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider font-mono">
+                    Módulo de Alteração Cadastral Presencial (Operador de Registo Autorizado)
+                  </span>
+                </div>
+              </div>
+              <div className="px-3 py-1 bg-indigo-50 border border-indigo-150 rounded-full text-indigo-750 text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 self-start sm:self-auto">
+                <ShieldAlert size={12} /> Exclusivo Operador
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
+              {/* Left Column: Search Citizen */}
+              <div className="space-y-4 bg-white border border-slate-200 p-5 rounded-2xl h-fit">
+                <div className="space-y-1 text-left">
+                  <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest font-mono">Pesquisa na Base Central</h4>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase leading-normal">Insira o Nº de Bilhete de Identidade (BI) do cidadão para carregar a ficha cadastral.</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                    <input
+                      type="text"
+                      placeholder="e.g. 009874562LA041"
+                      value={searchBiQuery}
+                      onChange={(e) => setSearchBiQuery(e.target.value)}
+                      className="w-full bg-slate-55 border border-slate-200 focus:border-indigo-550 focus:bg-white rounded-xl pl-9 pr-4 py-2.5 text-xs font-bold text-slate-900 outline-none placeholder:text-slate-400 font-mono tracking-widest"
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={handleQueryCitizen}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-750 text-white rounded-xl py-2.5 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer border-0 shadow-sm"
+                    >
+                      Buscar Cidadão
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchBiQuery('009874562LA041');
+                      }}
+                      className="px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl py-2.5 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer border-0"
+                    >
+                      Carregar Edlasio
+                    </button>
+                  </div>
+                </div>
+
+                {searchedCitizen ? (
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-150 rounded-xl space-y-1.5 animate-fadeIn text-left">
+                    <div className="flex items-center gap-1.5 text-emerald-700 text-[9px] font-black uppercase tracking-widest font-sans">
+                      <CheckCircle2 size={13} className="text-emerald-500" /> Registro Localizado
+                    </div>
+                    <div className="text-[11px] text-slate-800 font-black uppercase leading-snug font-sans">
+                      {searchedCitizen.name}
+                    </div>
+                    <div className="text-[9px] text-slate-500 font-bold font-mono tracking-wider uppercase">
+                      BI: {searchedCitizen.bi} &bull; Estado: Ativo
+                    </div>
+                  </div>
+                ) : searchAttempted ? (
+                  <div className="p-3.5 bg-rose-50 border border-rose-150 rounded-xl space-y-1 text-left">
+                    <div className="text-rose-700 text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 font-sans">
+                      <Ban size={13} /> Sem Resultados
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase leading-normal">Nenhum cidadão cadastrado online com o BI fornecido.</p>
+                  </div>
+                ) : (
+                  <div className="p-6 border border-dashed border-slate-200 rounded-xl text-center text-slate-400">
+                    <History size={18} className="mx-auto text-slate-300 mb-1.5" />
+                    <span className="text-[9px] font-black uppercase tracking-wider block">Aguardando pesquisa...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Update Profile Values */}
+              <div className="bg-white border border-slate-200 p-5 rounded-2xl flex flex-col justify-between text-left">
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3 mb-4">
+                    <div className="space-y-0.5">
+                      <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest font-mono">Ficha de Identidade Cadastrada</h4>
+                      <p className="text-[9px] text-slate-400 font-black uppercase tracking-wider font-sans">Campos auditáveis sujeitos a alteração estrita</p>
+                    </div>
+                    <span className="text-[9px] text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded font-mono font-bold uppercase self-start sm:self-auto">
+                      Protocolo Ativo: CDA-R2026
+                    </span>
+                  </div>
+
+                  <form onSubmit={handleUpdateRegister} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1 text-left">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Nome Completo</label>
+                      <input
+                        type="text"
+                        disabled={!searchedCitizen}
+                        value={tempProfileName}
+                        onChange={(e) => setTempProfileName(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 disabled:opacity-50 rounded-xl px-4 py-2.5 text-xs font-black text-slate-850 outline-none focus:border-indigo-500 focus:bg-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1 text-left">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Número de BI</label>
+                      <input
+                        type="text"
+                        disabled={!searchedCitizen}
+                        value={tempBiField}
+                        onChange={(e) => setTempBiField(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 disabled:opacity-50 rounded-xl px-4 py-2.5 text-xs font-mono font-bold text-slate-850 outline-none focus:border-indigo-500 focus:bg-white tracking-widest"
+                      />
+                    </div>
+
+                    <div className="space-y-1 text-left">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Data de Nascimento</label>
+                      <input
+                        type="text"
+                        disabled={!searchedCitizen}
+                        value={tempBirthField}
+                        onChange={(e) => setTempBirthField(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 disabled:opacity-50 rounded-xl px-4 py-2.5 text-xs font-mono font-bold text-slate-850 outline-none focus:border-indigo-500 focus:bg-white tracking-wider"
+                      />
+                    </div>
+
+                    <div className="space-y-1 text-left col-span-1">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Estado Civil</label>
+                      <select
+                        disabled={!searchedCitizen}
+                        value={tempMaritalField}
+                        onChange={(e) => setTempMaritalField(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 disabled:opacity-50 rounded-xl px-3 py-2.5 text-xs font-black text-slate-850 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer"
+                      >
+                        <option value="Solteiro">Solteiro</option>
+                        <option value="Casado">Casado</option>
+                        <option value="Divorciado">Divorciado</option>
+                        <option value="Viúvo">Viúvo</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1 text-left sm:col-span-2">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Filiação (Progenitores)</label>
+                      <input
+                        type="text"
+                        disabled={!searchedCitizen}
+                        value={tempFiliationField}
+                        onChange={(e) => setTempFiliationField(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 disabled:opacity-50 rounded-xl px-4 py-2.5 text-xs font-black text-slate-850 outline-none focus:border-indigo-500 focus:bg-white"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 pt-3 flex flex-col sm:flex-row gap-3">
+                      <button
+                        type="button"
+                        disabled={!searchedCitizen}
+                        onClick={() => {
+                          setTempProfileName(searchedCitizen?.name || '');
+                          setTempBiField(searchedCitizen?.bi || '');
+                          setTempBirthField(searchedCitizen?.birthDate || '');
+                          setTempMaritalField(searchedCitizen?.maritalStatus || '');
+                          setTempFiliationField(searchedCitizen?.filiation || '');
+                        }}
+                        className="flex-1 bg-white border border-slate-250 text-slate-700 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest disabled:opacity-50 hover:bg-slate-50 transition-all cursor-pointer"
+                      >
+                        Descartar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!searchedCitizen}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-755 text-white py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest disabled:opacity-50 transition-all cursor-pointer border-0 shadow-md"
+                      >
+                        Efetuar Atualização Cadastral
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {/* Electronic Seal & Protocol Certificate details below update */}
+            <AnimatePresence>
+              {lastUpdatedProtocol && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="bg-emerald-50 border border-emerald-250 rounded-[20px] p-5 text-left mt-4 animate-fadeIn"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs shrink-0 mt-0.5">
+                        <ShieldCheck size={18} />
+                      </div>
+                      <div>
+                        <h4 className="font-sans text-[11px] font-black text-emerald-950 uppercase tracking-wider mb-1">
+                          Selo Eletrónico de Homologação de Dados Cadastrais
+                        </h4>
+                        <p className="text-[11px] text-emerald-850 font-bold leading-normal">
+                          A ficha cadastral foi atualizada com sucesso e enviada ao Registo de Identidade Única do Cidadão. Atualização selada eletronicamente.
+                        </p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1.5 mt-3 text-[9px] font-mono leading-none text-emerald-700 font-black uppercase">
+                          <span>Selo: <strong className="font-black text-emerald-800">{lastUpdatedProtocol.protocolCode}</strong></span>
+                          <span>&bull;</span>
+                          <span>Assinatura Digital Emissor: AGENTE_OPERADOR_CDA_401</span>
+                          <span>&bull;</span>
+                          <span>Timestamp: {lastUpdatedProtocol.time}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLastUpdatedProtocol(null)}
+                      className="ml-auto text-[8px] font-mono uppercase font-black text-rose-600 border border-rose-250 hover:bg-rose-100/50 px-2.5 py-1 rounded-lg shrink-0 cursor-pointer transition-colors"
+                    >
+                      Fechar Recibo
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+        )}
 
         {/* Create Expediente Modal */}
         <AnimatePresence>

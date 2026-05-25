@@ -107,7 +107,14 @@ export function AIChatAssistant({
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
-    const recognition = new SpeechRecognition();
+    let recognition: any;
+    try {
+      recognition = new SpeechRecognition();
+    } catch (err) {
+      console.warn('SpeechRecognition initialization failed:', err);
+      return;
+    }
+
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'pt-AO';

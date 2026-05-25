@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
+  LogOut,
   Calendar, 
   Clock, 
   MapPin, 
@@ -242,6 +243,16 @@ export function MessageDetail({
   const [showQRValidation, setShowQRValidation] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
+  const [showAdvancedData, setShowAdvancedData] = useState(false);
+  const [detailReplyText, setDetailReplyText] = useState('');
+  const [isReplyingInDetails, setIsReplyingInDetails] = useState(false);
+  const [detailReplySuccess, setDetailReplySuccess] = useState<{
+    protocolNumber: string;
+    timestamp: string;
+    text: string;
+    digitalSeal: string;
+    documentHash: string;
+  } | null>(null);
 
   // States for the 8 official government actions requested
   const [activeOfficialAction, setActiveOfficialAction] = useState<string | null>(null);
@@ -503,6 +514,238 @@ export function MessageDetail({
     selectedMessage.details?.subject || selectedMessage.preview
   );
 
+  if (activeAction === 'Ver detalhes') {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -15 }}
+        className="space-y-6 pt-2 pb-6 text-left"
+      >
+        <div className="flex items-center">
+          <button 
+            type="button"
+            onClick={() => setActiveAction(null)}
+            className="flex items-center gap-2.5 px-6 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs md:text-sm text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+            title="Voltar"
+          >
+            <ArrowLeft size={16} className="text-[#384e6e]" />
+            <span>Voltar</span>
+          </button>
+        </div>
+
+        <div className="bg-white p-8 md:p-11 rounded-[24px] border border-slate-300 shadow-[0_8px_30px_rgb(0,0,0,0.03)] selection:bg-indigo-100 select-text">
+          <div className="flex items-center gap-3 mb-8 text-[#0c2340]">
+            <FileText size={24} className="text-[#0c2340]" />
+            <span className="font-sans font-extrabold text-[#0c2340] text-base md:text-lg">Conteúdo do Documento</span>
+          </div>
+          {selectedMessage.details?.body ? (
+            <div className="space-y-6 text-slate-700 text-sm md:text-[15px] leading-relaxed tracking-wide font-sans">
+              {selectedMessage.details.body.split('\n\n').map((paragraph, bgIdx) => {
+                const lines = paragraph.split('\n');
+                return (
+                  <p key={bgIdx} className="font-medium text-slate-700">
+                    {lines.map((line, lineIdx) => (
+                      <React.Fragment key={lineIdx}>
+                        {line}
+                        {lineIdx < lines.length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-slate-400 italic text-sm">Sem conteúdo oficial disponível.</p>
+          )}
+
+          {/* Divider and Reply Section */}
+          <div className="mt-8 pt-8 border-t border-slate-200">
+            {detailReplySuccess ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-4"
+              >
+                <div className="flex items-center gap-2.5 text-emerald-800">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                    <Check size={16} strokeWidth={3} />
+                  </div>
+                  <div>
+                    <h5 className="font-extrabold text-sm uppercase tracking-wide leading-none">Resposta Enviada com Sucesso</h5>
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest font-mono">Registo Criptográfico Selado</span>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-emerald-100 p-4 rounded-xl space-y-3 text-xs text-slate-700">
+                  <div>
+                    <span className="text-[9px] font-black text-slate-450 block uppercase">Protocolo de Resposta</span>
+                    <span className="font-mono font-bold text-primary block text-[13px]">{detailReplySuccess.protocolNumber}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black text-slate-450 block uppercase">Teor Enviado</span>
+                    <p className="bg-slate-50 border border-slate-150 p-2.5 rounded-lg font-mono text-slate-700 leading-relaxed max-h-32 overflow-y-auto">
+                      {detailReplySuccess.text}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-slate-150">
+                    <div>
+                      <span className="text-[9px] font-black text-slate-450 block uppercase">Data & Hora Registo</span>
+                      <span className="font-bold text-slate-850 font-mono">{detailReplySuccess.timestamp}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-black text-slate-450 block uppercase">Estado Operacional</span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-200 leading-none inline-block">
+                        Respondida
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black text-slate-450 block uppercase">Selo Digital Institucional</span>
+                    <span className="font-mono text-[8px] text-slate-500 break-all block truncate">{detailReplySuccess.digitalSeal}</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDetailReplySuccess(null)}
+                  className="px-4 py-2 text-xs font-bold text-emerald-800 hover:text-emerald-950 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-all cursor-pointer active:scale-95 border border-emerald-300"
+                >
+                  Criar Nova Resposta
+                </button>
+              </motion.div>
+            ) : isReplyingInDetails ? (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-4 text-left"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black tracking-widest text-[#0c2340] uppercase font-mono block">
+                    Elaboração de Resposta Oficial
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsReplyingInDetails(false);
+                      setDetailReplyText('');
+                    }}
+                    className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+
+                {sensConfig.level === 'Ultra Restrito' ? (
+                  <div className="bg-red-50 border border-red-200 text-red-00 p-4 rounded-xl flex items-start gap-2 text-xs font-bold">
+                    <Lock size={16} className="text-red-500 shrink-0 mt-0.5 animate-pulse" />
+                    <div>
+                      <span>Este documento possui sensibilidade crítica de nível <strong>Ultra Restrito</strong>.</span>
+                      <p className="text-[10px] text-red-700 mt-1 font-semibold leading-relaxed">
+                        A resposta a este documento está bloqueada por motivos regulamentares e de confidencialidade de Estado.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl text-xs text-slate-600 leading-relaxed font-semibold">
+                      Introduza o teor da sua resposta oficial para a entidade <strong className="text-primary">{selectedMessage.org}</strong>. Esta ação gerará um protocolo eletrónico assinado com validade administrativa.
+                    </div>
+
+                    <div>
+                      <textarea
+                        value={detailReplyText}
+                        onChange={(e) => setDetailReplyText(e.target.value)}
+                        placeholder="Escreva aqui a sua resposta oficial..."
+                        rows={5}
+                        className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-xl p-3.5 text-xs md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0c2340]/20 focus:border-[#0c2340] shadow-inner transition-all"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!detailReplyText.trim()) return;
+
+                          const newProtocol = generateProtocol(
+                            selectedMessage.org,
+                            'message',
+                            selectedMessage.id,
+                            `Resposta: ${selectedMessage.details?.subject || selectedMessage.preview}`
+                          );
+                          const now = new Date();
+                          const timestampStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                          const dmyStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                          const fullTimestamp = `${dmyStr} ${timestampStr}`;
+
+                          const auditLogAction = `Resposta Oficial submetida via Conteúdo do Documento (Prot: ${newProtocol.protocolNumber})`;
+                          const logEntry = `${timestampStr} - ${auditLogAction}`;
+                          const updatedLogs = [...(selectedMessage.auditLogs || []), logEntry];
+
+                          if (onUpdateMessage) {
+                            onUpdateMessage({
+                              ...selectedMessage,
+                              details: selectedMessage.details ? {
+                                ...selectedMessage.details,
+                                state: 'Respondida'
+                              } : {
+                                subject: selectedMessage.preview,
+                                body: selectedMessage.preview,
+                                state: 'Respondida'
+                              },
+                              auditLogs: updatedLogs
+                            });
+                          }
+
+                          setDetailReplySuccess({
+                            protocolNumber: newProtocol.protocolNumber,
+                            timestamp: fullTimestamp,
+                            text: detailReplyText,
+                            digitalSeal: newProtocol.digitalSeal,
+                            documentHash: newProtocol.documentHash
+                          });
+
+                          setDetailReplyText('');
+                          setIsReplyingInDetails(false);
+                        }}
+                        disabled={!detailReplyText.trim()}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-[#0c2340] text-white font-extrabold text-xs md:text-sm rounded-full shadow-md hover:bg-[#152e4d] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                      >
+                        <Send size={14} className="text-white" />
+                        <span>Enviar Resposta Oficial</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="text-left">
+                  <h5 className="font-extrabold text-sm text-slate-900 leading-none">Precisa responder a este documento?</h5>
+                  <p className="text-xs text-slate-550 font-semibold mt-1">Envie uma resposta formal assinada registando um protocolo associado.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsReplyingInDetails(true)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-black text-xs md:text-sm shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${
+                    sensConfig.level === 'Ultra Restrito'
+                      ? 'bg-slate-100 text-slate-400 border border-slate-205 cursor-not-allowed'
+                      : 'bg-[#0c2340] text-white hover:bg-[#152e4d]'
+                  }`}
+                  disabled={sensConfig.level === 'Ultra Restrito'}
+                >
+                  <Send size={14} className="text-white" />
+                  <span>{sensConfig.level === 'Ultra Restrito' ? 'Resposta Bloqueada' : 'Responder ao Documento'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -515,10 +758,11 @@ export function MessageDetail({
             setTab('correspondencias');
             setSelectedMessage(null);
           }}
-          className="bg-slate-100 text-slate-600 p-2.5 rounded-xl hover:bg-slate-200 transition-colors"
-          title="Voltar"
+          className="flex items-center gap-2.5 px-6 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs md:text-sm text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+          title="Voltar ao Correio"
         >
-          <ArrowLeft size={20} />
+          <LogOut size={16} className="text-[#384e6e]" />
+          <span>Voltar ao Correio</span>
         </button>
         
         <button 
@@ -554,42 +798,7 @@ export function MessageDetail({
         </motion.div>
       )}
 
-      {/* SENSITIVITY HEADER INFOBAR */}
-      <div className={`p-4 rounded-2xl border ${sensConfig.borderColor} ${sensConfig.badgeBg} flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm`}>
-        <div className="flex items-start gap-3">
-          <div className={`w-10 h-10 rounded-xl ${sensConfig.dotColor} text-white flex items-center justify-center shrink-0 shadow-sm`}>
-            <Lock size={18} />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sensibilidade Documental</span>
-              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${sensConfig.textColor} bg-white shadow-xs border ${sensConfig.borderColor} flex items-center gap-1`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${sensConfig.dotColor} animate-ping`} />
-                {sensConfig.level}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium mt-0.5 max-w-xl">{sensConfig.accessRules}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-          {timeLeft !== null && (
-            <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-dotted border-slate-200 shadow-xs font-mono">
-              <Clock size={13} className={timeLeft < 30 ? 'text-red-500 animate-pulse' : 'text-slate-400'} />
-              <span className="text-[10.5px] font-black text-slate-700">
-                SESSÃO: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-              </span>
-            </div>
-          )}
-          
-          {sensConfig.screenshotProtection && (
-            <div className="bg-white/80 border border-slate-150 rounded-xl px-2 py-1.5 flex items-center gap-1.5 text-[10px] text-slate-750 font-bold shrink-0">
-              <EyeOff size={11} className="text-indigo-600 animate-pulse" />
-              <span className="uppercase tracking-wider">Proteção Ecrã</span>
-            </div>
-          )}
-        </div>
-      </div>
+
 
       <section className={`border border-line rounded-2xl p-5 bg-white shadow-sm relative overflow-hidden select-none print:hidden ${sensConfig.screenshotProtection ? 'selection:bg-transparent' : ''}`}>
         <AnimatePresence mode="wait">
@@ -608,9 +817,10 @@ export function MessageDetail({
                   onClick={() => {
                     setActiveOfficialAction(null);
                   }}
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
                 >
-                  <ArrowLeft size={18} />
+                  <ArrowLeft size={16} className="text-[#384e6e]" />
+                  <span>Voltar</span>
                 </button>
                 <div className="text-left">
                   <h4 className="font-extrabold text-[#111A2E] text-sm md:text-base flex items-center gap-1.5 uppercase tracking-wide">
@@ -1018,9 +1228,10 @@ export function MessageDetail({
               <div className="flex items-center gap-3 pb-4 border-b border-line">
                 <button 
                   onClick={() => setActiveAction(null)}
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
                 >
-                  <ArrowLeft size={18} className="text-slate-500" />
+                  <ArrowLeft size={16} className="text-[#384e6e]" />
+                  <span>Voltar</span>
                 </button>
                 <div>
                   <h4 className="font-bold text-primary">{activeAction}</h4>
@@ -1028,16 +1239,32 @@ export function MessageDetail({
                 </div>
               </div>
 
-              {['Ver detalhes', 'Ler notificacao', 'Ler boletim', 'Abrir resultado', 'Ler resultado', 'Mais informacoes'].includes(activeAction) ? (
+              {['Ler notificacao', 'Ler boletim', 'Abrir resultado', 'Ler resultado', 'Mais informacoes'].includes(activeAction) ? (
                 <div className="space-y-6">
-                  <div className="bg-white p-6 rounded-2xl border border-line shadow-sm">
-                    <div className="flex items-center gap-3 mb-4 text-primary">
-                      <FileText size={20} />
-                      <span className="font-bold">Conteúdo do Documento</span>
+                  <div className="bg-white p-8 md:p-10 rounded-3xl border border-line shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 text-[#0c2340]">
+                      <FileText size={22} className="text-[#0c2340]" />
+                      <span className="font-sans font-extrabold text-[#0c2340] text-base md:text-lg">Conteúdo do Documento</span>
                     </div>
-                    <p className="text-slate-700 text-base leading-relaxed whitespace-pre-line font-medium mb-6">
-                      {selectedMessage.details?.body}
-                    </p>
+                    {selectedMessage.details?.body ? (
+                      <div className="space-y-6 text-[#334155] text-sm md:text-[15px] leading-relaxed tracking-wide">
+                        {selectedMessage.details.body.split('\n\n').map((paragraph, bgIdx) => {
+                          const lines = paragraph.split('\n');
+                          return (
+                            <p key={bgIdx} className="font-medium text-slate-700">
+                              {lines.map((line, lineIdx) => (
+                                <React.Fragment key={lineIdx}>
+                                  {line}
+                                  {lineIdx < lines.length - 1 && <br />}
+                                </React.Fragment>
+                              ))}
+                            </p>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 italic text-sm">Sem conteúdo adicional disponível.</p>
+                    )}
                   </div>
 
                   {/* 13 MANDATORY DIGITAL PROTOCOL FIELDS */}
@@ -1344,519 +1571,132 @@ export function MessageDetail({
               
               {selectedMessage.details && (
                 <div className="space-y-6">
-                  <div className="flex flex-col lg:flex-row gap-6">
-                    <div className="flex-1 bg-white rounded-3xl border border-line p-5 md:p-8 shadow-sm flex flex-col items-start text-left">
-                      <div className={`w-14 h-14 md:w-24 md:h-24 rounded-full flex items-center justify-center mb-5 md:mb-6 shadow-lg transition-transform hover:scale-105 ${
-                        (selectedMessage.details.state?.toLowerCase().includes('pendente') ?? false) 
-                        ? 'bg-orange-500 shadow-orange-100' 
-                        : 'bg-green-500 shadow-green-100'
-                      }`}>
-                        {(selectedMessage.details.state?.toLowerCase().includes('pendente') ?? false) ? (
-                          <Clock className="text-white w-7 h-7 md:w-12 md:h-12" />
-                        ) : (
-                          <Check className="text-white w-7 h-7 md:w-12 md:h-12" strokeWidth={3} />
-                        )}
-                      </div>
-                      
-                      <h3 className="text-base md:text-2xl font-extrabold text-primary mb-2">
-                        {selectedMessage.details.subject}
-                      </h3>
-                      
-                      <div className="w-full space-y-4 md:space-y-5 mb-8 text-left max-w-sm">
-                        <div className="flex items-center gap-3 md:gap-4 text-slate-700">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                            <Fingerprint size={16} className="text-indigo-600 md:w-[18px] md:h-[18px]" />
-                          </div>
-                          <div>
-                            <small className="text-indigo-600 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Nº Protocolo Nacional</small>
-                            <div className="text-xs md:text-sm font-mono font-black text-indigo-700 truncate">{protocol.protocolNumber}</div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 md:gap-4 text-slate-700">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                            <Calendar size={16} className="text-slate-500 md:w-[18px] md:h-[18px]" />
-                          </div>
-                          <div>
-                            <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Data Limite</small>
-                            <div className="text-xs md:text-sm font-bold text-primary">{selectedMessage.details.deadline}</div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 md:gap-4 text-slate-700">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                            <Clock size={16} className="text-slate-500 md:w-[18px] md:h-[18px]" />
-                          </div>
-                          <div>
-                            <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Estado do Documento</small>
-                            <div className="text-xs md:text-sm font-bold text-orange-700 flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
-                              {selectedMessage.details.state}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 md:gap-4 text-slate-700">
-                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                            <MapPin size={16} className="text-slate-500 md:w-[18px] md:h-[18px]" />
-                          </div>
-                          <div>
-                            <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Entidade Emissora</small>
-                            <div className="text-xs md:text-sm font-bold text-primary leading-tight">{selectedMessage.org}</div>
-                          </div>
-                        </div>
-
-                        {/* Tipo de Correspondência Oficial (Nova Seção) */}
-                        {(() => {
-                          const meta = getCategoryMetadata(protocol.category);
-                          const style = CATEGORY_STYLING[meta.name] || CATEGORY_STYLING['Ofício'];
-                          return (
-                            <div className="flex items-start gap-3 md:gap-4 text-slate-700">
-                              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 border ${style.border} ${style.badge}`}>
-                                {renderCategoryIcon(meta.icon, 16)}
-                              </div>
-                              <div>
-                                <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Tipo de Correspondência</small>
-                                <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                                  <span className={`text-xs md:text-sm font-bold leading-none ${style.text}`}>{meta.name}</span>
-                                  <span className="bg-red-50 border border-red-100 px-1.5 py-0.5 rounded text-[8px] font-bold text-red-650 tracking-wider font-mono uppercase">Prioridade: {meta.priority}</span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        {/* PAINEL OFICIAL DE PRAZO E PRIORIDADE */}
-                        <div className="w-full mt-6 pt-5 border-t border-slate-150 text-left space-y-4">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-6 h-6 rounded-md ${prioConfig.dotColor} text-white flex items-center justify-center shadow`}>
-                              <AlertTriangle size={13} />
-                            </div>
-                            <div>
-                              <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-900 leading-none">Prioridade e Prazo Governamental</h4>
-                              <p className="text-[9px] text-slate-400 font-bold mt-0.5">Controlo de prazos e trâmites de urgência regulamentar</p>
-                            </div>
-                            <span className={`ml-auto px-2 py-0.5 rounded text-[8px] font-black border uppercase tracking-widest leading-none ${prioConfig.textColor} ${prioConfig.badgeBg} ${prioConfig.borderColor}`}>
-                              {prioConfig.priority}
-                            </span>
-                          </div>
-
-                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3.5 text-xs text-slate-700 shadow-sm relative overflow-hidden">
-                            {/* COUNTDOWN TIMER */}
-                            {deadlineSecondsLeft !== null && (
-                              <div className="flex items-center justify-between bg-white border border-dotted border-slate-300 p-2.5 rounded-xl">
-                                <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 font-mono">Registo Regressivo Ordinário</span>
-                                <div className="flex items-center gap-1.5 font-mono text-[11px] font-black text-rose-650 animate-pulse">
-                                  <Clock size={13} className="text-red-500 animate-pulse" />
-                                  <span>{formatDeadlineRemaining(deadlineSecondsLeft)}</span>
-                                </div>
-                              </div>
+                  <div className="bg-white rounded-3xl border border-line p-5 md:p-8 shadow-sm flex flex-col lg:flex-row gap-8 items-stretch text-left">
+                    {/* Informações do Protocolo (Lado Esquerdo) */}
+                    <div className="flex-1 flex flex-col justify-between items-start">
+                      <div className="w-full">
+                        <div className="flex items-center gap-4 mb-6">
+                          <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 shadow-lg transition-transform hover:scale-105 ${
+                            (selectedMessage.details.state?.toLowerCase().includes('pendente') ?? false) 
+                            ? 'bg-orange-500 shadow-orange-100' 
+                            : 'bg-green-500 shadow-green-100'
+                          }`}>
+                            {(selectedMessage.details.state?.toLowerCase().includes('pendente') ?? false) ? (
+                              <Clock className="text-white w-7 h-7" />
+                            ) : (
+                              <Check className="text-white w-7 h-7" strokeWidth={3} />
                             )}
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-none mb-1">Guia de Benefícios</h3>
+                            <h2 className="text-base md:text-2xl font-extrabold text-primary leading-tight">
+                              {selectedMessage.details.subject}
+                            </h2>
+                          </div>
+                        </div>
 
-                            {/* PRAZO LIMITE */}
-                            <div className="grid grid-cols-2 gap-2 pb-3 border-b border-dashed border-slate-200">
-                              <div>
-                                <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Prazo Limite</span>
-                                <span className="font-bold text-slate-800">{selectedMessage.details.deadline || "Não Aplicável"}</span>
-                              </div>
-                              <div>
-                                <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider">Status Temporal</span>
-                                <span className={`font-bold inline-flex items-center gap-1 text-[10px] uppercase ${messagePriority === 'Crítico' || messagePriority === 'Urgente' ? 'text-red-650 animate-pulse' : 'text-slate-600'}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${messagePriority === 'Crítico' || messagePriority === 'Urgente' ? 'bg-red-500' : 'bg-slate-400'}`} />
-                                  {messagePriority === 'Crítico' || messagePriority === 'Urgente' ? 'Ação Crítica Pedida' : 'Tramitação Normal'}
-                                </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 w-full">
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              <Fingerprint size={16} className="text-indigo-600" />
+                            </div>
+                            <div>
+                              <small className="text-indigo-600 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Nº Protocolo Nacional</small>
+                              <div className="text-xs md:text-sm font-mono font-black text-indigo-700 truncate">{protocol.protocolNumber}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              <Calendar size={16} className="text-slate-500" />
+                            </div>
+                            <div>
+                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Data Limite</small>
+                              <div className="text-xs md:text-sm font-bold text-primary">{selectedMessage.details.deadline}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              <Clock size={16} className="text-slate-500" />
+                            </div>
+                            <div>
+                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Estado do Documento</small>
+                              <div className="text-xs md:text-sm font-bold text-orange-700 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                                {selectedMessage.details.state}
                               </div>
                             </div>
+                          </div>
 
-                            {/* CONSEQUÊNCIA POR ATRASO */}
-                            <div>
-                              <span className="text-[9px] font-black text-red-700/80 uppercase tracking-widest flex items-center gap-1">
-                                ✦ Consequência Legal por Atraso:
-                              </span>
-                              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed font-semibold italic">
-                                "{prioConfig.consequence}"
-                              </p>
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              <MapPin size={16} className="text-slate-500" />
                             </div>
-
-                            {/* NOTIFICAÇÕES ESCALÁVEIS */}
                             <div>
-                              <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider font-mono">Escalonamento de Notificações Governamentais</span>
-                              <div className="mt-1 space-y-1">
-                                {prioConfig.escalationLevels.map((lvl, idx) => (
-                                  <div key={idx} className="flex items-start gap-1.5 text-[10px] text-slate-550 leading-relaxed font-semibold">
-                                    <span className="text-slate-400 mt-0.5">•</span>
-                                    <span>{lvl}</span>
+                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Entidade Emissora</small>
+                              <div className="text-xs md:text-sm font-bold text-primary leading-tight">{selectedMessage.org}</div>
+                            </div>
+                          </div>
+
+                          {/* Tipo de Correspondência Oficial */}
+                          {(() => {
+                            const meta = getCategoryMetadata(protocol.category);
+                            const style = CATEGORY_STYLING[meta.name] || CATEGORY_STYLING['Ofício'];
+                            return (
+                              <div className="flex items-start gap-4 text-slate-700 md:col-span-2">
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${style.border} ${style.badge}`}>
+                                  {renderCategoryIcon(meta.icon, 16)}
+                                </div>
+                                <div>
+                                  <small className="text-slate-505 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Tipo de Correspondência</small>
+                                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                    <span className={`text-xs md:text-sm font-bold leading-none ${style.text}`}>{meta.name}</span>
+                                    <span className="bg-red-50 border border-red-100 px-1.5 py-0.5 rounded text-[8px] font-bold text-red-650 tracking-wider font-mono uppercase">Prioridade: {meta.priority}</span>
                                   </div>
-                                ))}
+                                </div>
                               </div>
-                            </div>
-
-                            {/* ALERTAS AUTOMÁTICOS */}
-                            <div>
-                              <span className="text-[9px] font-bold text-slate-400 block uppercase tracking-wider font-mono">Alertas de Custódia Ativos</span>
-                              <div className="mt-1 flex flex-wrap gap-1.5">
-                                {prioConfig.autoAlerts.map((alt, idx) => (
-                                  <span key={idx} className="bg-white border border-slate-200 text-slate-650 px-2 py-0.5 rounded text-[9.5px] font-semibold tracking-tight shadow-3xs">
-                                    {alt}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
+                            );
+                          })()}
                         </div>
                       </div>
 
-                      {/* Fluxo operacional próprio da correspondência */}
-                      {(() => {
-                        const meta = getCategoryMetadata(protocol.category);
-                        const style = CATEGORY_STYLING[meta.name] || CATEGORY_STYLING['Ofício'];
-                        return (
-                          <div className="w-full mt-6 pt-5 border-t border-slate-150 text-left">
-                            <div className="flex items-center justify-between mb-4">
-                              <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono">
-                                Fluxo Operacional Registo ({meta.name})
-                              </span>
-                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                                4 Fases Regulamentares
-                              </span>
-                            </div>
-                            
-                            {/* Process line stepper */}
-                            <div className="grid grid-cols-4 gap-1 items-start">
-                              {meta.flow.map((step, sIdx) => {
-                                const isPast = sIdx < 2; // simulated completed stages
-                                const isCurrent = sIdx === 2;
-                                return (
-                                  <div key={sIdx} className="flex flex-col items-center text-center relative">
-                                    {/* Lines connecting points */}
-                                    {sIdx > 0 && (
-                                      <div className={`absolute left-0 right-1/2 top-2.5 -translate-y-1/2 h-0.5 ${
-                                        isPast ? style.circleBg : 'bg-slate-150'
-                                      }`} />
-                                    )}
-                                    {sIdx < meta.flow.length - 1 && (
-                                      <div className={`absolute left-1/2 right-0 top-2.5 -translate-y-1/2 h-0.5 ${
-                                        isPast || isCurrent ? style.circleBg : 'bg-slate-150'
-                                      }`} />
-                                    )}
-                                    
-                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center relative z-10 text-[9px] font-black leading-none transition-all ${
-                                      isPast ? `${style.circleBg} shadow-sm` :
-                                      isCurrent ? `${style.badge} border-2 ${style.circleBorder}` :
-                                      'bg-slate-50 text-slate-400 border border-slate-200'
-                                    }`}>
-                                      {sIdx + 1}
-                                    </div>
-                                    <span className={`text-[9.5px] leading-tight font-black mt-2 max-w-[76px] break-words uppercase ${
-                                      isCurrent ? style.text : isPast ? 'text-slate-650' : 'text-slate-400'
-                                    }`}>
-                                      {step}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      
-                      {/* ESTABILIDADE JURÍDICA E COMPROVATIVOS DE VALIDADE */}
-                      <div className="w-full mt-6 pt-5 border-t border-slate-150 text-left space-y-4">
-                        {/* Legal Validity Banner */}
-                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5 shadow-sm">
-                          <ShieldCheck size={18} className="text-emerald-600 shrink-0 mt-0.5" />
-                          <div className="space-y-0.5">
-                            <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wide block">
-                              DOCUMENTO LEGALMENTE VÁLIDO
-                            </span>
-                            <span className="text-[10px] text-emerald-700/90 font-bold block leading-relaxed">
-                              Este documento possui validade legal. Em conformidade com a regulamentação ICP-Angola, este ato administrativo detém força probatória plena.
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* 4 Differentiated States and Proofs */}
-                        <div className="space-y-3">
-                          <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">
-                            Rastreabilidade e Comprovativos Oficiais
-                          </span>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {/* State 1: Entregue */}
-                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">1. Estado Transmissão</span>
-                                <span className="bg-blue-100/80 text-blue-800 text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border border-blue-200">
-                                  Entregue
-                                </span>
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[10.5px] font-bold text-slate-800 block">Comprovativo de Entrega</span>
-                                <span className="text-[9.5px] text-slate-500 font-semibold block leading-tight">
-                                  Gateway: Central Mailer [{protocol.internalId}]
-                                </span>
-                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
-                                  Carimbo: {selectedMessage.date || '08:15 UTC'} - Verificado
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* State 2: Visualizado */}
-                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">2. Estado Leitura</span>
-                                <span className="bg-teal-100/80 text-teal-805 text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border border-teal-200">
-                                  Visualizado
-                                </span>
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[10.5px] font-bold text-slate-800 block">Comprovativo de Leitura</span>
-                                <span className="text-[9.5px] text-slate-500 font-semibold block leading-tight">
-                                  Dispositivo: Terminal BI-Digital Cripto
-                                </span>
-                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
-                                  Carimbo: Leitura registada em tempo real
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* State 3: Confirmado */}
-                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">3. Confirmação Oficial</span>
-                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border ${
-                                  selectedMessage.details?.state?.toLowerCase().includes('pendente') 
-                                    ? 'bg-amber-100 text-amber-800 border-amber-200 animate-pulse' 
-                                    : 'bg-indigo-100/80 text-indigo-800 border-indigo-200'
-                                }`}>
-                                  Confirmado
-                                </span>
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[10.5px] font-bold text-slate-800 block">Confirmação Oficial</span>
-                                <span className="text-[9.5px] text-slate-500 font-semibold block leading-tight truncate">
-                                  Protocolo: {protocol.protocolNumber}
-                                </span>
-                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
-                                  Carimbo Secundário: Selado com sucesso
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* State 4: Assinado */}
-                            <div className="bg-slate-50 border border-slate-205/60 rounded-xl p-3 flex flex-col justify-between space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[9px] font-black text-slate-450 uppercase tracking-wider font-mono">4. Integridade da Assinatura</span>
-                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase leading-none border ${
-                                  (selectedMessage.details?.state?.toLowerCase().includes('pendente') || selectedMessage.details?.state === 'Pagamento pendente')
-                                    ? 'bg-slate-100 text-slate-505 border-slate-200' 
-                                    : 'bg-emerald-100/80 text-emerald-800 border-emerald-200'
-                                }`}>
-                                  {(selectedMessage.details?.state?.toLowerCase().includes('pendente') || selectedMessage.details?.state === 'Pagamento pendente') ? 'Pendente' : 'Assinado'}
-                                </span>
-                              </div>
-                              <div className="space-y-1">
-                                <span className="text-[10.5px] font-bold text-slate-800 block">Assinatura Eletrônica</span>
-                                <span className="text-[9.5px] text-slate-550 font-semibold block leading-none font-mono truncate">
-                                  ID: {protocol.digitalSignature.substring(0, 15)}...
-                                </span>
-                                <span className="text-[9px] font-mono text-slate-400 font-bold block">
-                                  Carimbo Temporal: Sincronizado ICP
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* SEÇÃO DETALHES DE AUTENTICAÇÃO */}
-                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-[10px] font-medium text-slate-600">
-                          <div>
-                            <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Selo Digital Institucional</span>
-                            <span className="font-mono text-slate-705 break-all text-[9.5px]">{protocol.digitalSeal}</span>
-                          </div>
-                          <div>
-                            <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Certificado Emissor Homologado</span>
-                            <span className="text-slate-705 font-bold text-[9.5px]">{protocol.institutionalCertificate}</span>
-                          </div>
-                          <div>
-                            <span className="text-[9px] font-black text-slate-400 block uppercase font-mono">Hash SHA-256 de Custódia</span>
-                            <span className="font-mono text-[9px] text-slate-700 break-all block truncate">{protocol.documentHash}</span>
-                          </div>
-                        </div>
+                      {/* Botão de Ver detalhes Completos */}
+                      <div className="w-full pt-6 border-t border-slate-150 flex justify-start mt-6">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveAction('Ver detalhes');
+                            addAuditLogToMessage('Visualizou detalhes completos do documento');
+                          }}
+                          className="text-xs font-black uppercase tracking-wider text-white bg-[#0c2340] hover:bg-[#152e4d] px-5 py-3 rounded-full shadow-md flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 font-bold animate-pulse"
+                        >
+                          <Eye size={13} className="text-white" />
+                          Ver detalhes Completos
+                        </button>
                       </div>
-
-                      {/* HISTÓRICO DE AUDITORIA COMPLETO COESÃO */}
-                      <div className="w-full mt-6 pt-5 border-t border-slate-150 text-left space-y-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center shadow">
-                            <History size={13} className="text-emerald-400" />
-                          </div>
-                          <div>
-                            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-900 leading-none">Histórico de Auditoria Digital</h4>
-                            <p className="text-[9px] text-slate-400 font-bold mt-0.5">Registos automatizados e imutáveis de ações regulamentares</p>
-                          </div>
-                          <span className="ml-auto bg-slate-900 text-emerald-400 font-mono text-[8px] font-black px-1.5 py-0.5 rounded border border-slate-800 uppercase leading-none tracking-wider">
-                            AUDITADO
-                          </span>
-                        </div>
-                        <div className="bg-slate-900 text-slate-300 p-3.5 border border-slate-850 rounded-2xl font-mono text-[10.5px] leading-relaxed space-y-1.5 max-h-40 overflow-y-auto shadow-inner">
-                          {(selectedMessage.auditLogs || []).map((log, lIdx) => (
-                            <div key={lIdx} className="flex items-start gap-2 py-0.5 border-b border-slate-800 last:border-0">
-                              <span className="text-emerald-400 shrink-0 font-black">▶</span>
-                              <span className="break-all">{log}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <button 
-                        onClick={() => setActiveAction('Ver detalhes')}
-                        className="w-full py-3.5 md:py-4 rounded-2xl bg-primary text-white font-bold text-xs md:text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-                      >
-                        Ver detalhes
-                      </button>
                     </div>
-                    
-                    <div className="flex flex-col items-center justify-center p-6 md:p-8 bg-white rounded-3xl border border-line/60 lg:w-[320px] shrink-0">
-                      <div className="text-xs font-extrabold text-slate-600 uppercase tracking-[0.2em] mb-4 md:mb-6">QR CODE DE PROTOCOLO</div>
+
+                    {/* QR Code de Protocolo (Lado Direito) */}
+                    <div className="flex flex-col items-center justify-center p-6 bg-slate-50/50 rounded-3xl border border-line/60 lg:w-[280px] shrink-0 self-center lg:self-stretch">
+                      <div className="text-[10px] font-extrabold text-slate-500 uppercase tracking-[0.2em] mb-4">QR CODE DE PROTOCOLO</div>
                       <div 
                         onClick={triggerVerification}
-                        className="p-3 md:p-4 bg-white border border-line/40 rounded-2xl shadow-md group relative overflow-hidden text-center w-full cursor-pointer hover:border-emerald-350 hover:bg-emerald-50/10 transition-all active:scale-95 flex flex-col items-center justify-center"
+                        className="p-3 bg-white border border-line/40 rounded-2xl shadow-md group relative overflow-hidden text-center w-full cursor-pointer hover:border-emerald-350 hover:bg-emerald-50/10 transition-all active:scale-95 flex flex-col items-center justify-center"
                       >
                         <motion.img 
                           src={protocol.qrCodeUrl} 
                           alt="QR Code Seguro" 
-                          className="w-40 h-40 md:w-48 md:h-48 object-contain transition-transform duration-500 group-hover:scale-105 mx-auto"
+                          className="w-32 h-32 md:w-36 md:h-36 object-contain transition-transform duration-500 group-hover:scale-105 mx-auto"
                           referrerPolicy="no-referrer"
                         />
                         <div className="text-[9px] font-mono text-indigo-700 font-extrabold uppercase mt-3 tracking-widest break-all">
                           {protocol.protocolNumber}
                         </div>
-                        <span className="text-[8px] font-mono text-emerald-700 uppercase mt-2 tracking-wider font-extrabold flex items-center gap-1 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded">
+                        <span className="text-[8px] font-mono text-emerald-700 uppercase mt-2 tracking-wider font-extrabold flex items-center gap-1 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded">
                           <QrCode size={9} /> CLIQUE PARA VALIDAR
                         </span>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Government AI Assistance Expansion Button */}
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      setShowAIPanel(!showAIPanel);
-                      addAuditLogToMessage(`Activou IA Governamental para mensagem: ${selectedMessage.details?.subject || selectedMessage.preview}`);
-                    }}
-                    className={`w-full mt-6 p-4 md:p-5 rounded-[24px] border transition-all flex items-center justify-between shadow-lg active:scale-98 ${
-                      showAIPanel 
-                        ? 'bg-primary text-white border-primary shadow-primary/25' 
-                        : 'bg-gradient-to-r from-indigo-50/70 to-[#eff6ff] border-blue-200/60 hover:border-blue-300 text-primary shadow-blue-900/5'
-                    }`}
-                  >
-                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${showAIPanel ? 'bg-white/10 text-white' : 'bg-primary/10 text-primary'}`}>
-                           <Sparkles size={18} className={showAIPanel ? 'animate-spin' : 'animate-pulse'} />
-                        </div>
-                        <div className="text-left font-sans">
-                           <span className="font-extrabold text-xs md:text-sm uppercase tracking-wider block">Resumo Inteligente (IA)</span>
-                           <span className={`text-[9px] md:text-xs font-bold block ${showAIPanel ? 'text-white/75' : 'text-slate-500'}`}>
-                              {showAIPanel ? 'Ocultar Análise de IA' : 'Resumir, Explicar termos, Auto-Classificar e Detetar Urgência'}
-                           </span>
-                        </div>
-                     </div>
-                     <ArrowRight size={18} className={`transition-transform duration-300 ${showAIPanel ? 'rotate-90' : ''}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {showAIPanel && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="overflow-hidden mt-6"
-                      >
-                        <GovernmentAIPanel 
-                          documentTitle={selectedMessage.details?.subject || selectedMessage.preview}
-                          rawText={`ASSUNTO CONTEÚDO OFICIAL: ${selectedMessage.details?.subject || selectedMessage.preview}
-Orgão Emissor: ${selectedMessage.org}
-Estado Oficial Declarado: ${selectedMessage.status}
-Detalhamento de Corpo de Mensagem:
-${selectedMessage.details?.body || ''}`}
-                          contextType="message"
-                          onLogMsg={(action, type) => addAuditLogToMessage(action)}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className="pt-2 border-t border-slate-100 mt-6 pt-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <small className="text-secondary text-sm font-black tracking-widest uppercase text-indigo-700">Trâmites e Ações Oficiais (Efeito Legal)</small>
-                      <div className="flex-1 h-px bg-slate-150" />
-                    </div>
-                    <div id="gov-official-actions-grid" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-                      {[
-                        { name: 'Responder', icon: MessageSquare, color: 'text-indigo-700 bg-indigo-50/60 hover:bg-indigo-100 border-indigo-200' },
-                        { name: 'Confirmar leitura', icon: CheckCircle, color: 'text-emerald-700 bg-emerald-50/60 hover:bg-emerald-100 border-emerald-200' },
-                        { name: 'Assinar documento', icon: ShieldCheck, color: 'text-teal-700 bg-teal-50/60 hover:bg-teal-100 border-teal-200' },
-                        { name: 'Solicitar revisão', icon: RefreshCw, color: 'text-amber-700 bg-amber-50/60 hover:bg-amber-100 border-amber-200' },
-                        { name: 'Contestação', icon: Scale, color: 'text-rose-700 bg-rose-50/60 hover:bg-rose-100 border-rose-200' },
-                        { name: 'Anexar documento', icon: Paperclip, color: 'text-slate-700 bg-slate-50/60 hover:bg-slate-100 border-slate-200' },
-                        { name: 'Agendar atendimento', icon: Calendar, color: 'text-cyan-700 bg-cyan-50/60 hover:bg-cyan-100 border-cyan-200' },
-                        { name: 'Encaminhar pedido', icon: CornerUpRight, color: 'text-violet-700 bg-violet-50/60 hover:bg-violet-100 border-violet-200' }
-                      ].map((item, idx) => {
-                        const IconComponent = item.icon;
-                        return (
-                          <button
-                            key={idx}
-                            id={`gov-action-btn-${idx}`}
-                            onClick={() => {
-                              // Security verification for Ultra Restrito level
-                              if (sensConfig.level === 'Ultra Restrito' && (item.name === 'Responder' || item.name === 'Encaminhar pedido')) {
-                                setShareBlockedNotice('Bloqueado: Política de Controle de Compartilhamento proíbe reencaminhar ou responder a documentos de nível Ultra Restrito.');
-                                setTimeout(() => setShareBlockedNotice(null), 5000);
-                                return;
-                              }
-                              setActiveOfficialAction(item.name);
-                            }}
-                            className={`flex flex-col items-center justify-center p-4 border rounded-2xl text-[11px] font-black uppercase text-center transition-all hover:scale-[1.02] hover:shadow-xs active:scale-95 gap-2 cursor-pointer ${item.color}`}
-                          >
-                            <IconComponent size={18} strokeWidth={2.5} />
-                            <span>{item.name}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="pt-2">
-                    <div className="flex items-center gap-2 mb-4">
-                      <small className="text-slate-400 text-sm font-bold tracking-widest uppercase">Acções Complementares</small>
-                      <div className="flex-1 h-px bg-line/30" />
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                      {selectedMessage.details.actions.filter(act => act !== 'Ver detalhes').map((act, i) => (
-                        <button 
-                          key={i} 
-                          onClick={() => {
-                            setActiveAction(act);
-                            const lowerAct = act.toLowerCase();
-                            if (lowerAct.includes('baixar') || lowerAct.includes('download') || lowerAct.includes('comprovativo')) {
-                              addAuditLogToMessage('Download efetuado');
-                            } else if (lowerAct.includes('responder') || lowerAct.includes('resposta')) {
-                              addAuditLogToMessage('Resposta enviada');
-                            } else if (lowerAct.includes('encaminhar') || lowerAct.includes('partilhar')) {
-                              addAuditLogToMessage('Correspondência encaminhada');
-                            } else if (lowerAct.includes('confirmar') || lowerAct.includes('aprovar') || lowerAct.includes('pagar') || lowerAct.includes('pagamento')) {
-                              addAuditLogToMessage('Documento aprovado');
-                            } else if (lowerAct.includes('arquivar')) {
-                              addAuditLogToMessage('Arquivamento efetuado');
-                            }
-                          }}
-                          className="flex-1 whitespace-nowrap min-w-[140px] bg-white border border-primary/10 text-primary rounded-xl py-3.5 px-4 text-xs font-bold hover:bg-primary/5 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2"
-                        >
-                          {act}
-                        </button>
-                      ))}
                     </div>
                   </div>
                 </div>

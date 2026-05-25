@@ -477,10 +477,10 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
           </div>
           <div>
             <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Interoperabilidade</h1>
-            <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+            <div className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
                <div className="w-1 h-3 bg-emerald-500 rounded-full" />
                Barramento Governamental & Cooperação Privada
-            </p>
+            </div>
           </div>
         </div>
 

@@ -45,9 +45,11 @@ export function DocumentDetail({
             setSelectedDoc(null);
             setTab('home');
           }}
-          className="p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors text-slate-600"
+          className="flex items-center gap-2.5 px-6 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs md:text-sm text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+          title="Voltar ao Painel"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} className="text-[#384e6e]" />
+          <span>Voltar ao Painel</span>
         </button>
         <div>
           <h3 className="text-base md:text-xl font-black text-primary leading-none">Visualizar Documento</h3>
