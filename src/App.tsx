@@ -331,7 +331,7 @@ export default function App() {
   const [isDocComposing, setIsDocComposing] = useState(false);
   const [docComposeData, setDocComposeData] = useState({ to: '', subject: '', body: '' });
 
-  const [contactForm, setContactForm] = useState({ name: '', bi: '', relation: '' });
+  const [contactForm, setContactForm] = useState({ name: '', bi: '', relation: '', type: 'Normal' as 'Normal' | 'Emergência' });
   const [activeSlide, setActiveSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [showInviteConfirm, setShowInviteConfirm] = useState(false);
@@ -796,6 +796,7 @@ export default function App() {
         bi: contactForm.bi,
         relation: contactForm.relation || "Contato",
         status: "Pendente",
+        type: contactForm.type || "Normal",
       },
       ...prev
     ]);
@@ -812,7 +813,7 @@ export default function App() {
     }
 
     setIsAddingContact(false);
-    setContactForm({ name: '', bi: '', relation: '' });
+    setContactForm({ name: '', bi: '', relation: '', type: 'Normal' });
   };
 
   const handleEmitDocument = (doc: Document, notification: AppNotification) => {

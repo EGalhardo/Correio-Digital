@@ -523,9 +523,9 @@ export const DOCUMENTS: Document[] = [
 ];
 
 export const INITIAL_CONTACTS: Contact[] = [
-  { id: 1, name: "Maria Domingos", bi: "008744221LA011", relation: "Mae", status: "Confirmado" },
-  { id: 2, name: "Joao Manuel", bi: "007112009LA031", relation: "Irmao", status: "Confirmado" },
-  { id: 3, name: "Ana Baptista", bi: "009991332LA018", relation: "Vizinha", status: "Pendente" },
+  { id: 1, name: "Maria Domingos", bi: "008744221LA011", relation: "Mae", status: "Confirmado", type: "Emergência" },
+  { id: 2, name: "Joao Manuel", bi: "007112009LA031", relation: "Irmao", status: "Confirmado", type: "Emergência" },
+  { id: 3, name: "Ana Baptista", bi: "009991332LA018", relation: "Vizinha", status: "Pendente", type: "Normal" },
 ];
 
 export const HIGHLIGHT_SLIDES: Slide[] = [

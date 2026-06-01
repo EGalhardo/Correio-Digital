@@ -74,6 +74,7 @@ export interface Contact {
   bi: string;
   relation: string;
   status: string;
+  type?: 'Normal' | 'Emergência';
 }
 
 export interface Slide {

@@ -9,8 +9,8 @@ import { Plus, UserPlus, ShieldCheck, Send } from 'lucide-react';
 interface AddContactModalProps {
   isAddingContact: boolean;
   setIsAddingContact: (isAdding: boolean) => void;
-  contactForm: { name: string; bi: string; relation: string };
-  setContactForm: (form: (prev: { name: string; bi: string; relation: string }) => { name: string; bi: string; relation: string }) => void;
+  contactForm: { name: string; bi: string; relation: string; type?: 'Normal' | 'Emergência' };
+  setContactForm: (form: any) => void;
   setShowInviteConfirm: (show: boolean) => void;
 }
 
@@ -81,6 +81,33 @@ export function AddContactModal({
                     onChange={e => setContactForm((prev: any) => ({ ...prev, relation: e.target.value }))}
                     className="w-full bg-slate-50 px-4 py-3 rounded-xl text-xs border-2 border-transparent outline-none focus:border-primary/20 focus:bg-white transition-all font-bold text-primary"
                   />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Classificação do Contacto</label>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setContactForm((prev: any) => ({ ...prev, type: 'Normal' }))}
+                      className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        (contactForm.type || 'Normal') === 'Normal'
+                          ? 'bg-primary text-white shadow-sm ring-2 ring-primary/10'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200/80 hover:text-slate-700'
+                      }`}
+                    >
+                      Normal
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setContactForm((prev: any) => ({ ...prev, type: 'Emergência' }))}
+                      className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        contactForm.type === 'Emergência'
+                          ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-550/10'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200/80 hover:text-slate-700'
+                      }`}
+                    >
+                      Emergência
+                    </button>
+                  </div>
                 </div>
               </div>
 

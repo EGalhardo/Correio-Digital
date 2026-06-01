@@ -4,7 +4,7 @@
  */
 
 import { motion } from 'motion/react';
-import { Home, Mail, QrCode, Users, User, BarChart3, Shield, Activity, Scan, Folder } from 'lucide-react';
+import { Home, Mail, QrCode, Users, User, BarChart3, Shield, Activity, Scan, Folder, Receipt } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Message, Document, AppMode } from '../../types';
 
@@ -25,7 +25,6 @@ interface MobileNavBarProps {
 const userItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
-  { id: 'documentos', label: 'Documentos', icon: Folder },
   { id: 'contatos', label: 'Contactos', icon: Users },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
@@ -33,7 +32,6 @@ const userItems: MenuItem[] = [
 const institutionItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
-  { id: 'documentos', label: 'Documentos', icon: Folder },
   { id: 'gov-contatos', label: 'Agentes', icon: Users },
   { id: 'perfil', label: 'Conta', icon: User },
 ];

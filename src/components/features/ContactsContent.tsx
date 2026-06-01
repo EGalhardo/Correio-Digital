@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Users, Plus, Search, ShieldCheck, Trash2, Info } from 'lucide-react';
 import { Contact } from '../../types';
@@ -24,6 +25,13 @@ export function ContactsContent({
   setIsAddingContact,
   setContactToDelete,
 }: ContactsContentProps) {
+  const [selectedClassification, setSelectedClassification] = useState<'Todos' | 'Emergência' | 'Normal'>('Todos');
+
+  const finalContacts = filteredContacts.filter(contact => {
+    if (selectedClassification === 'Todos') return true;
+    const type = contact.type || 'Normal';
+    return type === selectedClassification;
+  });
   return (
     <section className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -75,9 +83,29 @@ export function ContactsContent({
               Lista autenticada de familiares, dependentes e contactos oficiais sincronizados
             </p>
           </div>
+
+          {/* Tabbar para filtro de classificação */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/50 self-start lg:self-center shrink-0">
+            {(['Todos', 'Emergência', 'Normal'] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setSelectedClassification(tab)}
+                className={`relative px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                  selectedClassification === tab
+                    ? tab === 'Emergência'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'bg-primary text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {filteredContacts.length > 0 ? (
+        {finalContacts.length > 0 ? (
           <div className="overflow-auto rounded-[24px] border border-slate-100 bg-slate-50/20 custom-scrollbar max-h-[500px]">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead className="sticky top-0 z-10 bg-primary">
@@ -91,7 +119,7 @@ export function ContactsContent({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 <AnimatePresence mode="popLayout">
-                  {filteredContacts.map((contact, index) => (
+                  {finalContacts.map((contact, index) => (
                     <motion.tr 
                       layout
                       key={contact.id}
@@ -123,10 +151,17 @@ export function ContactsContent({
                         {contact.bi}
                       </td>
                       <td className="py-4 px-5">
-                        <div className="flex items-center gap-1.5 text-indigo-700 font-mono text-[9px] font-black">
+                        <div className="flex items-center gap-1.5 text-indigo-700 font-mono text-[9px] font-black mb-1.5">
                           <ShieldCheck size={10} className="text-indigo-500" />
                           Protocolo Ativo
                         </div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest ${
+                          (contact.type || 'Normal') === 'Emergência'
+                            ? 'bg-red-50 text-red-700 border border-red-150'
+                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                        }`}>
+                          {contact.type || 'Normal'}
+                        </span>
                       </td>
                       <td className="py-4 px-5">
                         <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider ${
@@ -165,7 +200,11 @@ export function ContactsContent({
             <div>
               <h4 className="text-base md:text-lg font-black text-slate-400">Sem contactos à vista</h4>
               <p className="text-xs md:text-sm text-slate-400 font-medium">
-                {searchContact ? `Nenhum resultado para "${searchContact}"` : 'Comece a construir o seu círculo de confiança digital.'}
+                {searchContact 
+                  ? `Nenhum resultado para "${searchContact}"` 
+                  : selectedClassification !== 'Todos'
+                    ? `Nenhum contacto classificado como "${selectedClassification}" encontrado.`
+                    : 'Comece a construir o seu círculo de confiança digital.'}
               </p>
             </div>
             {searchContact && (

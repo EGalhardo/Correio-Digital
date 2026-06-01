@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Landmark, 
   AlertTriangle,
@@ -23,7 +23,9 @@ import {
   Settings,
   Check,
   Bell,
-  Globe
+  Globe,
+  BadgeCheck,
+  X
 } from 'lucide-react';
 import { USER_PROFILE_PHOTO } from '../../constants/data';
 
@@ -71,436 +73,296 @@ export function GovPerfilContent({
   const [showSensitiveData, setShowSensitiveData] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   
-  // Local interface configuration states
-  const [interfaceLanguage, setInterfaceLanguage] = useState<'PT' | 'EN'>('PT');
-  const [activeSessions, setActiveSessions] = useState(3);
-  const [notificationChannel, setNotificationChannel] = useState<'PUSH' | 'SMS' | 'EMAIL'>('PUSH');
-  const [privacyMode, setPrivacyMode] = useState<'PADRÃO' | 'MILITARIZADA'>('PADRÃO');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
   return (
-    <div className="pb-24 space-y-6 md:space-y-8 select-none font-sans text-left">
-      
-      {/* Title Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white">
-              <Shield size={16} />
-            </div>
-            <span className="font-mono text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">
-              Admin &bull; Perfil de Autoridade
-            </span>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">
-            Conta Administrativa
-          </h1>
-          <p className="text-slate-500 font-medium text-xs mt-2 max-w-xl">
-            Credenciais de segurança nacional, ficha de habilitação de autoridade e controle do barramento unificado do Estado.
-          </p>
-        </div>
-      </div>
-
-      {/* Primary Header Card (Edlasio Galhardo & Metadata 2x2) */}
-      <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm flex flex-col xl:flex-row items-center gap-6 xl:gap-10 relative overflow-hidden">
-        {/* Absolute Background Accent */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-50/20 rounded-full blur-3xl pointer-events-none -z-1" />
-        
-        {/* Avatar squircle on the left */}
-        <div className="relative w-28 h-28 md:w-36 md:h-36 shrink-0 z-10">
-          <img 
-            src={USER_PROFILE_PHOTO} 
-            alt="Foto de Edlasio Galhardo" 
-            className="w-full h-full object-cover rounded-[32px] shadow-sm border border-slate-150"
-            referrerPolicy="no-referrer"
-          />
-          {/* Circular green check confirmed badge */}
-          <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white border-4 border-white shadow-md">
-            <Check size={18} strokeWidth={3} />
-          </div>
-        </div>
-
-        {/* Info on the right with 2x2 grid */}
-        <div className="flex-1 w-full text-center xl:text-left space-y-4 xl:space-y-6 z-10">
-          <div className="space-y-1">
-            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 justify-center xl:justify-start">
-              <h2 className="text-2xl md:text-5xl font-black text-slate-900 italic tracking-tighter uppercase mb-0">
-                {profileName}
-              </h2>
-              <div className="flex justify-center md:block">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 shadow-3xs">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-0.5" /> Estado: Activo
-                </span>
+    <section className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Photo & Main Info Card */}
+        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+          
+          <div className="relative mt-4 mb-4">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border-4 border-slate-50 p-1.5 bg-white shadow-xl relative">
+              <img 
+                src={USER_PROFILE_PHOTO} 
+                alt={profileName} 
+                className="w-full h-full rounded-[20px] object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl shadow-md border-2 border-white bg-emerald-500">
+                <BadgeCheck size={16} />
               </div>
             </div>
-            <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs">
-              ID Única Digital &bull; República de Angola
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 w-full">
-            {/* National ID Card (BI) */}
-            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
-              <div className="min-w-0 text-left">
-                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Número de BI
-                </div>
-                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
-                  {showSensitiveData ? bi : bi.replace(/\(?[A-Z0-9]{6}\)?$/, '******')}
-                </div>
+          <h3 className="text-xl font-black text-slate-950 uppercase italic tracking-tight mb-1">{profileName}</h3>
+          <p className="text-slate-400 font-extrabold text-[9px] uppercase tracking-widest leading-none mb-4">Administrador do Estado</p>
+
+          <div className="w-full border-t border-slate-100 my-4" />
+
+          {/* Mini info badge */}
+          <div className="w-full space-y-3 text-left animate-fade-in">
+            <div>
+              <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Nível de Autoridade</span>
+              <span className="text-xs font-bold text-slate-700">Administrador Geral / Central</span>
+            </div>
+            <div className="pt-1">
+              <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Data de Criação da Conta</span>
+              <span className="text-xs font-bold text-slate-700">1 de junho de 2026</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Information fields & Security section */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Information Container */}
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6 text-left">
+            <div className="border-b border-slate-100 pb-4 flex justify-between items-center">
+              <div>
+                <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Informações de Conta</h4>
+                <p className="text-xs text-slate-500 font-medium">Histórico e dados de autoridade na infraestrutura digital do Estado</p>
               </div>
               <button 
+                type="button"
                 onClick={() => setShowSensitiveData(!showSensitiveData)}
-                className="p-2.5 text-slate-400 hover:text-slate-700 transition-colors active:scale-95 bg-white rounded-xl shadow-3xs border border-slate-200"
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider"
               >
-                {showSensitiveData ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showSensitiveData ? <EyeOff size={14} /> : <Eye size={14} />}
+                <span>{showSensitiveData ? 'Ocultar' : 'Revelar'}</span>
               </button>
             </div>
 
-            {/* Telephone Card */}
-            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
-              <div className="min-w-0 text-left">
-                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Telefone Principal
-                </div>
-                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Nome Completo */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo</span>
+                <span className="text-xs font-bold text-slate-800 block">{profileName}</span>
+              </div>
+
+              {/* B.I. */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Bilhete de Identidade (BI)</span>
+                <span className="text-xs font-mono font-bold text-slate-800 block">
+                  {showSensitiveData ? bi : bi.replace(/\(?[A-Z0-9]{6}\)?$/, '******')}
+                </span>
+              </div>
+
+              {/* Email */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Funcional</span>
+                <span className="text-xs font-bold text-slate-800 block mb-1">edlasio.galhardo@mindis.gov.ao</span>
+                <span className="text-[9px] text-amber-600 font-bold bg-amber-50 rounded-lg px-2 py-0.5 border border-amber-100 italic block w-fit">
+                  Não é possível alterar o email funcional
+                </span>
+              </div>
+
+              {/* Telefone */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone Principal</span>
+                <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? phone : phone.replace(/\d{3} \d{3}$/, '*** ***')}
-                </div>
+                </span>
               </div>
-              <div className="p-2.5 text-emerald-500 bg-white rounded-xl shadow-3xs border border-slate-200">
-                <ShieldCheck size={18} />
-              </div>
-            </div>
 
-            {/* Tax ID Contribuinte Card */}
-            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
-              <div className="min-w-0 text-left">
-                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Contribuinte (NIF)
-                </div>
-                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
+              {/* Contribuinte (NIF) */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Contribuinte (NIF)</span>
+                <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? nif : nif.replace(/\d{4}$/, '****')}
-                </div>
+                </span>
               </div>
-              <div className="p-2.5 text-indigo-500 bg-white rounded-xl shadow-3xs border border-slate-200">
-                <IdCard size={18} />
-              </div>
-            </div>
 
-            {/* Passport Card */}
-            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
-              <div className="min-w-0 text-left">
-                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                  Passaporte
-                </div>
-                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
+              {/* Passaporte */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Passaporte</span>
+                <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? passport : passport.replace(/[A-Z0-9]{4}$/, '****')}
-                </div>
+                </span>
               </div>
-              <div className="p-2.5 text-slate-500 bg-white rounded-xl shadow-3xs border border-slate-200">
-                <Plane size={18} />
+
+              {/* Morada */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Departamento / Administração</span>
+                <span className="text-xs font-bold text-slate-800 block">Ministério da Defesa e Infraestrutura de Segurança</span>
+              </div>
+
+              {/* Registo de Acesso */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nível de Acesso</span>
+                <span className="text-xs font-bold text-slate-800 block">Administrador de Sistema (Infraestrutura Central - CDA)</span>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Second Card: Cadastro Eletrónico Harmonizado */}
-      <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm text-left">
-        {/* Forms Field Block - Non-Editable with lock indicators */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          
-          {/* Nome Completo */}
-          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
-              Nome Completo
-            </span>
-            <div className="text-slate-900 font-black text-sm uppercase tracking-tight flex items-center justify-between">
-              <span>{profileName}</span>
-              <Lock size={12} className="text-slate-300" />
-            </div>
-          </div>
-
-          {/* Número de BI */}
-          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
-              Número de BI
-            </span>
-            <div className="text-slate-900 font-mono font-bold text-sm tracking-widest flex items-center justify-between">
-              <span>{bi}</span>
-              <Lock size={12} className="text-slate-300" />
-            </div>
-          </div>
-
-          {/* Data de Nascimento */}
-          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
-              Data de Nascimento
-            </span>
-            <div className="text-slate-900 font-mono font-bold text-sm tracking-wider flex items-center justify-between">
-              <span>{userBirthDate}</span>
-              <Lock size={12} className="text-slate-300" />
-            </div>
-          </div>
-
-          {/* Estado Civil */}
-          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-            <span className="block text-[8px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest">
-              Estado Civil
-            </span>
-            <div className="text-slate-900 font-black text-sm uppercase tracking-tight flex items-center justify-between">
-              <span>{userMaritalStatus}</span>
-              <Lock size={12} className="text-slate-300" />
-            </div>
-          </div>
-
-          {/* Filiação */}
-          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group sm:col-span-2">
-            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
-              Filiação (Progenitores)
-            </span>
-            <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
-              <span>{userFiliation}</span>
-              <Lock size={12} className="text-slate-300" />
-            </div>
-          </div>
-          
-        </div>
-      </div>
-
-      {/* Third Section: Split Dual Columns layout as shown in attached image */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-        
-        {/* Column 1: SEGURANÇA */}
-        <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between text-left relative overflow-hidden">
-          
-          <div className="space-y-6 md:space-y-8">
-            {/* Security Section Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 shadow-sm border border-orange-100 shrink-0">
-                  <Lock size={22} />
+          {/* Security Section */}
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm text-left space-y-6">
+            <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
+                  <Lock size={18} />
                 </div>
                 <div>
-                  <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">
-                    Segurança
-                  </h3>
-                  <p className="text-[9px] @md:text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                    PROTECÇÃO DE IDENTIDADE
-                  </p>
-                </div>
-              </div>
-              {/* Pulse status indicator at top-right corner of card */}
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-550 bg-amber-500 animate-pulse relative">
-                <div className="absolute inset-0 bg-amber-500 rounded-full animate-ping opacity-60" />
-              </div>
-            </div>
-
-            {/* List Rows of Security Settings */}
-            <div className="space-y-3">
-              
-              {/* Autenticação Biométrica */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <span className="text-xs font-bold text-slate-700">Autenticação Biométrica</span>
-                <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${
-                  hasFacialAuth 
-                    ? 'text-emerald-600 bg-emerald-50 border border-emerald-150' 
-                    : 'text-slate-400 bg-slate-100 border border-slate-200'
-                }`}>
-                  {hasFacialAuth ? 'ACTIVADA' : 'INATIVA'}
-                </span>
-              </div>
-
-              {/* Assinatura Digital SME */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <span className="text-xs font-bold text-slate-700">Assinatura Digital SME</span>
-                <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl text-emerald-600 bg-emerald-50 border border-emerald-150">
-                  CERTIFICADA
-                </span>
-              </div>
-
-              {/* Autenticação em Dois Fatores */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <span className="text-xs font-bold text-slate-700 font-sans">Autenticação em Dois Fatores</span>
-                <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${
-                  hasTwoFactor 
-                    ? 'text-emerald-600 bg-emerald-50 border border-emerald-150' 
-                    : 'text-amber-600 bg-amber-50 border border-amber-150'
-                }`}>
-                  {hasTwoFactor ? 'ACTIVADA' : 'INATIVA'}
-                </span>
-              </div>
-
-              {/* Código PIN Governamental */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <span className="text-xs font-bold text-slate-700">Código PIN Governamental</span>
-                <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${
-                  govPin 
-                    ? 'text-emerald-600 bg-emerald-50 border border-emerald-150' 
-                    : 'text-slate-400 bg-slate-100 border border-slate-200'
-                }`}>
-                  {govPin ? 'CONFIGURADO' : 'NÃO DEFINIDO'}
-                </span>
-              </div>
-
-              {/* Histórico de Acessos clickable action */}
-              <button
-                onClick={() => setShowLogs(!showLogs)}
-                className="w-full text-left p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-all group active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-2">
-                  <History size={14} className="text-indigo-600" />
-                  <span className="text-xs font-bold text-slate-700">Histórico de Acessos</span>
-                </div>
-                <span className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-wider">
-                  {showLogs ? 'OCULTAR AUDITORIA' : 'VER LOGS DE AUDITORIA'}
-                </span>
-              </button>
-
-            </div>
-          </div>
-          
-        </div>
-
-        {/* Column 2: PREFERÊNCIAS */}
-        <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between text-left relative overflow-hidden">
-          
-          <div className="space-y-6 md:space-y-8">
-            {/* Preferences Section Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-100 shrink-0">
-                  <Settings size={22} />
-                </div>
-                <div>
-                  <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">
-                    Preferências
-                  </h3>
-                  <p className="text-[9px] @md:text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                    CONFIGURAÇÃO DO SISTEMA
-                  </p>
+                  <h4 className="font-black text-slate-900 text-base uppercase tracking-tight flex items-center gap-2">
+                    🔒 Segurança & Credenciais
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium font-sans">Altere a sua palavra-passe para garantir a integridade do seu perfil de administrador</p>
                 </div>
               </div>
 
-              {/* Action Button: ABRIR CENTRAL */}
               <button 
-                onClick={() => alert("A Central unificada de dados de acesso do utilizador está habilitada localmente.")}
-                className="px-3.5 py-1.5 bg-transparent border border-slate-200 text-slate-800 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                type="button"
+                onClick={() => setShowLogs(!showLogs)}
+                className="px-3 py-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl text-[9px] font-black uppercase tracking-wider text-slate-600 cursor-pointer flex items-center gap-1 shrink-0"
               >
-                ABRIR CENTRAL
+                <History size={11} />
+                <span>{showLogs ? 'Ocultar Logs' : 'Ver Logs'}</span>
               </button>
             </div>
 
-            {/* List Rows of Preferences Settings */}
-            <div className="space-y-3">
-              
-              {/* Idioma da Interface */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <div className="flex items-center gap-2">
-                  <Globe size={13} className="text-slate-400" />
-                  <span className="text-xs font-bold text-slate-700">Idioma da Interface</span>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!currentPassword || !newPassword || !confirmPassword) {
+                setPasswordError('Por favor, preencha todos os campos.');
+                setPasswordSuccess(false);
+                return;
+              }
+              if (newPassword !== confirmPassword) {
+                setPasswordError('As senhas introduzidas não coincidem.');
+                setPasswordSuccess(false);
+                return;
+              }
+              setPasswordSuccess(true);
+              setPasswordError('');
+              setCurrentPassword('');
+              setNewPassword('');
+              setConfirmPassword('');
+            }} className="space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</span>
+                  <input 
+                    type="password"
+                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    placeholder="Senha atual"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
                 </div>
-                <button
-                  onClick={() => setInterfaceLanguage(prev => prev === 'PT' ? 'EN' : 'PT')}
-                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
-                >
-                  {interfaceLanguage === 'PT' ? 'PORTUGUÊS ▾' : 'ENGLISH ▾'}
-                </button>
+                
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Palavra-passe</span>
+                  <input 
+                    type="password"
+                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    placeholder="Nova palavra-passe"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</span>
+                  <input 
+                    type="password"
+                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    placeholder="Repita a nova senha"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
               </div>
 
-              {/* Notificações & Canal */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <div className="flex items-center gap-2">
-                  <Bell size={13} className="text-slate-400" />
-                  <span className="text-xs font-bold text-slate-700">Notificações & Canal</span>
-                </div>
-                <button
-                  onClick={() => setNotificationChannel(prev => prev === 'PUSH' ? 'SMS' : prev === 'SMS' ? 'EMAIL' : 'PUSH')}
-                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
+              <AnimatePresence mode="popLayout">
+                {passwordError && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[11px] text-red-650 font-black bg-red-50 border border-red-150 rounded-xl px-4 py-2.5"
+                  >
+                    {passwordError}
+                  </motion.div>
+                )}
+
+                {passwordSuccess && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[11px] text-emerald-700 font-extrabold bg-emerald-50 border border-emerald-150 rounded-xl px-4 py-2.5 flex items-center gap-1.5"
+                  >
+                    <Check size={14} className="text-emerald-600" />
+                    <span>Palavra-passe alterada com sucesso!</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex justify-end pt-2">
+                <button 
+                  type="submit"
+                  className="bg-primary hover:bg-primary/95 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3.5 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer font-sans"
                 >
-                  NOTIFICAÇÃO {notificationChannel} ▾
+                  Altere a sua palavra-passe
                 </button>
               </div>
-
-              {/* Privacidade & Biometria */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={13} className="text-slate-400" />
-                  <span className="text-xs font-bold text-slate-700">Privacidade & Biometria</span>
-                </div>
-                <button
-                  onClick={() => setPrivacyMode(prev => prev === 'PADRÃO' ? 'MILITARIZADA' : 'PADRÃO')}
-                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
-                >
-                  {privacyMode === 'PADRÃO' ? 'PADRÃO ▾' : 'CDA MÁXIMA ▾'}
-                </button>
-              </div>
-
-              {/* Sessões & Dispositivos */}
-              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
-                <div className="flex items-center gap-2">
-                  <Smartphone size={13} className="text-slate-400" />
-                  <span className="text-xs font-bold text-slate-700">Sessões & Dispositivos</span>
-                </div>
-                <button
-                  onClick={() => setActiveSessions(prev => prev === 3 ? 1 : 3)}
-                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
-                >
-                  {activeSessions} {activeSessions === 1 ? 'ACTIVA' : 'ACTIVAS'} ▾
-                </button>
-              </div>
-
-            </div>
+            </form>
           </div>
-          
         </div>
-
       </div>
 
       {/* Slide-out System Logs Section */}
-      {showLogs && (
-        <motion.div 
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-slate-150/60 rounded-[32px] p-6 md:p-8 shadow-sm text-left"
-        >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
-            <div className="flex items-center gap-2">
-              <History size={16} className="text-[#2563eb]" />
-              <h4 className="font-sans text-xs md:text-sm font-black text-slate-900 uppercase tracking-widest leading-none">
-                Logs de Auditoria de Acesso unificado (SME/AGT)
-              </h4>
-            </div>
-            <span className="font-mono text-[9px] font-black uppercase text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
-              {logs.length} Registros Activos
-            </span>
-          </div>
-
-          <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
-            {logs.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-400 font-semibold uppercase tracking-widest">
-                Sem eventos registados recentemente.
+      <AnimatePresence>
+        {showLogs && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 15 }}
+            className="bg-white border border-slate-150/60 rounded-[32px] p-6 md:p-8 shadow-sm text-left"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <History size={16} className="text-[#2563eb]" />
+                <h4 className="font-sans text-xs md:text-sm font-black text-slate-900 uppercase tracking-widest leading-none">
+                  Logs de Auditoria de Acesso unificado (SME/AGT)
+                </h4>
               </div>
-            ) : (
-              logs.map((log) => (
-                <div key={log.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-slate-100/30 transition-all font-mono text-[10px]">
-                  <div className="flex items-center gap-3">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${
-                      log.type === 'critical' ? 'bg-red-500 animate-pulse' :
-                      log.type === 'warning' ? 'bg-amber-500' :
-                      log.type === 'success' ? 'bg-emerald-505 bg-emerald-500' : 'bg-blue-500'
-                    }`} />
-                    <span className="font-bold text-slate-800 uppercase">{log.action}</span>
-                  </div>
-                  <div className="text-slate-400 font-semibold mt-1.5 sm:mt-0">
-                    {log.timestamp} &bull; <span className="font-bold text-indigo-600 font-sans">{log.user}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </motion.div>
-      )}
+              <span className="font-mono text-[9px] font-black uppercase text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
+                {logs.length} Registros Activos
+              </span>
+            </div>
 
-    </div>
+            <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+              {logs.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-400 font-semibold uppercase tracking-widest">
+                  Sem eventos registados recentemente.
+                </div>
+              ) : (
+                logs.map((log) => (
+                  <div key={log.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-slate-100/30 transition-all font-mono text-[10px]">
+                    <div className="flex items-center gap-3">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${
+                        log.type === 'critical' ? 'bg-red-500 animate-pulse' :
+                        log.type === 'warning' ? 'bg-amber-500' :
+                        log.type === 'success' ? 'bg-emerald-500' : 'bg-blue-500'
+                      }`} />
+                      <span className="font-bold text-slate-800 uppercase">{log.action}</span>
+                    </div>
+                    <div className="text-slate-400 font-semibold mt-1.5 sm:mt-0">
+                      {log.timestamp} &bull; <span className="font-bold text-indigo-600 font-sans">{log.user}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
   );
 }

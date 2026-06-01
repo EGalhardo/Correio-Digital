@@ -228,297 +228,406 @@ export function ProfileContent({
     setIsConfiguringSecurity(false);
   };
 
-  return (
-    <section className="space-y-6">
-      {/* Identity Header */}
-      <div className="bg-white md:border border-slate-100 rounded-[32px] md:rounded-[48px] p-6 md:p-12 shadow-sm flex flex-col md:flex-row items-center gap-6 md:gap-12 relative overflow-hidden group">
-        {/* Decorative Accent */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full -mr-40 -mt-40 blur-3xl group-hover:bg-primary/10 transition-colors pointer-events-none" />
-        
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
 
-        
-        <div className="relative">
-          <div className="w-32 h-32 md:w-48 md:h-48 rounded-[32px] md:rounded-[56px] border-4 border-slate-50 p-1.5 md:p-2 bg-white shadow-2xl relative">
-            <img 
-              src={USER_PROFILE_PHOTO} 
-              alt="Perfil" 
-              className="w-full h-full rounded-[24px] md:rounded-[48px] object-cover shadow-inner"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-white p-2 md:p-3 rounded-2xl md:rounded-3xl shadow-xl border-4 border-white bg-emerald-500">
-              <BadgeCheck size={20} className="md:w-8 md:h-8" />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex-1 text-center md:text-left space-y-4 md:space-y-6">
-          <div className="space-y-1">
-            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 justify-center md:justify-start">
-              <h2 className="text-2xl md:text-5xl font-black text-slate-900 italic tracking-tighter uppercase mb-0">{profileName}</h2>
-              <div className="flex justify-center md:block">
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1" /> Estado: Activo
-                </span>
-              </div>
-            </div>
-            <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs">
-              {isInst ? 'Administração Geral Tributária \u2022 Agente do Estado' : 'ID Única Digital \u2022 República de Angola'}
-            </p>
-          </div>
-
-          <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full max-w-4xl">
-            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${isInst ? 'flex-grow' : 'w-full max-w-2xl'}`}>
-              {/* National ID / Agent ID */}
-              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
-                <div className="min-w-0">
-                  <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    {isInst ? 'Identificação de Agente' : 'Número de BI'}
-                  </div>
-                  <div className="text-slate-900 font-mono font-bold text-sm md:text-base truncate tracking-wider">
-                    {isInst ? 'AGT-DE-2026-8841-EG' : (showSensitiveData ? bi : bi.replace(/\(?[A-Z0-9]{6}\)?$/, '******'))}
-                  </div>
-                </div>
-                {isInst ? (
-                  <div className="p-2.5 text-red-600 bg-white rounded-xl shadow-xs border border-slate-200">
-                    <UserCheck size={18} />
-                  </div>
-                ) : (
-                  <button 
-                    onClick={() => setShowSensitiveData(!showSensitiveData)}
-                    className="p-2.5 text-slate-400 hover:text-primary transition-colors active:scale-90"
-                  >
-                    {showSensitiveData ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                )}
-              </div>
-
-              {/* Phone / Representative Department */}
-              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
-                <div className="min-w-0">
-                  <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    {isInst ? 'Departamento / Repartição' : 'Telefone Principal'}
-                  </div>
-                  <div className="text-slate-900 font-mono font-bold text-xs md:text-sm truncate tracking-wider">
-                    {isInst ? 'Grandes Contribuintes - LUA' : (showSensitiveData ? phone : phone.replace(/\d{3} \d{3}$/, '*** ***'))}
-                  </div>
-                </div>
-                <div className={`p-2.5 rounded-xl shadow-xs border ${isInst ? 'text-red-500 bg-white border-slate-200' : 'text-emerald-500 bg-white border-slate-250'}`}>
-                  {isInst ? <Landmark size={18} /> : <ShieldCheck size={18} />}
-                </div>
-              </div>
-
-              {/* NIF / Agent Tax NIF */}
-              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
-                <div className="min-w-0">
-                  <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    {isInst ? 'NIF do Agente (Pessoal)' : 'Contribuinte (NIF)'}
-                  </div>
-                  <div className="text-slate-900 font-mono font-bold text-sm md:text-base truncate tracking-wider">
-                    {showSensitiveData ? nif : nif.replace(/\d{4}$/, '****')}
-                  </div>
-                </div>
-                <div className="p-2.5 text-indigo-500 bg-white rounded-xl shadow-xs border border-slate-200">
-                  <IdCard size={18} />
-                </div>
-              </div>
-
-              {/* Passport / Functional Email */}
-              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
-                <div className="min-w-0">
-                  <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    {isInst ? 'Correio Eletrónico Funcional' : 'Passaporte'}
-                  </div>
-                  <div className="text-slate-900 font-mono font-bold text-xs md:text-sm truncate tracking-wider">
-                    {isInst ? 'edlasio.galhardo@agt.minfin.gov.ao' : (showSensitiveData ? passport : passport.replace(/[A-Z0-9]{4}$/, '****'))}
-                  </div>
-                </div>
-                <div className={`p-2.5 rounded-xl shadow-xs border ${isInst ? 'text-red-500 bg-white border-slate-200 animate-pulse' : 'text-slate-600 bg-white border-slate-200'}`}>
-                  {isInst ? <Globe size={18} /> : <Plane size={18} />}
-                </div>
-              </div>
-            </div>
-
-            {isInst && (
-              <div id="agt_logo_box" className="w-full lg:w-[260px] bg-transparent border border-slate-200 rounded-[24px] p-6 flex flex-col items-center justify-center shadow-3xs transition-all select-none hover:bg-slate-50/50 self-stretch group/logo shrink-0">
+  if (!isInst) {
+    return (
+      <section className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Photo & Main Info Card */}
+          <div className="lg:col-span-1 bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+            
+            <div className="relative mt-4 mb-4">
+              <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border-4 border-slate-50 p-1.5 bg-white shadow-xl relative">
                 <img 
-                  src="https://i.postimg.cc/1XDX0qsQ/agt.png" 
-                  alt="AGT" 
-                  className="w-24 h-24 md:w-32 md:h-32 object-contain transition-transform group-hover/logo:scale-105"
+                  src={USER_PROFILE_PHOTO} 
+                  alt="João Silva" 
+                  className="w-full h-full rounded-[20px] object-cover"
                   referrerPolicy="no-referrer"
                 />
-                <div className="text-[10px] md:text-[11.5px] font-black text-slate-800 uppercase tracking-widest mt-3 leading-none">AGT</div>
-                <div className="text-[7.5px] md:text-[8.5px] text-slate-400 font-extrabold uppercase tracking-wider mt-1.5">Inst. Pública</div>
+                <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl shadow-md border-2 border-white bg-emerald-500">
+                  <BadgeCheck size={16} />
+                </div>
               </div>
-            )}
+            </div>
+
+            <h3 className="text-xl font-black text-slate-950 uppercase italic tracking-tight mb-1">João Silva</h3>
+            <p className="text-slate-400 font-extrabold text-[9px] uppercase tracking-widest leading-none mb-4">Cidadão Verificado</p>
+
+            <div className="w-full border-t border-slate-100 my-4" />
+
+            {/* Mini info badge */}
+            <div className="w-full space-y-3 text-left animate-fade-in">
+              <div>
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Contacto de Emergência</span>
+                <span className="text-xs font-bold text-slate-700">Protocolo Familiar Activo</span>
+              </div>
+              <div className="pt-1">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Data de Criação da Conta</span>
+                <span className="text-xs font-bold text-slate-700">1 de junho de 2026</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Information fields & Security section */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Information Container */}
+            <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6 text-left">
+              <div className="border-b border-slate-100 pb-4">
+                <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Informações de Conta</h4>
+                <p className="text-xs text-slate-500 font-medium">Histórico e dados cadastrados na infraestrutura digital do cidadão</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Nome Completo */}
+                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo</span>
+                  <span className="text-xs font-bold text-slate-800 block">João Silva</span>
+                </div>
+
+                {/* B.I. */}
+                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">B.I</span>
+                  <span className="text-xs font-mono font-bold text-slate-800 block">123456789</span>
+                </div>
+
+                {/* Email */}
+                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Email</span>
+                  <span className="text-xs font-bold text-slate-800 block mb-1">joao@cidadao.ao</span>
+                  <span className="text-[9px] text-amber-600 font-bold bg-amber-50 rounded-lg px-2 py-0.5 border border-amber-100 italic block w-fit">
+                    Não é possível alterar o email
+                  </span>
+                </div>
+
+                {/* Telefone */}
+                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone</span>
+                  <span className="text-xs font-mono font-bold text-slate-800 block">+244 923 111 222</span>
+                </div>
+
+                {/* Morada */}
+                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Morada</span>
+                  <span className="text-xs font-bold text-slate-800 block">Rua da Paz, 45, Luanda</span>
+                </div>
+
+                {/* Conta Criada em */}
+                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Registo do Sistema</span>
+                  <span className="text-xs font-bold text-slate-800 block">Conta criada em: 1 de junho de 2026</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Section */}
+            <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm text-left space-y-6">
+              <div className="border-b border-slate-100 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
+                  <Lock size={18} />
+                </div>
+                <div>
+                  <h4 className="font-black text-slate-900 text-base uppercase tracking-tight flex items-center gap-2">
+                    🔒 Segurança
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium">Altere a sua palavra-passe para garantir a integridade do seu perfil</p>
+                </div>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                  setPasswordError('Por favor, preencha todos os campos.');
+                  setPasswordSuccess(false);
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  setPasswordError('As senhas introduzidas não coincidem.');
+                  setPasswordSuccess(false);
+                  return;
+                }
+                setPasswordSuccess(true);
+                setPasswordError('');
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+              }} className="space-y-4">
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-1">
+                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</span>
+                    <input 
+                      type="password"
+                      className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                      placeholder="Senha atual"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Palavra-passe</span>
+                    <input 
+                      type="password"
+                      className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                      placeholder="Nova palavra-passe"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</span>
+                    <input 
+                      type="password"
+                      className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                      placeholder="Repita a nova senha"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <AnimatePresence mode="popLayout">
+                  {passwordError && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="text-[11px] text-red-650 font-black bg-red-50 border border-red-150 rounded-xl px-4 py-2.5"
+                    >
+                      {passwordError}
+                    </motion.div>
+                  )}
+
+                  {passwordSuccess && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="text-[11px] text-emerald-700 font-extrabold bg-emerald-50 border border-emerald-150 rounded-xl px-4 py-2.5 flex items-center gap-1.5"
+                    >
+                      <Check size={14} className="text-emerald-600" />
+                      <span>Palavra-passe alterada com sucesso!</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="flex justify-end pt-2">
+                  <button 
+                    type="submit"
+                    className="bg-primary hover:bg-primary/95 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3.5 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer font-sans"
+                  >
+                    Altere a sua palavra-passe
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+    );
+  }
 
-
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Ficha de Identidade Civil Regulamentada */}
-        {!isInst && (
-          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 text-left col-span-1 lg:col-span-2">
-            <div className="flex items-center gap-4 pb-4 border-b border-slate-200">
-              <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                <IdCard size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Dados de Registo Civil</h3>
-                <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Identidade Oficial do Cidadão</p>
-              </div>
-            </div>
-
-            {/* Cadastro Fiel */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</span>
-                <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
-                  <span>{profileName}</span>
-                  <Lock size={12} className="text-slate-400" />
-                </div>
-              </div>
-              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Número de BI</span>
-                <div className="text-slate-905 font-mono font-bold text-sm tracking-widest flex items-center justify-between">
-                  <span>{bi}</span>
-                  <Lock size={12} className="text-slate-400" />
-                </div>
-              </div>
-              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Data de Nascimento</span>
-                <div className="text-slate-905 font-mono font-bold text-sm tracking-wider flex items-center justify-between">
-                  <span>{userBirthDate}</span>
-                  <Lock size={12} className="text-slate-400" />
-                </div>
-              </div>
-              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
-                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Estado Civil</span>
-                <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
-                  <span>{userMaritalStatus}</span>
-                  <Lock size={12} className="text-slate-400" />
-                </div>
-              </div>
-              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group sm:col-span-2">
-                <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Filiação (Progenitores)</span>
-                <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
-                  <span>{userFiliation}</span>
-                  <Lock size={12} className="text-slate-400" />
-                </div>
+  return (
+    <section className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Photo & Main Info Card */}
+        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+          
+          <div className="relative mt-4 mb-4">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border-4 border-slate-50 p-1.5 bg-white shadow-xl relative">
+              <img 
+                src={USER_PROFILE_PHOTO} 
+                alt={profileName} 
+                className="w-full h-full rounded-[20px] object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl shadow-md border-2 border-white bg-emerald-500">
+                <BadgeCheck size={16} />
               </div>
             </div>
           </div>
-        )}
 
-        {/* Security Center */}
-        <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 md:space-y-8 text-left">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 shadow-sm border border-orange-100">
-                <Lock size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Segurança</h3>
-                <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Protecção de Identidade</p>
-              </div>
+          <h3 className="text-xl font-black text-slate-950 uppercase italic tracking-tight mb-1">{profileName}</h3>
+          <p className="text-slate-400 font-extrabold text-[9px] uppercase tracking-widest leading-none mb-4">Agente do Estado</p>
+
+          <div className="w-full border-t border-slate-100 my-4" />
+
+          {/* Mini info badge */}
+          <div className="w-full space-y-3 text-left animate-fade-in">
+            <div>
+              <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Instituição Pública</span>
+              <span className="text-xs font-bold text-slate-700 font-sans">Administração Geral Tributária</span>
             </div>
-            <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] ${hasTwoFactor ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-          </div>
-          <div className="space-y-3">
-            {[
-              { label: 'Autenticação Biométrica', value: hasFacialAuth ? 'Activada' : 'Seleção Facial ausente', icon: <Fingerprint size={20} />, status: hasFacialAuth ? 'success' : 'neutral' },
-              { label: isInst ? 'Assinatura Credenciada AGT' : 'Assinatura Digital SME', value: 'Certificada', icon: <BadgeCheck size={20} />, status: 'success' },
-              { label: 'Autenticação em Dois Fatores', value: hasTwoFactor ? 'Chave Ativa' : 'Inativa', icon: <Smartphone size={20} />, status: hasTwoFactor ? 'success' : 'warning' },
-              { label: isInst ? 'PIN de Validação Operacional' : 'Código PIN Governamental', value: govPin ? 'Configurado' : 'Não definido', icon: <Key size={20} />, status: govPin ? 'success' : 'warning' },
-              { label: isInst ? 'Log de Auditoria Tributária' : 'Histórico de Acessos', value: 'Ver logs de auditoria', icon: <History size={20} />, status: 'neutral', action: () => setIsConfiguringSecurity(true) },
-            ].map((item, i) => (
-              <div 
-                key={i} 
-                onClick={item.action}
-                className="flex items-center justify-between p-4 bg-transparent rounded-2xl border border-slate-200 hover:border-orange-200 transition-all cursor-pointer group"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="text-slate-400 group-hover:text-orange-600 transition-colors">{item.icon}</div>
-                  <span className="text-sm font-bold text-slate-700 tracking-tight">{item.label}</span>
-                </div>
-                <div className={`text-[10px] font-black uppercase tracking-widest ${
-                  item.status === 'success' 
-                    ? 'text-emerald-600' 
-                    : item.status === 'warning' 
-                    ? 'text-amber-600' 
-                    : 'text-slate-400'
-                }`}>
-                  {item.value}
-                </div>
-              </div>
-            ))}
+            <div className="pt-1">
+              <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Data de Registo</span>
+              <span className="text-xs font-bold text-slate-700">1 de junho de 2026</span>
+            </div>
           </div>
         </div>
 
-        {/* Settings & Preferences */}
-        <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 md:space-y-8 text-left">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                <Settings size={24} />
+        {/* Right Column: Information fields & Security section */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Information Container */}
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6 text-left">
+            <div className="border-b border-slate-100 pb-4">
+              <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Informações de Função</h4>
+              <p className="text-xs text-slate-500 font-medium font-sans">Histórico e credenciais funcionais associados a este perfil de utilizador</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Nome Completo */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo</span>
+                <span className="text-xs font-bold text-slate-800 block">{profileName}</span>
               </div>
-              <div>
-                <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Preferências</h3>
-                <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Configuração do Sistema</p>
+
+              {/* Identificação de Agente */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Identificação de Agente</span>
+                <span className="text-xs font-mono font-bold text-slate-800 block">AGT-DE-2026-8841-EG</span>
+              </div>
+
+              {/* Email Funcional */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Funcional</span>
+                <span className="text-xs font-bold text-slate-800 block mb-1 font-sans">edlasio.galhardo@agt.minfin.gov.ao</span>
+                <span className="text-[9px] text-amber-600 font-bold bg-amber-50 rounded-lg px-2 py-0.5 border border-amber-100 italic block w-fit">
+                  Não é possível alterar o email funcional
+                </span>
+              </div>
+
+              {/* NIF do Agente */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">NIF do Agente (Pessoal)</span>
+                <span className="text-xs font-mono font-bold text-slate-800 block">
+                  {showSensitiveData ? nif : nif.replace(/\d{4}$/, '****')}
+                </span>
+              </div>
+
+              {/* Departamento */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 font-sans">Departamento / Repartição</span>
+                <span className="text-xs font-bold text-slate-800 block">Grandes Contribuintes - LUA</span>
+              </div>
+
+              {/* Registo de Acesso */}
+              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Registo do Sistema</span>
+                <span className="text-xs font-bold text-slate-800 block">Conta criada em: 1 de junho de 2026</span>
               </div>
             </div>
-            <button
-              onClick={() => { setPrefSubTab('geral'); setIsPrefsOpen(true); }}
-              className="px-3.5 py-2 bg-primary/10 text-primary hover:bg-primary/20 transition-all text-[10px] uppercase font-black tracking-widest rounded-xl cursor-pointer border-0"
-            >
-              Abrir Central
-            </button>
           </div>
 
-          <div className="space-y-3">
-            {[
-              { 
-                label: 'Idioma da Interface', 
-                value: prefLanguage === 'pt' ? 'Português' : prefLanguage === 'en' ? 'Inglês' : prefLanguage === 'ln' ? 'Kimbundu' : 'Umbundu', 
-                icon: <Languages size={20} />,
-                action: () => { setPrefSubTab('geral'); setIsPrefsOpen(true); }
-              },
-              { 
-                label: 'Notificações & Canal', 
-                value: prefCommChannel, 
-                icon: <Bell size={20} />,
-                action: () => { setPrefSubTab('notificacoes'); setIsPrefsOpen(true); }
-              },
-              { 
-                label: 'Privacidade & Biometria', 
-                value: prefPrivacyLevel === 'standard' ? 'Padrão' : 'Máxima Protecção', 
-                icon: <ShieldCheck size={20} />,
-                action: () => { setPrefSubTab('privacidade'); setIsPrefsOpen(true); }
-              },
-              { 
-                label: 'Sessões & Dispositivos', 
-                value: `${activeSessions.length} Activas`, 
-                icon: <Smartphone size={20} />,
-                action: () => { setPrefSubTab('conectividade'); setIsPrefsOpen(true); }
-              },
-            ].map((item, i) => (
-              <button 
-                key={i} 
-                type="button"
-                onClick={item.action}
-                className="w-full flex items-center justify-between p-4 bg-transparent rounded-2xl border border-slate-200 hover:border-primary/20 transition-all group cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="text-slate-400 group-hover:text-primary transition-colors">{item.icon}</div>
-                  <span className="text-sm font-bold text-slate-700 tracking-tight">{item.label}</span>
+          {/* Security Section */}
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm text-left space-y-6">
+            <div className="border-b border-slate-100 pb-4 flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
+                <Lock size={18} />
+              </div>
+              <div>
+                <h4 className="font-black text-slate-900 text-base uppercase tracking-tight flex items-center gap-2">
+                  🔒 Segurança
+                </h4>
+                <p className="text-xs text-slate-500 font-medium">Altere a sua palavra-passe para garantir a integridade do seu perfil de agente</p>
+              </div>
+            </div>
+
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!currentPassword || !newPassword || !confirmPassword) {
+                setPasswordError('Por favor, preencha todos os campos.');
+                setPasswordSuccess(false);
+                return;
+              }
+              if (newPassword !== confirmPassword) {
+                setPasswordError('As senhas introduzidas não coincidem.');
+                setPasswordSuccess(false);
+                return;
+              }
+              setPasswordSuccess(true);
+              setPasswordError('');
+              setCurrentPassword('');
+              setNewPassword('');
+              setConfirmPassword('');
+            }} className="space-y-4">
+              <div className="flex flex-col gap-4">
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</span>
+                  <input 
+                    type="password"
+                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    placeholder="Senha atual"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                  />
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#1e293b]/80">{item.value}</span>
-                  <Settings className="text-slate-300 group-hover:rotate-90 transition-transform" size={14} />
+                
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Palavra-passe</span>
+                  <input 
+                    type="password"
+                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    placeholder="Nova palavra-passe"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
                 </div>
-              </button>
-            ))}
+
+                <div className="space-y-1">
+                  <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</span>
+                  <input 
+                    type="password"
+                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    placeholder="Repita a nova senha"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <AnimatePresence mode="popLayout">
+                {passwordError && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[11px] text-red-650 font-black bg-red-50 border border-red-150 rounded-xl px-4 py-2.5"
+                  >
+                    {passwordError}
+                  </motion.div>
+                )}
+
+                {passwordSuccess && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[11px] text-emerald-700 font-extrabold bg-emerald-50 border border-emerald-150 rounded-xl px-4 py-2.5 flex items-center gap-1.5"
+                  >
+                    <Check size={14} className="text-emerald-600" />
+                    <span>Palavra-passe alterada com sucesso!</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="flex justify-end pt-2">
+                <button 
+                  type="submit"
+                  className="bg-primary hover:bg-primary/95 text-white text-[10px] font-black uppercase tracking-widest px-6 py-3.5 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer font-sans"
+                >
+                  Altere a sua palavra-passe
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

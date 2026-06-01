@@ -460,8 +460,8 @@ export function GovContactsContent({
 
   const handleCreateWorker = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newWorkerName || !newWorkerRole || !newWorkerAgentId) {
-      alert('Por favor, preencha os dados obrigatórios (Nome, Cargo e ID do Agente).');
+    if (!newWorkerName || !newWorkerEmail || !newWorkerPhone || !newWorkerRole) {
+      alert('Por favor, preencha todos os campos obrigatórios (Nome completo, Email, Telefone e Função/Cargo).');
       return;
     }
 
@@ -469,28 +469,28 @@ export function GovContactsContent({
       setWorkers(prev => prev.map(w => w.id === editingWorkerId ? {
         ...w,
         name: newWorkerName,
-        email: newWorkerEmail || `${newWorkerName.toLowerCase().replace(/\s+/g, '.')}@cda.gov.ao`,
+        email: newWorkerEmail,
         role: newWorkerRole,
-        department: newWorkerDept || 'Suporte CDA',
-        agentId: newWorkerAgentId,
-        phone: newWorkerPhone || '+244 900 000 000',
-        status: newWorkerStatus
+        phone: newWorkerPhone,
+        department: w.department || 'Geral',
+        agentId: w.agentId || `CDA-${Math.floor(1000 + Math.random() * 9000)}`,
+        status: w.status || 'Ativo'
       } : w));
-      addAuditLog?.(`[AGENTES] Registo do agente ${newWorkerName} (${newWorkerAgentId}) atualizado com sucesso.`, 'success');
+      addAuditLog?.(`[AGENTES] Registo do agente ${newWorkerName} atualizado com sucesso.`, 'success');
     } else {
       const newWorker: Trabajador = {
         id: `w-${Date.now()}`,
         name: newWorkerName,
-        email: newWorkerEmail || `${newWorkerName.toLowerCase().replace(/\s+/g, '.')}@cda.gov.ao`,
+        email: newWorkerEmail,
         role: newWorkerRole,
-        department: newWorkerDept || 'Suporte CDA',
-        agentId: newWorkerAgentId,
-        status: newWorkerStatus,
-        lastAccess: 'Nunca acedeu',
-        phone: newWorkerPhone || '+244 900 000 000'
+        phone: newWorkerPhone,
+        department: 'Geral',
+        agentId: `CDA-${Math.floor(1000 + Math.random() * 9000)}`,
+        status: 'Ativo',
+        lastAccess: 'Nunca acedeu'
       };
       setWorkers(prev => [...prev, newWorker]);
-      addAuditLog?.(`[AGENTES] Novo agente ${newWorkerName} (${newWorkerAgentId}) cadastrado com sucesso.`, 'success');
+      addAuditLog?.(`[AGENTES] Novo agente ${newWorkerName} cadastrado com sucesso.`, 'success');
     }
 
     setShowAddWorkerModal(false);
@@ -503,10 +503,10 @@ export function GovContactsContent({
     setNewWorkerName(w.name);
     setNewWorkerEmail(w.email);
     setNewWorkerRole(w.role);
-    setNewWorkerDept(w.department);
-    setNewWorkerAgentId(w.agentId);
+    setNewWorkerDept(w.department || 'Geral');
+    setNewWorkerAgentId(w.agentId || '');
     setNewWorkerPhone(w.phone);
-    setNewWorkerStatus(w.status);
+    setNewWorkerStatus(w.status || 'Ativo');
     setShowAddWorkerModal(true);
   };
 
@@ -528,12 +528,11 @@ export function GovContactsContent({
   const filteredWorkers = useMemo(() => {
     return workers.filter(w => {
       const matchesSearch = w.name.toLowerCase().includes(workerSearch.toLowerCase()) || 
-                            w.agentId.toLowerCase().includes(workerSearch.toLowerCase()) ||
+                            w.email.toLowerCase().includes(workerSearch.toLowerCase()) ||
                             w.role.toLowerCase().includes(workerSearch.toLowerCase());
-      const matchesStatus = workerStatusFilter === 'all' || w.status === workerStatusFilter;
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [workers, workerSearch, workerStatusFilter]);
+  }, [workers, workerSearch]);
 
   if (appMode === 'institution') {
     return (
@@ -553,7 +552,7 @@ export function GovContactsContent({
               Gestão de Agentes
             </h1>
             <p className="text-slate-500 font-medium text-xs mt-2 max-w-xl">
-              Controle de agentes públicos, funcionários e técnicos autorizados da instituição. Administre permissões, estados de atividade e registe novos operadores do sistema.
+              Controle de agentes públicos, funcionários e técnicos autorizados da instituição. Administre as credenciais operacionais e registe novos operadores do sistema.
             </p>
           </div>
 
@@ -570,7 +569,7 @@ export function GovContactsContent({
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
             <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Total de Agentes</span>
             <div className="flex items-baseline gap-2 mt-1">
@@ -579,17 +578,10 @@ export function GovContactsContent({
             </div>
           </div>
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
-            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Agentes Ativos</span>
+            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Canal Regulamentado</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-black text-emerald-600 italic font-mono">{workers.filter(w => w.status === 'Ativo').length}</span>
-              <span className="text-[10px] text-emerald-600 font-bold">Em serviço</span>
-            </div>
-          </div>
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
-            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Outros Estados</span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-black text-amber-600 italic font-mono">{workers.filter(w => w.status !== 'Ativo').length}</span>
-              <span className="text-[10px] text-amber-500 font-bold">Férias / Pendente / Suspenso</span>
+              <span className="text-3xl font-black text-indigo-600 italic font-mono">AGT</span>
+              <span className="text-[10px] text-indigo-500 font-bold">Acesso Governamental</span>
             </div>
           </div>
         </div>
@@ -614,38 +606,25 @@ export function GovContactsContent({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-450" size={13} />
                 <input
                   type="text"
-                  placeholder="Pesquisar por Nome, ID, Cargo..."
+                  placeholder="Pesquisar por Nome, Cargo, Email..."
                   value={workerSearch}
                   onChange={(e) => setWorkerSearch(e.target.value)}
                   className="pl-8 pr-3 py-1.5 w-full sm:w-[220px] bg-slate-55 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 outline-none placeholder:text-slate-400"
                 />
               </div>
-
-              <select
-                value={workerStatusFilter}
-                onChange={(e) => setWorkerStatusFilter(e.target.value)}
-                className="px-2.5 py-1.5 bg-slate-55 border border-slate-200 rounded-xl text-[11px] font-black uppercase text-slate-600 cursor-pointer outline-none"
-              >
-                <option value="all">TODOS OS ESTADOS</option>
-                <option value="Ativo">ATIVO</option>
-                <option value="Suspenso">SUSPENSO</option>
-                <option value="Férias">EM FÉRIAS</option>
-                <option value="Pendente">PENDENTE</option>
-              </select>
             </div>
           </div>
 
           {/* Table Container */}
           <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-55/30">
             <div className="overflow-auto max-h-[500px] custom-scrollbar">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse font-sans">
                 <thead className="sticky top-0 z-10 bg-primary">
                   <tr className="bg-primary text-white text-[9px] font-black uppercase tracking-widest">
-                    <th className="py-3.5 px-5 rounded-l-2xl">Colaborador / Função</th>
-                    <th className="py-3.5 px-3">Depto / ID Agente</th>
-                    <th className="py-3.5 px-3">Contacto Directo</th>
-                    <th className="py-3.5 px-3">Último Acesso</th>
-                    <th className="py-3.5 px-3">Estado</th>
+                    <th className="py-3.5 px-5 rounded-l-2xl">Nome Completo</th>
+                    <th className="py-3.5 px-3">Email</th>
+                    <th className="py-3.5 px-3">Telefone</th>
+                    <th className="py-3.5 px-3">Função / Cargo</th>
                     <th className="py-3.5 px-5 text-right rounded-r-2xl">Ações</th>
                   </tr>
                 </thead>
@@ -655,58 +634,24 @@ export function GovContactsContent({
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-750 text-xs uppercase shadow-3xs">
-                            {(() => {
-                              const initials = w.name.split(' ').map(n => n[0]).slice(0, 2).join('');
-                              return (initials === 'MD' || initials === 'md') ? (
-                                <Users size={14} className="text-indigo-700" />
-                              ) : (
-                                initials
-                              );
-                            })()}
+                            {w.name.split(' ').map(n => n[0]).slice(0, 2).join('') || 'AG'}
                           </div>
                           <div>
                             <span className="font-extrabold text-slate-900 leading-tight block uppercase">{w.name}</span>
-                            <span className="text-[10px] text-slate-455 font-semibold block">{w.email}</span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-4 px-3">
-                        <span className="font-bold text-slate-800 block text-[11px] leading-tight">{w.role}</span>
-                        <span className="font-mono text-[9px] font-black text-indigo-650 bg-indigo-50 border border-indigo-100/70 px-1.5 py-0.5 rounded uppercase tracking-wider mt-0.5 inline-block">
-                          {w.agentId}
-                        </span>
+                      <td className="py-4 px-3 font-semibold text-slate-600">
+                        {w.email}
                       </td>
 
                       <td className="py-4 px-3 font-semibold text-slate-600 font-mono text-[10.5px]">
                         {w.phone}
                       </td>
 
-                      <td className="py-4 px-3 text-[10px] text-slate-455 font-bold font-mono">
-                        {w.lastAccess}
-                      </td>
-
-                      <td className="py-4 px-3">
-                        {w.status === 'Ativo' && (
-                          <span className="inline-flex items-center gap-1 text-emerald-600 text-[9px] font-black uppercase tracking-wider">
-                            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" /> Ativo
-                          </span>
-                        )}
-                        {w.status === 'Suspenso' && (
-                          <span className="inline-flex items-center gap-1 text-red-655 text-[9px] font-black uppercase tracking-wider">
-                            Suspenso
-                          </span>
-                        )}
-                        {w.status === 'Férias' && (
-                          <span className="inline-flex items-center gap-1 text-blue-655 text-[9px] font-black uppercase tracking-wider">
-                            Em Férias
-                          </span>
-                        )}
-                        {w.status === 'Pendente' && (
-                          <span className="inline-flex items-center gap-1 text-amber-600 text-[9px] font-black uppercase tracking-wider">
-                            Pendente
-                          </span>
-                        )}
+                      <td className="py-4 px-3 font-bold text-slate-805 text-[11px]">
+                        {w.role}
                       </td>
 
                       <td className="py-4 px-5 text-right">
@@ -717,17 +662,6 @@ export function GovContactsContent({
                             className="p-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-205 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-3xs cursor-pointer transition-colors"
                           >
                             Editar
-                          </button>
-                          <button
-                            onClick={() => handleToggleWorkerStatus(w.id, w.name, w.status)}
-                            title={w.status === 'Ativo' ? 'Suspender Operador' : 'Reativar Operador'}
-                            className={`p-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-3xs cursor-pointer transition-colors border-0 ${
-                              w.status === 'Ativo' 
-                                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' 
-                                : 'bg-emerald-50 text-emerald-650 hover:bg-emerald-100'
-                            }`}
-                          >
-                            {w.status === 'Ativo' ? 'Suspender' : 'Ativar'}
                           </button>
                           <button
                             onClick={() => handleDeleteWorker(w.id, w.name)}
@@ -743,7 +677,7 @@ export function GovContactsContent({
 
                   {filteredWorkers.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-slate-400">
+                      <td colSpan={5} className="py-12 text-center text-slate-400">
                         <Users size={28} className="mx-auto text-slate-300 mb-2" />
                         <span className="text-[10.5px] font-black uppercase tracking-wider block">Nenhum agente localizado...</span>
                         <p className="text-[9.5px] text-slate-400 font-bold uppercase mt-1">Experimente alterar os critérios de filtro ou pesquisa.</p>
@@ -788,7 +722,7 @@ export function GovContactsContent({
 
                 <form onSubmit={handleCreateWorker} className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome Completo do Agente *</label>
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome Completo *</label>
                     <input
                       required
                       type="text"
@@ -799,85 +733,40 @@ export function GovContactsContent({
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5 font-bold">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Cargo / Função *</label>
-                      <input
-                        required
-                        type="text"
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                        placeholder="Ex: Inspector Chefe"
-                        value={newWorkerRole}
-                        onChange={(e) => setNewWorkerRole(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 font-bold">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">ID do Agente / Código *</label>
-                      <input
-                        required
-                        type="text"
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold font-mono text-indigo-650 outline-none"
-                        placeholder="Ex: CDA-0492"
-                        value={newWorkerAgentId}
-                        onChange={(e) => setNewWorkerAgentId(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 font-bold">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Departamento</label>
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Email *</label>
                     <input
-                      type="text"
+                      required
+                      type="email"
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                      placeholder="Ex: Departamento de Validação Digital - CDA"
-                      value={newWorkerDept}
-                      onChange={(e) => setNewWorkerDept(e.target.value)}
+                      placeholder="f.manuel@cda.gov.ao"
+                      value={newWorkerEmail}
+                      onChange={(e) => setNewWorkerEmail(e.target.value)}
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5 font-bold">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Email Corporativo</label>
-                      <input
-                        type="email"
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                        placeholder="f.manuel@cda.gov.ao"
-                        value={newWorkerEmail}
-                        onChange={(e) => setNewWorkerEmail(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Contacto Telefónico</label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold font-mono text-slate-800 outline-none"
-                        placeholder="+244 923 000 000"
-                        value={newWorkerPhone}
-                        onChange={(e) => setNewWorkerPhone(e.target.value)}
-                      />
-                    </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Telefone *</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold font-mono text-slate-800 outline-none"
+                      placeholder="+244 923 000 000"
+                      value={newWorkerPhone}
+                      onChange={(e) => setNewWorkerPhone(e.target.value)}
+                    />
                   </div>
 
-                  <div className="space-y-1.5 pb-2">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Estado Inicial do Agente</label>
-                    <div className="flex gap-2">
-                      {['Ativo', 'Suspenso', 'Férias', 'Pendente'].map((st) => (
-                        <button
-                          key={st}
-                          type="button"
-                          onClick={() => setNewWorkerStatus(st as any)}
-                          className={`flex-grow py-2 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer border transition-all ${
-                            newWorkerStatus === st 
-                              ? 'bg-indigo-600 text-white border-indigo-600 font-bold' 
-                              : 'bg-slate-50 text-slate-550 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {st === 'Férias' ? 'Férias' : st}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Função / Cargo *</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
+                      placeholder="Ex: Inspetor Chefe"
+                      value={newWorkerRole}
+                      onChange={(e) => setNewWorkerRole(e.target.value)}
+                    />
                   </div>
 
                   {/* Submit / Cancel row */}
