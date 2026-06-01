@@ -374,6 +374,7 @@ export function GovDashboard({
       { name: "Registo Civil", value: 6, color: "#14b8a6" },
       { name: "Seguro Social", value: 6, color: "#f97316" },
       { name: "Administradoras", value: 5, color: "#64748b" },
+      { name: "INE", value: 4, color: "#6366f1" },
     ],
     [],
   );
@@ -655,7 +656,7 @@ export function GovDashboard({
         {/* Resumo Geral - KPI panel */}
         <section
           id="resumo-geral-section"
-          className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm"
+          className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm"
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
@@ -756,579 +757,54 @@ export function GovDashboard({
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Facial Security Integration Section */}
-        <section
-          id="gov-facials-integration-section"
-          className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm"
-        >
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
-              <div className="flex flex-col">
-                <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
-                  Módulo de Segurança Facial & Biometria
-                </h2>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                  Sincronizado com o Core Neural de Identidade Nacional
-                </span>
+        {/* Stats Grid for Users & Provinces - Harmonizing with Trabalhadores page style with gray borders */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs flex flex-col justify-between">
+            <div>
+              <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Total de Utilizadores</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-black text-slate-900 italic font-mono">1.842.150</span>
+                <span className="text-[10px] text-slate-400 font-bold">Cidadãos Inscritos</span>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full text-indigo-700 text-[10px] font-black uppercase tracking-wider">
-              <Fingerprint size={12} className="animate-pulse" />
-              BIOMETRIA ATIVA
+            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2 pt-2 border-t border-slate-100">
+              Cidadãos ativos registados no sistema nacional de Correio Digital de Angola.
+            </p>
+          </div>
+          
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs flex flex-col justify-between">
+            <div>
+              <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Distribuição Geográfica</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-black text-indigo-600 italic font-mono">18</span>
+                <span className="text-[10px] text-indigo-600 font-bold">Províncias Ativas</span>
+              </div>
             </div>
+            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2 pt-2 border-t border-slate-100">
+              Cobertura administrativa total estabelecida com sincronização provincial.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Column 1: Core Metrics Cards */}
-            <div className="space-y-4">
-              <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block mb-2">Métricas Ativas do Servidor</span>
-              
-              {/* Stat 1 */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Modelos Registrados</span>
-                  <span className="text-xl font-black text-slate-950 font-mono mt-1 block">15.240 faces</span>
-                </div>
-                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                  <Scan size={18} />
-                </div>
-              </div>
-
-              {/* Stat 2 */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Acurácia de Matching</span>
-                  <span className="text-xl font-black text-indigo-650 font-mono mt-1 block">98.67%</span>
-                </div>
-                <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                  <ShieldCheck size={18} />
-                </div>
-              </div>
-
-              {/* Stat 3 */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                <div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Fraudes de Spoofing Evitadas</span>
-                  <span className="text-xl font-black text-red-600 font-mono mt-1 block">48 tentativas</span>
-                </div>
-                <div className="p-2.5 bg-red-50 text-red-600 rounded-xl">
-                  <ShieldAlert size={18} />
-                </div>
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs flex flex-col justify-between">
+            <div>
+              <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Taxa de Adesão Média</span>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-3xl font-black text-emerald-600 italic font-mono">+12.5%</span>
+                <span className="text-[10px] text-emerald-600 font-bold">Crescimento Mensal</span>
               </div>
             </div>
-
-            {/* Column 2: Live Feed list */}
-            <div className="lg:col-span-1 space-y-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">Histórico de Validações Recentes</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              </div>
-
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
-                {/* Attempt 1 */}
-                <div className="p-3 bg-slate-50 hover:bg-slate-100/50 border border-slate-100 rounded-xl transition-all flex items-center justify-between group">
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-slate-800 truncate block">Edlasio Galhardo</span>
-                    <span className="text-[9px] font-mono text-slate-400 flex items-center gap-1 mt-0.5">
-                      <span>Cidadão</span>
-                      <span>&bull;</span>
-                      <span>Hoje, 20:15</span>
-                    </span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] text-emerald-600 uppercase font-black tracking-wider block">CONFIRMADO</span>
-                    <span className="text-[9px] font-mono text-slate-500 font-bold">98.8% match</span>
-                  </div>
-                </div>
-
-                {/* Attempt 2 */}
-                <div className="p-3 bg-slate-50 hover:bg-slate-100/50 border border-slate-100 rounded-xl transition-all flex items-center justify-between group">
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-slate-800 truncate block">Afonso Henriques</span>
-                    <span className="text-[9px] font-mono text-slate-400 flex items-center gap-1 mt-0.5">
-                      <span>Instituição (MINFIN)</span>
-                      <span>&bull;</span>
-                      <span>Hoje, 18:42</span>
-                    </span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] text-emerald-600 uppercase font-black tracking-wider block">CONFIRMADO</span>
-                    <span className="text-[9px] font-mono text-slate-500 font-bold">99.4% match</span>
-                  </div>
-                </div>
-
-                {/* Attempt 3 */}
-                <div className="p-3 bg-red-50/40 hover:bg-red-50/60 border border-red-100/70 rounded-xl transition-all flex items-center justify-between group">
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-red-950 truncate block">Desconhecido (#9381)</span>
-                    <span className="text-[9px] font-mono text-red-500 flex items-center gap-1 mt-0.5">
-                      <span>Tentativa inválida</span>
-                      <span>&bull;</span>
-                      <span>Hoje, 15:30</span>
-                    </span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] text-red-600 uppercase font-black tracking-wider block">BLOQUEADO</span>
-                    <span className="text-[9px] font-mono text-red-500 font-bold">Liveness Falhou</span>
-                  </div>
-                </div>
-
-                {/* Attempt 4 */}
-                <div className="p-3 bg-slate-50 hover:bg-slate-100/50 border border-slate-100 rounded-xl transition-all flex items-center justify-between group">
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-slate-800 truncate block">Cláudia Simões</span>
-                    <span className="text-[9px] font-mono text-slate-400 flex items-center gap-1 mt-0.5">
-                      <span>Cidadão</span>
-                      <span>&bull;</span>
-                      <span>Hoje, 10:24</span>
-                    </span>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] text-emerald-600 uppercase font-black tracking-wider block">CONFIRMADO</span>
-                    <span className="text-[9px] font-mono text-slate-500 font-bold">96.5% match</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Column 3: Slider details & Liveness switch representation */}
-            <div className="space-y-4">
-              <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block mb-2">Controlo Integrado do Painel</span>
-              
-              <div className="p-5 bg-slate-950 text-white rounded-2xl space-y-4 shadow-md relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none">
-                  <Lock size={120} />
-                </div>
-                
-                {/* Liveness active state */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block font-mono">Anti-Spoofing</span>
-                    <span className="text-xs font-bold mt-1 block">Liveness Ativo</span>
-                  </div>
-                  <button
-                    onClick={() => setAntiSpoofingEnforced(!antiSpoofingEnforced)}
-                    className={`w-10 h-5.5 rounded-full transition-colors flex items-center px-0.5 shrink-0 ${
-                      antiSpoofingEnforced ? 'bg-indigo-600' : 'bg-slate-800'
-                    }`}
-                  >
-                    <span className={`w-4 h-4 rounded-full bg-white transition-transform ${antiSpoofingEnforced ? 'translate-x-4' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-
-                {/* matching rate slider view */}
-                <div className="pt-2 border-t border-white/5">
-                  <div className="flex justify-between text-[10px] font-bold text-indigo-400 mb-1.5 font-mono">
-                    <span>Mínimo de Confiança</span>
-                    <span className="text-white font-black">{matchingThreshold}%</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="75" 
-                    max="99" 
-                    value={matchingThreshold} 
-                    onChange={(e) => setMatchingThreshold(+e.target.value)}
-                    className="w-full h-1 bg-white/15 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-                  />
-                </div>
-
-                <div className="pt-1.5 flex items-center gap-1.5 text-[8.5px] font-mono text-slate-450 tracking-wider">
-                  <ShieldCheck size={11} className="text-emerald-400" />
-                  SISTEMA TOTALMENTE ENCRIPTADO
-                </div>
-              </div>
-            </div>
+            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2 pt-2 border-t border-slate-100">
+              Adesão média de novos utilizadores com assinatura biométrica validada.
+            </p>
           </div>
-        </section>
-
-        {/* Gestão Operacional & Filas de Trabalho (User requested operational dashboard) */}
-        <section
-          id="gov-operativo-section"
-          className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6"
-        >
-          {/* Header Card inside section */}
-          <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-6 bg-red-650 rounded-full" />
-              <div className="flex flex-col">
-                <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
-                  Gestão Operacional & Fluxo de Expedientes
-                </h2>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                  Selecione o perfil de operação governamental para executar ações de validação
-                </span>
-              </div>
-            </div>
-
-            {/* Profile selectors */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-2xl w-full xl:w-auto">
-              {(Object.keys(ROLE_PERMISSIONS) as GovRole[]).map((roleKey) => {
-                const roleDef = ROLE_PERMISSIONS[roleKey];
-                const isActive = activeRole === roleKey;
-                return (
-                  <button
-                    key={roleKey}
-                    onClick={() => handleRoleChange(roleKey)}
-                    className={`flex-1 xl:flex-none px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                      isActive 
-                        ? "bg-slate-900 text-white shadow-sm font-black" 
-                        : "text-slate-500 hover:text-slate-800 hover:bg-slate-205"
-                    }`}
-                  >
-                    {roleDef.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-6 md:gap-8">
-            {/* Left Column: Role Details & Permissions Matrix */}
-            <div className="space-y-5 bg-slate-50/70 border border-slate-150/70 rounded-[24px] p-5 flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">Perfil Ativo</span>
-                  <h4 className="text-base font-black text-slate-950 uppercase tracking-tight italic flex items-center gap-2">
-                    <UserCheck size={18} className="text-red-600" />
-                    {ROLE_PERMISSIONS[activeRole].label}
-                  </h4>
-                  <p className="text-[11px] text-slate-600 leading-relaxed font-bold uppercase">
-                    {ROLE_PERMISSIONS[activeRole].desc}
-                  </p>
-                </div>
-
-                <div className="border-t border-slate-200/60 pt-4 space-y-3.5">
-                  <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">Matriz de Permissões Regulatórias</span>
-                  
-                  <div className="space-y-2.5">
-                    {[
-                      { key: 'create', label: 'Criar Documento', desc: 'Emissão e autuação de novos expedientes' },
-                      { key: 'sign', label: 'Assinar Digitalmente', desc: 'Aposição de chaves e carimbos PKI' },
-                      { key: 'approve', label: 'Aprovar Pedido', desc: 'Despacho deferido com validade' },
-                      { key: 'reject', label: 'Rejeitar Pedido', desc: 'Indeferimento com justificativa' },
-                      { key: 'forward', label: 'Encaminhar Órgão', desc: 'Trâmite inter-operacional setorial' },
-                      { key: 'archive', label: 'Arquivar Termo', desc: 'Depósito e guarda de processo' },
-                    ].map((perm) => {
-                      const hasPerm = ROLE_PERMISSIONS[activeRole].perms[perm.key as keyof PermMatrix];
-                      return (
-                        <div key={perm.key} className="flex items-start gap-2.5">
-                          <span className={`shrink-0 mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border text-[9px] font-black ${
-                            hasPerm 
-                              ? "bg-emerald-50 border-emerald-100 text-emerald-600" 
-                              : "bg-red-50/50 border-red-100/50 text-red-500 opacity-60"
-                          }`}>
-                            {hasPerm ? "✓" : "✗"}
-                          </span>
-                          <div>
-                            <span className={`block text-[11px] font-black uppercase tracking-tight leading-none ${hasPerm ? "text-slate-800" : "text-slate-400 font-medium"}`}>
-                              {perm.label}
-                            </span>
-                            <span className="block text-[8px] text-slate-450 font-mono tracking-wider mt-0.5 uppercase">
-                              {perm.desc}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-200/60 mt-4 text-[9px] text-slate-400 font-mono font-black tracking-wider uppercase flex items-center gap-1.5 justify-center">
-                <Lock size={12} className="text-red-500 animate-pulse" /> SEGURANÇA OPERACIONAL RIGOROSA
-              </div>
-            </div>
-
-            {/* Right Column: Work Queue and Operations Desk */}
-            <div className="space-y-4">
-              {/* Queue Navigation Tabs */}
-              <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1.5 border-b border-slate-100">
-                {[
-                  { id: 'pendentes', label: 'Pendentes', priority: 'normal', color: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200 text-indigo-700' },
-                  { id: 'urgentes', label: 'Urgentes', priority: 'urgente', color: 'bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700' },
-                  { id: 'criticas', label: 'Críticas', priority: 'critica', color: 'bg-red-50 hover:bg-red-100 border-red-200 text-red-700 animate-pulse' },
-                  { id: 'expiradas', label: 'Expiradas', priority: 'expirada', color: 'bg-slate-100 hover:bg-slate-200 border-slate-250 text-slate-700' },
-                ].map((queue) => {
-                  const isActive = activeQueue === queue.id;
-                  const count = queueCounts[queue.id as keyof typeof queueCounts];
-                  return (
-                    <button
-                      key={queue.id}
-                      onClick={() => {
-                        setActiveQueue(queue.id as any);
-                        const firstFiltered = queueItems.find(i => {
-                          const itemPriority = queue.id === 'pendentes' ? 'normal' : queue.id === 'urgentes' ? 'urgente' : queue.id === 'criticas' ? 'critica' : 'expirada';
-                          return i.priority === itemPriority;
-                        });
-                        if (firstFiltered) {
-                          setSelectedQueueItemId(firstFiltered.id);
-                        }
-                      }}
-                      className={`px-4.5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
-                        isActive 
-                          ? queue.id === 'pendentes' ? 'bg-indigo-650 text-white border-indigo-650 shadow-sm' :
-                            queue.id === 'urgentes' ? 'bg-orange-650 text-white border-orange-650 shadow-sm' :
-                            queue.id === 'criticas' ? 'bg-red-650 text-white border-red-650 shadow-sm animate-pulse' :
-                            'bg-slate-900 text-white border-slate-900 shadow-sm'
-                          : `${queue.color}`
-                      }`}
-                    >
-                      {queue.label}
-                      <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono leading-none font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200/60 text-slate-800'}`}>
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-
-                {/* Create action button */}
-                {ROLE_PERMISSIONS[activeRole].perms.create && (
-                  <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="ml-auto px-4 py-2.5 bg-slate-950 hover:bg-slate-850 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all cursor-pointer"
-                  >
-                    <Plus size={14} /> Autuar Expediente
-                  </button>
-                )}
-              </div>
-
-              {/* Workspace Split Layout: Left is list, Right is actions */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
-                
-                {/* Left Side: Queue Items list */}
-                <div className="space-y-3">
-                  {/* Internal Queue Search */}
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-                    <input
-                      type="text"
-                      placeholder="Pesquisar nesta fila..."
-                      value={queueSearch}
-                      onChange={(e) => setQueueSearch(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-slate-350 focus:bg-white rounded-xl pl-9 pr-4 py-2.5 text-xs font-bold text-slate-900 outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-
-                  {/* List Container */}
-                  <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1 select-none custom-scrollbar">
-                    {filteredQueueItems.length === 0 ? (
-                      <div className="p-8 text-center bg-slate-50 border border-slate-100 rounded-2xl flex flex-col items-center justify-center gap-2">
-                        <span className="text-slate-450 font-mono text-xs">✗</span>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-normal">
-                          Sem expedientes nesta fila de trabalho
-                        </p>
-                      </div>
-                    ) : (
-                      filteredQueueItems.map((item) => {
-                        const isItemSelected = selectedQueueItem?.id === item.id;
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => setSelectedQueueItemId(item.id)}
-                            className={`p-4 border rounded-2xl transition-all cursor-pointer flex flex-col gap-2 relative ${
-                              isItemSelected 
-                                ? "bg-slate-900 border-slate-900 text-white shadow-md transform translate-x-1" 
-                                : "bg-white border-slate-150 hover:bg-slate-50 text-slate-600"
-                            }`}
-                          >
-                            <div className="flex justify-between items-start gap-2">
-                              <div>
-                                <span className={`text-[8.5px] font-mono font-black px-1.5 py-0.5 rounded leading-none ${
-                                  isItemSelected ? "bg-white/10 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
-                                }`}>
-                                  {item.id}
-                                </span>
-                                <h5 className={`font-extrabold text-xs md:text-sm mt-1.5 ${isItemSelected ? "text-white" : "text-slate-900"}`}>
-                                  {item.documentType}
-                                </h5>
-                                <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isItemSelected ? "text-slate-300" : "text-slate-450"}`}>
-                                  Interessado: {item.citizenName} &bull; BI: {item.biNumber}
-                                </p>
-                              </div>
-                              <span className={`px-2 py-0.5 text-[8px] font-black rounded uppercase tracking-wider border shrink-0 ${
-                                item.status === 'Pendente' ? 'bg-indigo-50 border-indigo-100 text-indigo-750' :
-                                item.status === 'Assinado' ? 'bg-blue-50 border-blue-100 text-blue-750' :
-                                item.status === 'Aprovado' ? 'bg-emerald-50 border-emerald-100 text-emerald-750' :
-                                item.status === 'Rejeitado' ? 'bg-red-50 border-red-100 text-red-650' :
-                                item.status === 'Encaminhado' ? 'bg-orange-50 border-orange-100 text-orange-650 animate-pulse' :
-                                'bg-slate-100 border-slate-200 text-slate-600'
-                              }`}>
-                                {item.status}
-                              </span>
-                            </div>
-
-                            <p className={`text-[10.5px] line-clamp-2 leading-relaxed ${isItemSelected ? "text-slate-300" : "text-slate-500 font-medium"}`}>
-                              {item.description}
-                            </p>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-
-                {/* Right Side: Action Console Desk */}
-                <div className="bg-slate-50 border border-slate-150 rounded-2xl p-5 flex flex-col justify-between min-h-[460px]">
-                  {selectedQueueItem ? (
-                    <div className="space-y-4">
-                      {/* Desk Header */}
-                      <div className="border-b border-slate-200/60 pb-3">
-                        <span className="text-[8px] font-mono font-black tracking-widest text-slate-400 uppercase">Mesa de Análise Regulamentar</span>
-                        <h4 className="text-sm font-black text-slate-950 uppercase italic mt-1 leading-snug">
-                          {selectedQueueItem.documentType}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider font-mono">ID: {selectedQueueItem.id}</span>
-                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider font-mono">&bull;</span>
-                          <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider font-mono">Entrada: {selectedQueueItem.date}</span>
-                        </div>
-                      </div>
-
-                      {/* Desk Metadata */}
-                      <div className="space-y-2.5">
-                        <div className="p-3.5 bg-white border border-slate-150 rounded-xl">
-                          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Cidadão Interessado</span>
-                          <span className="block text-xs font-black text-slate-800 uppercase leading-none">{selectedQueueItem.citizenName}</span>
-                          <span className="block text-[9px] font-mono text-slate-500 font-bold mt-1.5 uppercase">BI de Origem: {selectedQueueItem.biNumber}</span>
-                        </div>
-
-                        <div className="p-3.5 bg-white border border-slate-150 rounded-xl leading-relaxed text-xs">
-                          <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Descrição Circunstancial</span>
-                          <span className="text-slate-700 font-medium font-sans block leading-normal">{selectedQueueItem.description}</span>
-                          <span className="block text-[8.5px] text-slate-400 font-mono tracking-wider mt-2.5 uppercase font-bold">Lotação Atual: {selectedQueueItem.institution}</span>
-                        </div>
-                      </div>
-
-                      {/* Decisive Action controls depending on Permissions */}
-                      <div className="border-t border-slate-200/60 pt-4 space-y-3">
-                        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase font-mono block">Ações Disponíveis ({ROLE_PERMISSIONS[activeRole].label})</span>
-
-                        <div className="flex flex-col gap-2">
-                          {/* Sign action */}
-                          <button
-                            disabled={!ROLE_PERMISSIONS[activeRole].perms.sign || selectedQueueItem.status === 'Assinado' || selectedQueueItem.status === 'Aprovado' || selectedQueueItem.status === 'Arquivado'}
-                            onClick={() => handleActionSign(selectedQueueItem)}
-                            className={`w-full py-2.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 cursor-pointer ${
-                              ROLE_PERMISSIONS[activeRole].perms.sign && selectedQueueItem.status !== 'Assinado' && selectedQueueItem.status !== 'Aprovado' && selectedQueueItem.status !== 'Arquivado'
-                                ? "bg-indigo-600 hover:bg-indigo-750 text-white shadow-sm font-black border-0" 
-                                : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
-                            }`}
-                          >
-                            {!ROLE_PERMISSIONS[activeRole].perms.sign && <Lock size={11} />}
-                            Assinar Expediente (PKI)
-                          </button>
-
-                          {/* Approve and Reject Row */}
-                          <div className="grid grid-cols-2 gap-2">
-                            {/* Approve */}
-                            <button
-                              disabled={!ROLE_PERMISSIONS[activeRole].perms.approve || selectedQueueItem.status === 'Aprovado' || selectedQueueItem.status === 'Arquivado'}
-                              onClick={() => handleActionApprove(selectedQueueItem)}
-                              className={`py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
-                                ROLE_PERMISSIONS[activeRole].perms.approve && selectedQueueItem.status !== 'Aprovado' && selectedQueueItem.status !== 'Arquivado'
-                                  ? "bg-emerald-600 hover:bg-emerald-750 text-white shadow-sm font-black border-0" 
-                                  : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
-                              }`}
-                            >
-                              {!ROLE_PERMISSIONS[activeRole].perms.approve && <Lock size={11} />}
-                              Deferir
-                            </button>
-
-                            {/* Reject */}
-                            <button
-                              disabled={!ROLE_PERMISSIONS[activeRole].perms.reject || selectedQueueItem.status === 'Rejeitado' || selectedQueueItem.status === 'Arquivado'}
-                              onClick={() => handleActionReject(selectedQueueItem)}
-                              className={`py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
-                                ROLE_PERMISSIONS[activeRole].perms.reject && selectedQueueItem.status !== 'Rejeitado' && selectedQueueItem.status !== 'Arquivado'
-                                  ? "bg-red-600 hover:bg-red-750 text-white shadow-sm font-black border-0" 
-                                  : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-305"
-                              }`}
-                            >
-                              {!ROLE_PERMISSIONS[activeRole].perms.reject && <Lock size={11} />}
-                              Indeferir
-                            </button>
-                          </div>
-
-                          {/* Rejection reason nested input if Reject action is empowered */}
-                          {ROLE_PERMISSIONS[activeRole].perms.reject && selectedQueueItem.status !== 'Rejeitado' && selectedQueueItem.status !== 'Arquivado' && (
-                            <input
-                              type="text"
-                              placeholder="Indique o motivo fundamentado do indeferimento..."
-                              value={rejectionReason}
-                              onChange={(e) => setRejectionReason(e.target.value)}
-                              className="bg-white border border-slate-250 focus:border-red-400 rounded-xl px-3 py-2 text-[11px] font-bold text-slate-800 outline-none placeholder:font-semibold placeholder:text-slate-400"
-                            />
-                          )}
-
-                          {/* Forward to department custom select action */}
-                          <div className="border-t border-slate-200/60 pt-2.5 grid grid-cols-1 gap-2">
-                            <span className="text-[8px] font-mono font-black tracking-widest text-slate-400 uppercase font-bold">Tramitar para Órgão Coadjuvante</span>
-                            <div className="flex gap-1.5">
-                              <select 
-                                disabled={!ROLE_PERMISSIONS[activeRole].perms.forward || selectedQueueItem.status === 'Arquivado'}
-                                onChange={(e) => {
-                                  if (e.target.value) {
-                                    handleActionForward(selectedQueueItem, e.target.value);
-                                    e.target.value = '';
-                                  }
-                                }}
-                                className={`flex-1 min-w-0 px-3 py-2 border rounded-xl text-[10px] uppercase font-black tracking-widest outline-none transition-all appearance-none cursor-pointer text-slate-700 ${
-                                  ROLE_PERMISSIONS[activeRole].perms.forward && selectedQueueItem.status !== 'Arquivado'
-                                    ? "bg-white border-slate-250 hover:border-slate-350"
-                                    : "bg-slate-200 text-slate-400 cursor-not-allowed border-slate-300"
-                                }`}
-                              >
-                                <option value="">Proceder ao encaminhamento...</option>
-                                <option value="SME">Serviço de Migração e Estrangeiros (SME)</option>
-                                <option value="AGT">Administração Geral Tributária (AGT)</option>
-                                <option value="MINJUS">Ministério da Justiça (MINJUS)</option>
-                                <option value="MED">Ministério da Educação (MED)</option>
-                              </select>
-                              <span className="p-2 shrink-0 bg-slate-100 text-slate-500 rounded-xl border border-slate-200 pointer-events-none flex items-center justify-center select-none">
-                                <Send size={11} />
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Archive action */}
-                          <button
-                            disabled={!ROLE_PERMISSIONS[activeRole].perms.archive || selectedQueueItem.status === 'Arquivado'}
-                            onClick={() => handleActionArchive(selectedQueueItem)}
-                            className={`w-full py-2.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 cursor-pointer mt-1 border-0 ${
-                              ROLE_PERMISSIONS[activeRole].perms.archive && selectedQueueItem.status !== 'Arquivado'
-                                ? "bg-slate-900 hover:bg-slate-850 text-white shadow-sm font-black" 
-                                : "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
-                            }`}
-                          >
-                            {!ROLE_PERMISSIONS[activeRole].perms.archive && <Lock size={11} />}
-                            <FolderArchive size={12} /> Guardar & Arquivar Termo
-                          </button>
-
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="min-h-[290px] flex flex-col justify-center items-center text-center gap-3">
-                      <span className="text-slate-300 text-xl font-bold font-mono">✗</span>
-                      <p className="italic text-[10px] text-slate-400 mx-auto leading-relaxed max-w-[200px] font-sans font-bold uppercase tracking-wider">
-                        Selecione um expediente na fila para abrir a mesa de análise.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
 
         {/* Anti-Fraud Registry Updates - Exclusive for Operators */}
         {activeRole === 'operador' && (
@@ -1615,7 +1091,7 @@ export function GovDashboard({
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Documento</label>
                       <select
@@ -1685,7 +1161,7 @@ export function GovDashboard({
           {/* Category Donut Card */}
           <section
             id="categoria-card"
-            className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm min-h-[480px] flex flex-col justify-between"
+            className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm min-h-[480px] flex flex-col justify-between"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-1 h-5 bg-red-600 rounded-full" />
@@ -1737,7 +1213,7 @@ export function GovDashboard({
                 </div>
               </div>
 
-              <div className="w-full md:w-[55%] space-y-2 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar grid grid-cols-2 gap-x-4">
+              <div className="w-full md:w-[55%] overflow-y-auto max-h-[300px] pr-1 custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {categoryData.map((cat) => (
                   <div
                     key={cat.name}
@@ -1764,7 +1240,7 @@ export function GovDashboard({
           {/* Outline Map container */}
           <section
             id="provincia-card"
-            className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm min-h-[480px] flex flex-col justify-between"
+            className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm min-h-[480px] flex flex-col justify-between"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-1 h-5 bg-red-600 rounded-full" />
@@ -1775,7 +1251,7 @@ export function GovDashboard({
 
             <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0 items-center justify-center">
               {/* Visual Maps Representation: Angola Provinces Map */}
-              <div className="w-full md:w-[50%] h-[240px] md:h-full flex flex-col items-center justify-center relative bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 overflow-hidden group/map select-none">
+              <div className="w-full md:w-[50%] h-[240px] md:h-full flex flex-col items-center justify-center relative bg-slate-50/50 p-4 rounded-2xl border border-slate-200 overflow-hidden group/map select-none">
                 
                 {/* Sized aspect ratio wrapper ensuring perfect coordinate synchronization */}
                 <div className="relative w-[190px] h-[220px]">
@@ -1786,29 +1262,8 @@ export function GovDashboard({
                     referrerPolicy="no-referrer"
                   />
 
-                  {/* Tactical Crosslines active on hover */}
-                  {hoveredProvince && (
-                    <>
-                      {/* Horizontal Targeting Line */}
-                      <div 
-                        className="absolute left-0 right-0 h-[1px] border-b border-dashed border-red-500/40 pointer-events-none transition-all duration-300 z-10"
-                        style={{ 
-                          top: mapPins.find(p => p.id === hoveredProvince)?.top || "50%" 
-                        }}
-                      />
-                      {/* Vertical Targeting Line */}
-                      <div 
-                        className="absolute top-0 bottom-0 w-[1px] border-r border-dashed border-red-500/40 pointer-events-none transition-all duration-300 z-10"
-                        style={{ 
-                          left: mapPins.find(p => p.id === hoveredProvince)?.left || "50%" 
-                        }}
-                      />
-                    </>
-                  )}
-
                   {/* Pins Overlays */}
                   {mapPins.map((pin) => {
-                    const isHovered = hoveredProvince === pin.id;
                     const isSelected = selectedProvince === pin.id;
                     return (
                       <div
@@ -1819,8 +1274,6 @@ export function GovDashboard({
                           left: pin.left,
                           transform: "translate(-50%, -50%)"
                         }}
-                        onMouseEnter={() => setHoveredProvince(pin.id)}
-                        onMouseLeave={() => setHoveredProvince(null)}
                         onClick={() => {
                           setSelectedProvince(selectedProvince === pin.id ? null : pin.id);
                         }}
@@ -1828,9 +1281,7 @@ export function GovDashboard({
                         {/* Interactive Highlight Pulse Wave */}
                         <div 
                           className={`absolute w-8 h-8 -top-3 -left-3 rounded-full border transition-all duration-500 ${
-                            isHovered 
-                              ? "border-red-500 bg-red-500/15 scale-125" 
-                              : isSelected
+                            isSelected
                               ? "border-red-600 bg-red-600/15 scale-110"
                               : "border-transparent"
                           }`}
@@ -1838,9 +1289,7 @@ export function GovDashboard({
 
                         {/* Secondary Pin Glow */}
                         <span className={`absolute inline-flex rounded-full opacity-75 animate-ping -top-1.5 -left-1.5 ${
-                          isHovered 
-                            ? "h-4 w-4 bg-red-600" 
-                            : isSelected
+                          isSelected
                             ? "h-4 w-4 bg-red-700"
                             : "h-3 w-3 bg-red-400/20"
                         }`} />
@@ -1848,31 +1297,11 @@ export function GovDashboard({
                         {/* Core Dot Indicator */}
                         <div 
                           className={`w-2.5 h-2.5 rounded-full shadow-md transition-all duration-300 ${
-                            isHovered 
-                              ? "bg-red-650 scale-125 ring-4 ring-red-100" 
-                              : isSelected
+                            isSelected
                               ? "bg-red-700 scale-115 ring-4 ring-red-200"
-                              : "bg-red-500 hover:bg-red-650 hover:scale-110 ring-2 ring-white"
+                              : "bg-red-500 hover:scale-110 ring-2 ring-white"
                           }`}
                         />
-
-                        {/* Floating Tactile HUD Card Overlay */}
-                        {isHovered && (
-                          <div className="absolute left-5 top-1/2 -translate-y-1/2 bg-slate-900/95 border border-red-500/40 text-white rounded-xl p-2.5 shadow-xl whitespace-nowrap pointer-events-none z-30 font-mono text-[8px] flex flex-col gap-0.5 min-w-[130px] transition-all duration-200">
-                            <span className="font-sans font-black uppercase text-red-500 text-[9px] tracking-wide mb-0.5 flex items-center justify-between">
-                              {pin.name}
-                              <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block animate-pulse" />
-                            </span>
-                            <div className="flex justify-between gap-3 text-slate-350">
-                              <span>Correspondências:</span>
-                              <span className="font-black text-white text-[9px]">{pin.count.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between gap-3 text-slate-400 text-[7px] border-t border-slate-800/65 pt-1 mt-0.5">
-                              <span>Canal CDA:</span>
-                              <span className="text-green-400 font-bold uppercase tracking-widest text-[7px]">Ativo</span>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -1886,22 +1315,17 @@ export function GovDashboard({
 
               {/* Province listings matching layout exact specifications */}
               <div className="w-full md:w-[50%] flex flex-col justify-between h-full min-h-[220px]">
-                <div className="space-y-1.5 overflow-y-auto max-h-[190px] pr-1 custom-scrollbar">
+                <div className="space-y-1.5 overflow-y-auto max-h-[280px] pr-1 custom-scrollbar">
                   {provinceData.map((prov) => {
-                    const isHovered = hoveredProvince === prov.id;
                     const isSelected = selectedProvince === prov.id;
                     return (
                       <div
                         key={prov.name}
-                        onMouseEnter={() => setHoveredProvince(prov.id)}
-                        onMouseLeave={() => setHoveredProvince(null)}
                         onClick={() => {
                           setSelectedProvince(selectedProvince === prov.id ? null : prov.id);
                         }}
                         className={`flex justify-between items-center text-[10px] p-2.5 rounded-xl border transition-all cursor-pointer group ${
-                          isHovered
-                            ? "bg-red-50/50 border-red-200 text-red-950 scale-[1.02] shadow-sm"
-                            : isSelected
+                          isSelected
                             ? "bg-red-50/70 border-red-300 text-red-950 scale-[1.01] shadow-sm"
                             : "bg-slate-50/30 border-transparent hover:bg-slate-50 hover:border-slate-100 text-slate-600"
                         }`}
@@ -1912,9 +1336,7 @@ export function GovDashboard({
                         </span>
                         <span
                           className={`font-mono font-black tracking-tighter ${
-                            isHovered
-                              ? "text-red-650"
-                              : isSelected
+                            isSelected
                               ? "text-red-700"
                               : "text-slate-950"
                           }`}
@@ -1927,33 +1349,44 @@ export function GovDashboard({
                 </div>
 
                 {/* Sub regional interactive diagnostic card */}
-                <div className="mt-3 p-3 bg-slate-50/90 border border-slate-100/80 rounded-2xl min-h-[56px] flex items-center justify-between text-[10px] text-slate-500 transition-all duration-300">
-                  {selectedProvince ? (
-                    <div className="w-full flex justify-between items-center transition-all animate-fadeIn">
-                      <div>
-                        <span className="font-mono text-[8px] font-black uppercase text-red-600 block leading-none mb-1 tracking-wider">
-                          Província Ativa: {provinceData.find(p => p.id === selectedProvince)?.name}
-                        </span>
-                        <p className="text-[9px] text-slate-400 font-medium font-sans">
-                          Canal seguro CDA estabelecido e operando com {provinceData.find(p => p.id === selectedProvince)?.count.toLocaleString()} registros ativos.
+                {(() => {
+                  const activeProv = selectedProvince 
+                    ? provinceData.find(p => p.id === selectedProvince) 
+                    : null;
+                  return (
+                    <div className={`mt-3 p-3.5 border rounded-2xl min-h-[70px] flex items-center justify-between text-[10.5px] transition-all duration-300 ${
+                      activeProv 
+                        ? "bg-red-50/95 border-red-200 text-red-950 shadow-md ring-2 ring-red-500/20" 
+                        : "bg-slate-50/90 border-slate-100/80 text-slate-500"
+                    }`}>
+                      {activeProv ? (
+                        <div className="w-full flex justify-between items-center transition-all animate-fadeIn">
+                          <div>
+                            <span className="font-mono text-[9px] font-black uppercase text-red-600 block leading-none mb-1 tracking-wider">
+                              Província Ativa: {activeProv.name}
+                            </span>
+                            <p className="text-[11px] text-slate-850 font-bold font-sans">
+                              Canal seguro CDA estabelecido e operando com {activeProv.count.toLocaleString()} registros ativos.
+                            </p>
+                          </div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProvince(null);
+                            }}
+                            className="p-1.5 px-3 bg-white border border-red-300 hover:border-red-400 text-red-700 hover:bg-red-50 rounded-xl text-[8.5px] font-mono uppercase font-black tracking-wider shadow-sm transition-all shrink-0 cursor-pointer"
+                          >
+                            Limpar
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="italic text-[9.5px] text-slate-400 mx-auto text-center font-medium leading-relaxed max-w-[220px] font-sans">
+                          Selecione uma província no mapa ou na lista acima para ver os dados exibidos.
                         </p>
-                      </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedProvince(null);
-                        }}
-                        className="p-1 px-2.5 bg-white border border-slate-200 hover:border-slate-350 text-slate-800 rounded-lg text-[8px] font-mono uppercase font-black tracking-wider shadow-sm transition-all shrink-0 hover:bg-slate-50"
-                      >
-                        Desativar
-                      </button>
+                      )}
                     </div>
-                  ) : (
-                    <p className="italic text-[9px] text-slate-400 mx-auto text-center font-medium leading-relaxed max-w-[200px] font-sans">
-                      Selecione uma província no mapa ou na lista acima para diagnósticos integrados regionais.
-                    </p>
-                  )}
-                </div>
+                  );
+                })()}
               </div>
             </div>
           </section>

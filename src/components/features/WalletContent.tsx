@@ -32,13 +32,14 @@ export function WalletContent({
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestData, setRequestData] = useState({ institution: 'AGT', docType: '' });
 
-  const INSTITUTIONS = ['AGT', 'SME', 'MINFIN', 'PNA', 'Conservatória'];
+  const INSTITUTIONS = ['AGT', 'SME', 'MINFIN', 'PNA', 'Conservatória', 'INE'];
   const DOC_TYPES = {
     'AGT': ['NIF Digital', 'Certidão de Contribuinte'],
     'SME': ['Passaporte Digital', 'Autorização de Residência'],
     'MINFIN': ['Comprovativo de IRT', 'Taxa de Circulação'],
     'PNA': ['Carta de Condução', 'Livrete Digital'],
-    'Conservatória': ['Assento de Nascimento', 'Certidão de Casamento']
+    'Conservatória': ['Assento de Nascimento', 'Certidão de Casamento'],
+    'INE': ['Certificação Estatística', 'Inquérito de Agregado Familiar']
   };
 
   const handleRequestSubmit = () => {

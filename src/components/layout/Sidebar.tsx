@@ -22,11 +22,13 @@ interface SidebarProps {
   handleLogout: (clearAll?: boolean) => void;
   appMode: AppMode;
   setAppMode: (mode: AppMode) => void;
+  setStage?: (stage: string) => void;
 }
 
 const userItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
+  { id: 'documentos', label: 'Documentos', icon: Folder },
   { id: 'contatos', label: 'Contactos', icon: Users },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
@@ -34,15 +36,17 @@ const userItems: MenuItem[] = [
 const institutionItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
+  { id: 'documentos', label: 'Documentos', icon: Folder },
+  { id: 'gov-contatos', label: 'Agentes', icon: Users },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
 
 const adminItems: MenuItem[] = [
   { id: 'gov-dashboard', label: 'Painel', icon: BarChart3 },
-  { id: 'gov-interoperabilidade', label: 'Interoperabilidade', icon: Activity },
-  { id: 'gov-contatos', label: 'Usuário Geral', icon: Users },
-  { id: 'gov-perfil', label: 'Instituição Geral', icon: Landmark },
-  { id: 'gov-seguranca', label: 'Segurança Facial', icon: Scan },
+  { id: 'gov-interoperabilidade', label: 'Instituição', icon: Activity },
+  { id: 'gov-contatos', label: 'Usuário', icon: Users },
+  { id: 'gov-trabalhadores', label: 'Agentes', icon: Users },
+  { id: 'gov-perfil', label: 'Conta', icon: User },
 ];
 
 export function Sidebar({ 
@@ -52,7 +56,8 @@ export function Sidebar({
   setSelectedDoc, 
   handleLogout,
   appMode,
-  setAppMode
+  setAppMode,
+  setStage
 }: SidebarProps) {
   
   const getItemsForMode = () => {
@@ -77,7 +82,7 @@ export function Sidebar({
             key={id}
             onClick={() => {
               setTab(id);
-              if (id !== 'correspondencias' && id !== 'mensagem') setSelectedMessage(null);
+              if (id !== 'correspondencias' && id !== 'documentos' && id !== 'mensagem') setSelectedMessage(null);
               if (id !== 'documento') setSelectedDoc(null);
             }}
             className={`w-full flex items-center gap-3 px-2 py-2 rounded-xl font-bold transition-all ${
@@ -101,6 +106,9 @@ export function Sidebar({
             onClick={() => {
               setAppMode('user');
               setTab('home');
+              if (setStage) {
+                setStage('splash');
+              }
             }}
             className={`px-1.5 py-1 font-black text-[10px] uppercase tracking-wider transition-all ${
               appMode === 'user' 
@@ -116,6 +124,9 @@ export function Sidebar({
             onClick={() => {
               setAppMode('institution');
               setTab('home');
+              if (setStage) {
+                setStage('splash');
+              }
             }}
             className={`px-1.5 py-1 font-black text-[10px] uppercase tracking-wider transition-all ${
               appMode === 'institution' 
@@ -131,6 +142,9 @@ export function Sidebar({
             onClick={() => {
               setAppMode('admin');
               setTab('gov-dashboard');
+              if (setStage) {
+                setStage('splash');
+              }
             }}
             className={`px-1.5 py-1 font-black text-[10px] uppercase tracking-wider transition-all ${
               appMode === 'admin' 

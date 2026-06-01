@@ -9,7 +9,7 @@ import {
   Languages, Bell, Users, LogOut, Trash2, Scan, IdCard, Plane, Shield, 
   Key, Smartphone, Camera, Check, X, ChevronRight, UserCheck, AlertTriangle, ShieldAlert, 
   RefreshCw, Award, Landmark, CheckCircle2, CircleDot, Globe, Cpu, Server, 
-  Laptop, WifiOff, Clock
+  Laptop, WifiOff, Clock, Sparkles
 } from 'lucide-react';
 import { USER_PROFILE_PHOTO } from '../../constants/data';
 import { OfflineManager } from '../../utils/offlineManager';
@@ -245,16 +245,8 @@ export function ProfileContent({
               className="w-full h-full rounded-[24px] md:rounded-[48px] object-cover shadow-inner"
               referrerPolicy="no-referrer"
             />
-            <div className={`absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-white p-2 md:p-3 rounded-2xl md:rounded-3xl shadow-xl border-4 border-white ${
-              verificationStatus === 'Totalmente verificado' 
-                ? 'bg-emerald-500' 
-                : 'bg-red-500'
-            }`}>
-              {verificationStatus === 'Totalmente verificado' ? (
-                <BadgeCheck size={20} className="md:w-8 md:h-8" />
-              ) : (
-                <Shield size={20} className="md:w-8 md:h-8" />
-              )}
+            <div className="absolute -bottom-2 -right-2 md:-bottom-3 md:-right-3 text-white p-2 md:p-3 rounded-2xl md:rounded-3xl shadow-xl border-4 border-white bg-emerald-500">
+              <BadgeCheck size={20} className="md:w-8 md:h-8" />
             </div>
           </div>
         </div>
@@ -264,15 +256,9 @@ export function ProfileContent({
             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 justify-center md:justify-start">
               <h2 className="text-2xl md:text-5xl font-black text-slate-900 italic tracking-tighter uppercase mb-0">{profileName}</h2>
               <div className="flex justify-center md:block">
-                {verificationStatus === 'Totalmente verificado' ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 shadow-2xs">
-                    <CheckCircle2 size={12} className="text-emerald-500" /> Totalmente verificado
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-red-100 animate-pulse">
-                    <Shield size={12} className="text-red-500" /> Não verificado
-                  </span>
-                )}
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1" /> Estado: Activo
+                </span>
               </div>
             </div>
             <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs">
@@ -283,7 +269,7 @@ export function ProfileContent({
           <div className="flex flex-col lg:flex-row items-stretch gap-3 w-full max-w-4xl">
             <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${isInst ? 'flex-grow' : 'w-full max-w-2xl'}`}>
               {/* National ID / Agent ID */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs hover:bg-slate-100/50 transition-colors">
+              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
                 <div className="min-w-0">
                   <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
                     {isInst ? 'Identificação de Agente' : 'Número de BI'}
@@ -293,7 +279,7 @@ export function ProfileContent({
                   </div>
                 </div>
                 {isInst ? (
-                  <div className="p-2.5 text-red-600 bg-white rounded-xl shadow-xs border border-red-50">
+                  <div className="p-2.5 text-red-600 bg-white rounded-xl shadow-xs border border-slate-200">
                     <UserCheck size={18} />
                   </div>
                 ) : (
@@ -307,7 +293,7 @@ export function ProfileContent({
               </div>
 
               {/* Phone / Representative Department */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs hover:bg-slate-100/50 transition-colors">
+              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
                 <div className="min-w-0">
                   <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
                     {isInst ? 'Departamento / Repartição' : 'Telefone Principal'}
@@ -316,13 +302,13 @@ export function ProfileContent({
                     {isInst ? 'Grandes Contribuintes - LUA' : (showSensitiveData ? phone : phone.replace(/\d{3} \d{3}$/, '*** ***'))}
                   </div>
                 </div>
-                <div className={`p-2.5 rounded-xl shadow-xs border ${isInst ? 'text-red-500 bg-white border-red-50' : 'text-emerald-500 bg-white border-emerald-50'}`}>
+                <div className={`p-2.5 rounded-xl shadow-xs border ${isInst ? 'text-red-500 bg-white border-slate-200' : 'text-emerald-500 bg-white border-slate-250'}`}>
                   {isInst ? <Landmark size={18} /> : <ShieldCheck size={18} />}
                 </div>
               </div>
 
               {/* NIF / Agent Tax NIF */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs hover:bg-slate-100/50 transition-colors">
+              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
                 <div className="min-w-0">
                   <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
                     {isInst ? 'NIF do Agente (Pessoal)' : 'Contribuinte (NIF)'}
@@ -331,13 +317,13 @@ export function ProfileContent({
                     {showSensitiveData ? nif : nif.replace(/\d{4}$/, '****')}
                   </div>
                 </div>
-                <div className="p-2.5 text-indigo-500 bg-white rounded-xl shadow-xs border border-indigo-50">
+                <div className="p-2.5 text-indigo-500 bg-white rounded-xl shadow-xs border border-slate-200">
                   <IdCard size={18} />
                 </div>
               </div>
 
               {/* Passport / Functional Email */}
-              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs hover:bg-slate-100/50 transition-colors">
+              <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group/field shadow-3xs transition-colors">
                 <div className="min-w-0">
                   <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
                     {isInst ? 'Correio Eletrónico Funcional' : 'Passaporte'}
@@ -346,14 +332,14 @@ export function ProfileContent({
                     {isInst ? 'edlasio.galhardo@agt.minfin.gov.ao' : (showSensitiveData ? passport : passport.replace(/[A-Z0-9]{4}$/, '****'))}
                   </div>
                 </div>
-                <div className={`p-2.5 rounded-xl shadow-xs border ${isInst ? 'text-red-500 bg-white border-red-100 animate-pulse' : 'text-slate-600 bg-white border-slate-100'}`}>
+                <div className={`p-2.5 rounded-xl shadow-xs border ${isInst ? 'text-red-500 bg-white border-slate-200 animate-pulse' : 'text-slate-600 bg-white border-slate-200'}`}>
                   {isInst ? <Globe size={18} /> : <Plane size={18} />}
                 </div>
               </div>
             </div>
 
             {isInst && (
-              <div id="agt_logo_box" className="w-full lg:w-[260px] bg-slate-50 border border-slate-100 rounded-[24px] p-6 flex flex-col items-center justify-center shadow-3xs transition-all select-none hover:bg-slate-100/50 self-stretch group/logo shrink-0">
+              <div id="agt_logo_box" className="w-full lg:w-[260px] bg-transparent border border-slate-200 rounded-[24px] p-6 flex flex-col items-center justify-center shadow-3xs transition-all select-none hover:bg-slate-50/50 self-stretch group/logo shrink-0">
                 <img 
                   src="https://i.postimg.cc/1XDX0qsQ/agt.png" 
                   alt="AGT" 
@@ -368,131 +354,53 @@ export function ProfileContent({
         </div>
       </div>
 
-      {/* Dynamic Identity Verification Banner/Cta */}
-      {!isInst && (
-        <div className="bg-gradient-to-br from-indigo-950 to-slate-905 rounded-[32px] p-6 md:p-10 text-white relative overflow-hidden shadow-xl border border-indigo-950/30">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full -mr-28 -mt-28 blur-3xl pointer-events-none" />
-          <div className="absolute -left-10 -bottom-10 w-64 h-64 bg-slate-800/10 rounded-full blur-2xl pointer-events-none" />
-          
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-3 text-left">
-              <div className="flex items-center gap-2.5">
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-widest rounded-full border ${
-                  verificationStatus === 'Totalmente verificado' 
-                    ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' 
-                    : 'bg-amber-500/10 text-amber-300 border-amber-500/20 animate-pulse'
-                }`}>
-                  {verificationStatus}
-                </span>
-                <span className="text-indigo-200 text-[10px] font-black uppercase tracking-widest">Identidade Oficial Segura</span>
-              </div>
-              <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tight">Portal de Credenciais Digitais</h3>
-              <p className="text-indigo-150 text-xs md:text-sm font-medium max-w-xl leading-relaxed">
-                O seu portal do Correio Digital de Angola opera com autenticação multifatorial. Mantenha os seus dados validados biometricamente e use o seu PIN para assinar correspondência de efeito legal do Estado.
-              </p>
-            </div>
 
-            <div className="shrink-0 flex flex-col gap-2.5 w-full md:w-auto">
-              {verificationStatus !== 'Totalmente verificado' ? (
-                <button 
-                  onClick={() => {
-                    setTempBi(bi);
-                    setTempNif(nif);
-                    setTempPassport(passport);
-                    setTempPhone(phone);
-                    setVerifyStep(1);
-                    setIsVerifying(true);
-                  }}
-                  className="w-full md:w-auto bg-gradient-to-r from-orange-500 to-amber-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-102 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer border-0"
-                >
-                  <Scan size={16} /> Iniciar Certificação Digital
-                </button>
-              ) : (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4.5 text-center flex flex-col items-center">
-                  <span className="text-emerald-300 font-black text-xs uppercase tracking-widest flex items-center gap-1.5 justify-center">
-                    <BadgeCheck size={16} /> Identidade Digital Consolidada
-                  </span>
-                  <span className="text-[10px] text-emerald-400 block mt-1 font-mono uppercase tracking-wider">Assinaturas Oficiais Habilitadas</span>
-                </div>
-              )}
-              
-              <button 
-                onClick={() => {
-                  setTempPin(govPin);
-                  setTemp2FA(hasTwoFactor);
-                  setTempFacial(hasFacialAuth);
-                  setIsConfiguringSecurity(true);
-                }}
-                className="w-full md:w-auto bg-white/10 hover:bg-white/15 text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all text-center flex items-center justify-center gap-2 ring-1 ring-white/20 cursor-pointer"
-              >
-                <Settings size={14} /> Gerir PIN e 2FA
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Ficha de Identidade Civil Regulamentada */}
         {!isInst && (
-          <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 text-left col-span-1 lg:col-span-2">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
-                  <IdCard size={24} />
-                </div>
-                <div>
-                  <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Ficha de Identidade Civil Regulamentada</h3>
-                  <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Base de Dados Central de Angola</p>
-                </div>
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-10 shadow-sm space-y-6 text-left col-span-1 lg:col-span-2">
+            <div className="flex items-center gap-4 pb-4 border-b border-slate-200">
+              <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary shadow-sm border border-primary/10">
+                <IdCard size={24} />
               </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50/80 text-indigo-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-150 self-start md:self-auto">
-                <Lock size={12} /> Proteção Anti-Fraude Ativa
-              </div>
-            </div>
-
-            {/* Elegante Mensagem Oficial */}
-            <div className="p-5 bg-amber-50/75 border border-amber-200 rounded-2xl flex items-start gap-3.5 shadow-3xs">
-              <ShieldAlert className="text-amber-600 shrink-0 mt-0.5" size={20} />
               <div>
-                <h5 className="font-sans text-[11px] font-black text-amber-950 uppercase tracking-wider mb-1">Aviso de Segurança Regulamentar (Prevenção de Fraudes)</h5>
-                <p className="text-[11px] md:text-xs text-amber-850 font-semibold leading-relaxed">
-                  Para sua segurança e prevenção de fraudes, a atualização de dados cadastrais apenas pode ser realizada presencialmente numa Instituição Pública Autorizada.
-                </p>
+                <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">Dados de Registo Civil</h3>
+                <p className="text-[9px] md:text-[10px] text-slate-400 font-black uppercase tracking-widest">Identidade Oficial do Cidadão</p>
               </div>
             </div>
 
             {/* Cadastro Fiel */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
                 <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome Completo</span>
                 <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
                   <span>{profileName}</span>
                   <Lock size={12} className="text-slate-400" />
                 </div>
               </div>
-              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
                 <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Número de BI</span>
                 <div className="text-slate-905 font-mono font-bold text-sm tracking-widest flex items-center justify-between">
                   <span>{bi}</span>
                   <Lock size={12} className="text-slate-400" />
                 </div>
               </div>
-              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
                 <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Data de Nascimento</span>
                 <div className="text-slate-905 font-mono font-bold text-sm tracking-wider flex items-center justify-between">
                   <span>{userBirthDate}</span>
                   <Lock size={12} className="text-slate-400" />
                 </div>
               </div>
-              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group">
+              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
                 <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Estado Civil</span>
                 <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
                   <span>{userMaritalStatus}</span>
                   <Lock size={12} className="text-slate-400" />
                 </div>
               </div>
-              <div className="space-y-1 bg-slate-50 border border-slate-100 p-4 rounded-2xl relative group sm:col-span-2">
+              <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group sm:col-span-2">
                 <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">Filiação (Progenitores)</span>
                 <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
                   <span>{userFiliation}</span>
@@ -520,7 +428,7 @@ export function ProfileContent({
           <div className="space-y-3">
             {[
               { label: 'Autenticação Biométrica', value: hasFacialAuth ? 'Activada' : 'Seleção Facial ausente', icon: <Fingerprint size={20} />, status: hasFacialAuth ? 'success' : 'neutral' },
-              { label: isInst ? 'Assinatura Credenciada AGT' : 'Assinatura Digital SME', value: verificationStatus === 'Totalmente verificado' ? 'Certificada' : 'Em homologação', icon: <BadgeCheck size={20} />, status: verificationStatus === 'Totalmente verificado' ? 'success' : 'neutral' },
+              { label: isInst ? 'Assinatura Credenciada AGT' : 'Assinatura Digital SME', value: 'Certificada', icon: <BadgeCheck size={20} />, status: 'success' },
               { label: 'Autenticação em Dois Fatores', value: hasTwoFactor ? 'Chave Ativa' : 'Inativa', icon: <Smartphone size={20} />, status: hasTwoFactor ? 'success' : 'warning' },
               { label: isInst ? 'PIN de Validação Operacional' : 'Código PIN Governamental', value: govPin ? 'Configurado' : 'Não definido', icon: <Key size={20} />, status: govPin ? 'success' : 'warning' },
               { label: isInst ? 'Log de Auditoria Tributária' : 'Histórico de Acessos', value: 'Ver logs de auditoria', icon: <History size={20} />, status: 'neutral', action: () => setIsConfiguringSecurity(true) },
@@ -528,7 +436,7 @@ export function ProfileContent({
               <div 
                 key={i} 
                 onClick={item.action}
-                className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-orange-200 transition-all cursor-pointer group"
+                className="flex items-center justify-between p-4 bg-transparent rounded-2xl border border-slate-200 hover:border-orange-200 transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-slate-400 group-hover:text-orange-600 transition-colors">{item.icon}</div>
@@ -599,7 +507,7 @@ export function ProfileContent({
                 key={i} 
                 type="button"
                 onClick={item.action}
-                className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-primary/20 transition-all group cursor-pointer"
+                className="w-full flex items-center justify-between p-4 bg-transparent rounded-2xl border border-slate-200 hover:border-primary/20 transition-all group cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-slate-400 group-hover:text-primary transition-colors">{item.icon}</div>
@@ -649,80 +557,92 @@ export function ProfileContent({
                 </button>
               </div>
 
-              {/* Progress Tracker Steps */}
-              <div className="bg-slate-50 px-6 py-3 border-b border-slate-150 flex items-center justify-between text-xs text-slate-500 font-extrabold uppercase tracking-widest">
-                <div className="flex items-center gap-2">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${verifyStep >= 1 ? 'bg-primary text-white' : 'bg-slate-200'}`}>1</span>
-                  <span className={verifyStep === 1 ? 'text-primary' : ''}>Credenciais</span>
-                </div>
-                <div className="w-8 h-px bg-slate-200" />
-                <div className="flex items-center gap-2">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${verifyStep >= 2 ? 'bg-primary text-white' : 'bg-slate-200'}`}>2</span>
-                  <span className={verifyStep === 2 ? 'text-primary' : ''}>Digitalização Facial</span>
-                </div>
-                <div className="w-8 h-px bg-slate-200" />
-                <div className="flex items-center gap-2">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${verifyStep >= 3 ? 'bg-primary text-white' : 'bg-slate-200'}`}>3</span>
-                  <span className={verifyStep === 3 ? 'text-primary' : ''}>Segurança</span>
-                </div>
-              </div>
-
               {/* Modal Body */}
               <div className="p-6 overflow-y-auto space-y-4 flex-1">
                 {verifyStep === 1 && (
                   <div className="space-y-4">
-                    <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-2xl flex gap-3 text-xs text-slate-700 leading-relaxed font-semibold">
-                      <Landmark className="text-secondary shrink-0 mt-0.5" size={18} />
+                    {/* Header Badge */}
+                    <div className="flex justify-start">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#eff6ff] border border-blue-150 rounded-full text-[#1e3a8a] font-extrabold text-[9px] uppercase tracking-[0.18em]">
+                        <Sparkles size={11} className="text-blue-500 fill-blue-100" />
+                        <span>VALIDAÇÃO DE CREDENCIAIS</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-3xl flex gap-3 text-xs text-slate-700 leading-relaxed font-semibold">
+                      <Landmark className="text-[#2563eb] shrink-0 mt-0.5" size={18} />
                       <span>
                         Para homologar a sua identidade, introduza e valide os seus identificadores oficiais nacionais em vigor. Estes dados serão processados via canais encriptados seguros do SME e AGT.
                       </span>
                     </div>
 
-                    <div className="space-y-3">
-                      <label className="grid gap-1.5">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Número de Bilhete de Identidade (BI)</span>
-                        <div className="relative">
+                    <div className="space-y-4">
+                      {/* Número de BI */}
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Número de Bilhete de Identidade (BI)</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-[16px] bg-[#f0f4ff] border border-[#dbe4ff] flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                            <IdCard size={18} />
+                          </div>
                           <input 
                             type="text"
                             maxLength={14}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white transition-all font-mono"
+                            className="flex-1 h-12 bg-white border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 rounded-full px-5 py-3 text-xs md:text-sm font-bold text-slate-800 outline-none transition-all font-mono"
                             value={tempBi}
                             onChange={(e) => setTempBi(e.target.value.toUpperCase())}
                           />
                         </div>
-                      </label>
+                      </div>
 
-                      <label className="grid gap-1.5">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Número de Identificação Fiscal (NIF)</span>
-                        <input 
-                          type="text"
-                          maxLength={10}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white transition-all font-mono"
-                          value={tempNif}
-                          onChange={(e) => setTempNif(e.target.value.replace(/\D/g, ''))}
-                        />
-                      </label>
+                      {/* Número de NIF */}
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Número de Identificação Fiscal (NIF)</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-[16px] bg-[#f0f4ff] border border-[#dbe4ff] flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                            <Landmark size={18} />
+                          </div>
+                          <input 
+                            type="text"
+                            maxLength={10}
+                            className="flex-1 h-12 bg-white border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 rounded-full px-5 py-3 text-xs md:text-sm font-bold text-slate-800 outline-none transition-all font-mono"
+                            value={tempNif}
+                            onChange={(e) => setTempNif(e.target.value.replace(/\D/g, ''))}
+                          />
+                        </div>
+                      </div>
 
-                      <label className="grid gap-1.5">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Número do Passaporte</span>
-                        <input 
-                          type="text"
-                          maxLength={9}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white transition-all font-mono"
-                          value={tempPassport}
-                          onChange={(e) => setTempPassport(e.target.value.toUpperCase())}
-                        />
-                      </label>
+                      {/* Número do Passaporte */}
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Número do Passaporte</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-[16px] bg-[#f0f4ff] border border-[#dbe4ff] flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                            <Plane size={18} />
+                          </div>
+                          <input 
+                            type="text"
+                            maxLength={9}
+                            className="flex-1 h-12 bg-white border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 rounded-full px-5 py-3 text-xs md:text-sm font-bold text-slate-800 outline-none transition-all font-mono"
+                            value={tempPassport}
+                            onChange={(e) => setTempPassport(e.target.value.toUpperCase())}
+                          />
+                        </div>
+                      </div>
 
-                      <label className="grid gap-1.5">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Telefone Principal Associado</span>
-                        <input 
-                          type="text"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-800 outline-none focus:border-primary focus:bg-white transition-all font-mono"
-                          value={tempPhone}
-                          onChange={(e) => setTempPhone(e.target.value)}
-                        />
-                      </label>
+                      {/* Telefone Principal */}
+                      <div className="space-y-1.5 text-left">
+                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Telefone Principal Associado</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-[16px] bg-[#f0f4ff] border border-[#dbe4ff] flex items-center justify-center text-blue-600 shrink-0 shadow-sm">
+                            <Smartphone size={18} />
+                          </div>
+                          <input 
+                            type="text"
+                            className="flex-1 h-12 bg-white border border-slate-200 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 rounded-full px-5 py-3 text-xs md:text-sm font-bold text-slate-800 outline-none transition-all font-sans"
+                            value={tempPhone}
+                            onChange={(e) => setTempPhone(e.target.value)}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -828,7 +748,7 @@ export function ProfileContent({
 
                 {verifyStep === 3 && (
                   <div className="space-y-4">
-                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex gap-3 text-xs text-slate-700 leading-relaxed font-semibold">
+                    <div className="bg-transparent border border-slate-200 p-4 rounded-2xl flex gap-3 text-xs text-slate-700 leading-relaxed font-semibold">
                       <ShieldCheck className="text-primary shrink-0 mt-0.5" size={18} />
                       <span>
                         Configure os seus fatores de segurança fundamentais. O PIN governamental é obrigatório para assinar documentos de validade jurídica civis e fiscais.
@@ -844,13 +764,13 @@ export function ProfileContent({
                           maxLength={4}
                           placeholder="••••"
                           value={tempPin}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-center text-lg font-mono font-black tracking-[0.5em] focus:outline-none focus:border-indigo-500"
+                          className="w-full bg-transparent border border-slate-200 rounded-xl p-3 text-center text-lg font-mono font-black tracking-[0.5em] focus:outline-none focus:border-indigo-500"
                           onChange={(e) => setTempPin(e.target.value.replace(/\D/g, ''))}
                         />
                       </label>
 
                       {/* 2FA Toggle */}
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-1">
                           <span className="text-xs font-bold text-slate-800 block">Autenticação em Dois Fatores (2FA)</span>
                           <span className="text-[10.5px] text-slate-400 block font-medium">Requer verificação adicional por código OTP no telemóvel ao fazer login.</span>
@@ -860,23 +780,6 @@ export function ProfileContent({
                             type="checkbox" 
                             checked={temp2FA}
                             onChange={(e) => setTemp2FA(e.target.checked)}
-                            className="sr-only peer" 
-                          />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                        </label>
-                      </div>
-
-                      {/* Facial Authentication Toggle */}
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
-                        <div className="space-y-1">
-                          <span className="text-xs font-bold text-slate-800 block">Ativar Login Facial Biométrico</span>
-                          <span className="text-[10.5px] text-slate-400 block font-medium">Permite autenticação direta no Correio Digital via câmara digital.</span>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            checked={tempFacial}
-                            onChange={(e) => setTempFacial(e.target.checked)}
                             className="sr-only peer" 
                           />
                           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
@@ -898,7 +801,7 @@ export function ProfileContent({
               </div>
 
               {/* Modal Footer Buttons */}
-              <div className="p-6 border-t border-slate-150 flex gap-3 bg-slate-50">
+              <div className="p-6 border-t border-slate-200 flex gap-3 bg-transparent">
                 {verifyStep > 1 && (
                   <button 
                     onClick={() => {
@@ -983,13 +886,13 @@ export function ProfileContent({
                       maxLength={4}
                       value={tempPin}
                       placeholder="••••"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-center text-lg font-mono tracking-[0.5em] focus:outline-none focus:border-orange-500"
+                      className="w-full bg-transparent border border-slate-200 rounded-xl p-3 text-center text-lg font-mono tracking-[0.5em] focus:outline-none focus:border-orange-500"
                       onChange={(e) => setTempPin(e.target.value.replace(/\D/g, ''))}
                     />
                   </div>
 
                   {/* 2FA switch */}
-                  <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="flex items-center justify-between p-3.5 bg-transparent border border-slate-200 rounded-xl">
                     <div className="pr-2">
                       <span className="text-xs font-bold text-slate-800 block">
                         {isInst ? "Autenticação em Dois Fatores (AGT-2FA)" : "Autenticação 2 Fatores (2FA)"}
@@ -1010,7 +913,7 @@ export function ProfileContent({
                   </div>
 
                   {/* Facial state switch */}
-                  <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="flex items-center justify-between p-3.5 bg-transparent border border-slate-200 rounded-xl">
                     <div className="pr-2">
                       <span className="text-xs font-bold text-slate-800 block">
                         {isInst ? "Validação e Acesso Biométrico Facial" : "Login por Biometria Facial"}
@@ -1047,7 +950,7 @@ export function ProfileContent({
                 </div>
               </div>
 
-              <div className="p-4 md:p-6 bg-slate-50 border-t border-slate-100 flex gap-3 shrink-0">
+              <div className="p-4 md:p-6 bg-transparent border-t border-slate-200 flex gap-3 shrink-0">
                 <button 
                   onClick={() => setIsConfiguringSecurity(false)}
                   className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 font-extrabold text-xs uppercase rounded-xl hover:bg-slate-100 cursor-pointer"
@@ -1075,44 +978,44 @@ export function ProfileContent({
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-100 text-left flex flex-col my-8 max-h-[85vh] md:max-h-[90vh]"
+              className="bg-white rounded-[32px] w-full max-w-2xl overflow-hidden shadow-2xl border border-slate-100 text-left flex flex-col my-4 max-h-[92vh]"
             >
               {/* Head */}
-              <div className="p-4 md:p-6 bg-[#111A2E] text-white flex justify-between items-center shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-primary/20 rounded-xl text-primary flex items-center justify-center">
-                    <Settings size={22} className="animate-spin-slow" />
+              <div className="p-3.5 md:p-4.5 bg-[#111A2E] text-white flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 md:p-2 bg-primary/20 rounded-xl text-primary flex items-center justify-center">
+                    <Settings size={18} className="animate-spin-slow" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm md:text-base uppercase tracking-tight text-white leading-tight font-sans">
+                    <h3 className="font-extrabold text-xs md:text-sm uppercase tracking-tight text-white leading-tight font-sans">
                       {isInst ? "Central de Preferências do Agente" : "Central de Preferências do Cidadão"}
                     </h3>
-                    <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold font-sans">
+                    <p className="text-[8px] text-slate-400 uppercase tracking-widest font-black font-sans leading-none mt-0.5">
                       {isInst ? "Administração Geral Tributária \u2022 Identidade Funcional AGT" : "Correio Digital de Angola \u2022 Governação Inteligente"}
                     </p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsPrefsOpen(false)}
-                  className="text-white/60 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
+                  className="text-white/60 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
                 >
-                  <X size={20} />
+                  <X size={16} />
                 </button>
               </div>
 
               {/* Tabs */}
-              <div className="bg-slate-50 px-4 md:px-6 border-b border-slate-150 flex gap-2 overflow-x-auto scrollbar-none py-2.5 select-none shrink-0">
+              <div className="bg-transparent px-4 md:px-6 border-b border-slate-150 flex gap-2 overflow-x-auto scrollbar-none py-2 select-none shrink-0">
                 {[
-                  { id: 'geral', label: isInst ? 'Geral & Idioma AGT' : 'Geral & Idioma', icon: <Languages size={14} /> },
-                  { id: 'notificacoes', label: isInst ? 'Canais Tributários' : 'Canais & Notifs', icon: <Bell size={14} /> },
-                  { id: 'privacidade', label: isInst ? 'Privacidade & Biometria AGT' : 'Privacidade & Biometria', icon: <ShieldCheck size={14} /> },
-                  { id: 'conectividade', label: isInst ? 'Sessões & Terminais' : 'Sessões & Dispositivos', icon: <Smartphone size={14} /> }
+                  { id: 'geral', label: isInst ? 'Geral & Idioma AGT' : 'Geral & Idioma', icon: <Languages size={13} /> },
+                  { id: 'notificacoes', label: isInst ? 'Canais Tributários' : 'Canais & Notifs', icon: <Bell size={13} /> },
+                  { id: 'privacidade', label: isInst ? 'Privacidade & Biometria AGT' : 'Privacidade & Biometria', icon: <ShieldCheck size={13} /> },
+                  { id: 'conectividade', label: isInst ? 'Sessões & Terminais' : 'Sessões & Dispositivos', icon: <Smartphone size={13} /> }
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
                     onClick={() => setPrefSubTab(tab.id as any)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 border transition-all cursor-pointer duration-155 shrink-0 select-none ${
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border transition-all cursor-pointer duration-155 shrink-0 select-none ${
                       prefSubTab === tab.id
                         ? 'bg-primary border-primary text-white shadow-md shadow-primary/20'
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -1125,7 +1028,7 @@ export function ProfileContent({
               </div>
 
               {/* Body */}
-              <div className="p-4 md:p-6 overflow-y-auto space-y-6 flex-1 min-h-[300px]">
+              <div className="p-4 md:p-5 overflow-y-auto space-y-5 flex-1 min-h-[250px]">
                 {prefSubTab === 'geral' && (
                   <div className="space-y-5">
                     {/* Language select */}
@@ -1187,7 +1090,7 @@ export function ProfileContent({
 
                     {/* Eco and Offline switches */}
                     <div className="space-y-3 pt-2">
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-1 block text-left">
                           <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 font-sans">
                             <Cpu size={14} className="text-primary" /> Modo Económico (Poupança de Dados)
@@ -1207,7 +1110,7 @@ export function ProfileContent({
                         </label>
                       </div>
 
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-1 block text-left">
                           <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 font-sans">
                             <WifiOff size={14} className="text-primary" /> Uso Offline de Documentos
@@ -1262,7 +1165,7 @@ export function ProfileContent({
                         {isInst ? 'Notificações & Diretivas Técnicas da AGT' : 'Notificações e Avisos de Estado'}
                       </label>
                       
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-0.5 text-left block">
                           <span className="text-xs font-bold text-slate-800 block font-sans">
                             {isInst ? 'Alertas por SMS de Infrações Tributárias/Aduaneiras' : 'Alertas por SMS de Urgência Nacional'}
@@ -1282,7 +1185,7 @@ export function ProfileContent({
                         </label>
                       </div>
 
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-0.5 text-left block">
                           <span className="text-xs font-bold text-slate-800 block font-sans">
                             {isInst ? 'Correio Eletrónico Institucional Certificado' : 'E-mail Oficial Certificado'}
@@ -1302,7 +1205,7 @@ export function ProfileContent({
                         </label>
                       </div>
 
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-0.5 text-left block">
                           <span className="text-xs font-bold text-slate-800 block font-sans">
                             {isInst ? 'Push de Auditoria no Dispositivo Autorizado' : 'Notificação Push no Telemóvel'}
@@ -1332,7 +1235,7 @@ export function ProfileContent({
                         {isInst ? "Segurança Facial & Biometria Funcional" : "Segurança Facial & Biometria"}
                       </label>
                       
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-between">
+                      <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-1 block text-left">
                           <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 font-sans">
                             <Fingerprint size={15} className="text-primary" /> Habilitar Biometria nos Terminais
@@ -1380,7 +1283,7 @@ export function ProfileContent({
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between">
+                    <div className="bg-transparent border border-slate-200 rounded-xl p-4 flex items-center justify-between">
                       <div className="space-y-0.5 text-left block">
                         <span className="text-xs font-bold text-slate-800 flex items-center gap-1 font-sans">Wipe de Logs de Segurança</span>
                         <span className="text-[10px] text-slate-400 block font-sans">
@@ -1399,7 +1302,7 @@ export function ProfileContent({
                     </div>
 
                     {/* CITIZEN BACKUP CENTER */}
-                    <div className="border border-slate-100 rounded-3xl p-4 bg-slate-50/50 space-y-4">
+                    <div className="border border-slate-200 rounded-3xl p-4 bg-transparent space-y-4">
                       <div className="flex justify-between items-center">
                         <div className="text-left font-sans">
                           <span className="text-xs font-black uppercase tracking-wider text-slate-800 block">
@@ -1455,7 +1358,7 @@ export function ProfileContent({
                         <span className="text-[9px] bg-slate-150 px-2.5 py-1 text-[#1e293b] rounded-full font-black uppercase tracking-widest font-sans">{activeSessions.length} Activas</span>
                       </div>
 
-                      <div className="space-y-2 divide-y divide-slate-100 bg-slate-50 border border-slate-150 rounded-xl p-3">
+                      <div className="space-y-2 divide-y divide-slate-100 bg-transparent border border-slate-200 rounded-xl p-3">
                         {activeSessions.map((session: any) => (
                           <div key={session.id} className="flex justify-between items-center py-2.5 first:pt-0 last:pb-0 font-medium font-sans">
                             <div className="min-w-0">
@@ -1556,7 +1459,7 @@ export function ProfileContent({
               </div>
 
               {/* Foot */}
-              <div className="p-4 md:p-6 bg-slate-50 border-t border-slate-150 flex gap-3 shadow-xs shrink-0">
+              <div className="p-4 md:p-6 bg-transparent border-t border-slate-200 flex gap-3 shadow-xs shrink-0">
                 <button 
                   type="button"
                   onClick={() => setIsPrefsOpen(false)}

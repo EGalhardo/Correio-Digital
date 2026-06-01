@@ -1,33 +1,31 @@
-import React from 'react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   Landmark, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Layers, 
   AlertTriangle,
   CheckCircle2,
-  XCircle,
-  Clock
+  Lock,
+  History,
+  Shield,
+  ShieldCheck,
+  Plane,
+  Smartphone,
+  Eye,
+  EyeOff,
+  IdCard,
+  User,
+  Sparkles,
+  Settings,
+  Check,
+  Bell,
+  Globe
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip 
-} from 'recharts';
-
-// Elegant monthly trend data optimized for corporate institutional overview with approved and non-approved document requests
-const INSTITUTIONAL_TREND_DATA = [
-  { month: 'Jan', mensagens: 14200, naoLidas: 410, enviadas: 12100, solicitacoes: 4150, solicitacoesNaoAprovadas: 190 },
-  { month: 'Fev', mensagens: 16800, naoLidas: 380, enviadas: 14800, solicitacoes: 5200, solicitacoesNaoAprovadas: 210 },
-  { month: 'Mar', mensagens: 19500, naoLidas: 390, enviadas: 17200, solicitacoes: 6300, solicitacoesNaoAprovadas: 180 },
-  { month: 'Abr', mensagens: 21000, naoLidas: 290, enviadas: 19100, solicitacoes: 7800, solicitacoesNaoAprovadas: 140 },
-  { month: 'Mai', mensagens: 24580, naoLidas: 320, enviadas: 21450, solicitacoes: 8920, solicitacoesNaoAprovadas: 120 },
-];
+import { USER_PROFILE_PHOTO } from '../../constants/data';
 
 interface AuditLog {
   id: string;
@@ -41,253 +39,468 @@ interface GovPerfilContentProps {
   logs: AuditLog[];
   emergencyMode: boolean;
   onToggleEmergency: (active: boolean) => void;
+  bi?: string;
+  phone?: string;
+  nif?: string;
+  passport?: string;
+  profileName?: string;
+  userBirthDate?: string;
+  userFiliation?: string;
+  userMaritalStatus?: string;
+  hasFacialAuth?: boolean;
+  hasTwoFactor?: boolean;
+  govPin?: string;
 }
 
-export function GovPerfilContent({ logs, emergencyMode, onToggleEmergency }: GovPerfilContentProps) {
-  // Always display full data of the trend
-  const displayedData = INSTITUTIONAL_TREND_DATA;
-
-  // Modern styling properties for the charts of 5 metrics
-  const metrics = [
-    {
-      key: 'mensagens',
-      title: 'Mensagens Totais',
-      sub: 'Monitoramento de Fluxo',
-      value: '24,580',
-      color: '#3b82f6', // Azure Blue
-      bgGrad: 'instColorMensagens',
-      change: '+17.2%',
-      isPositive: true,
-      description: 'Total acumulado de correspondências interligadas este mês'
-    },
-    {
-      key: 'naoLidas',
-      title: 'Mensagens Não Lidas',
-      sub: 'Controle de Resposta',
-      value: '320',
-      color: '#f43f5e', // Hot Rose
-      bgGrad: 'instColorNaoLidas',
-      change: '-22.0%',
-      isPositive: true, // actually positive in terms of performance (less unread messages)
-      description: 'Mensagens pendentes de triagem nas caixas institucionais'
-    },
-    {
-      key: 'enviadas',
-      title: 'Mensagens Enviadas',
-      sub: 'Taxa de Entrega',
-      value: '21,450',
-      color: '#fbbf24', // Yellow Gold
-      bgGrad: 'instColorEnviadas',
-      change: '+15.5%',
-      isPositive: true,
-      description: 'Mensagens com protocolo de envio autenticado pelo CDA'
-    },
-    {
-      key: 'solicitacoes',
-      title: 'Solicitacões Doc. Digital Aprovada',
-      sub: 'Emissão de Credenciais',
-      value: '8,920',
-      color: '#10b981', // Emerald Green
-      bgGrad: 'instColorSolicitacoes',
-      change: '+25.0%',
-      isPositive: true,
-      description: 'Requisições de bilhete e certidão eletrónica deferidas e homologadas'
-    },
-    {
-      key: 'solicitacoesNaoAprovadas',
-      title: 'Solicitacões Doc. Digital Não Aprovada',
-      sub: 'Análise de Inconsistências',
-      value: '120',
-      color: '#f97316', // Bright Orange
-      bgGrad: 'instColorSolicitacoesNaoAprovadas',
-      change: '-14.2%',
-      isPositive: true, // positive because unapproved requests decreased
-      description: 'Requisições canceladas ou indeferidas por inconformidade cadastral'
-    }
-  ];
+export function GovPerfilContent({ 
+  logs, 
+  emergencyMode, 
+  onToggleEmergency,
+  bi = '009874562LA041',
+  phone = '+244 923 888 777',
+  nif = '5401328901',
+  passport = 'AO-P123456',
+  profileName = 'Edlasio Galhardo',
+  userBirthDate = '12/03/1995',
+  userFiliation = 'António Galhardo & Maria Conceição',
+  userMaritalStatus = 'Solteiro',
+  hasFacialAuth = true,
+  hasTwoFactor = false,
+  govPin = '1234'
+}: GovPerfilContentProps) {
+  const [showSensitiveData, setShowSensitiveData] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  
+  // Local interface configuration states
+  const [interfaceLanguage, setInterfaceLanguage] = useState<'PT' | 'EN'>('PT');
+  const [activeSessions, setActiveSessions] = useState(3);
+  const [notificationChannel, setNotificationChannel] = useState<'PUSH' | 'SMS' | 'EMAIL'>('PUSH');
+  const [privacyMode, setPrivacyMode] = useState<'PADRÃO' | 'MILITARIZADA'>('PADRÃO');
 
   return (
-    <div className="pb-24">
+    <div className="pb-24 space-y-6 md:space-y-8 select-none font-sans text-left">
+      
       {/* Title Header Section */}
-      <div className="mb-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white">
-              <Landmark size={16} />
+              <Shield size={16} />
             </div>
-            <span className="font-mono text-xs font-black uppercase text-slate-400 tracking-[0.2em]">
-              Admin &bull; Painel Corporativo
+            <span className="font-mono text-[9px] font-black uppercase text-slate-400 tracking-[0.2em]">
+              Admin &bull; Perfil de Autoridade
             </span>
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">
-            Instituição Geral
+            Conta Administrativa
           </h1>
           <p className="text-slate-500 font-medium text-xs mt-2 max-w-xl">
-            Desempenho operacional simplificado, tendências de aprovação de documentos e monitoramento de conexões ativas.
+            Credenciais de segurança nacional, ficha de habilitação de autoridade e controle do barramento unificado do Estado.
           </p>
         </div>
       </div>
 
-      {/* Emergency Mode Banner Alert Alert */}
-      {emergencyMode && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 p-5 bg-red-50 border-2 border-red-550/30 rounded-3xl flex items-start gap-4"
-        >
-          <div className="p-2.5 bg-red-600 text-white rounded-2xl">
-            <AlertTriangle size={20} className="animate-bounce" />
+      {/* Primary Header Card (Edlasio Galhardo & Metadata 2x2) */}
+      <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm flex flex-col xl:flex-row items-center gap-6 xl:gap-10 relative overflow-hidden">
+        {/* Absolute Background Accent */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-50/20 rounded-full blur-3xl pointer-events-none -z-1" />
+        
+        {/* Avatar squircle on the left */}
+        <div className="relative w-28 h-28 md:w-36 md:h-36 shrink-0 z-10">
+          <img 
+            src={USER_PROFILE_PHOTO} 
+            alt="Foto de Edlasio Galhardo" 
+            className="w-full h-full object-cover rounded-[32px] shadow-sm border border-slate-150"
+            referrerPolicy="no-referrer"
+          />
+          {/* Circular green check confirmed badge */}
+          <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-emerald-500 rounded-2xl flex items-center justify-center text-white border-4 border-white shadow-md">
+            <Check size={18} strokeWidth={3} />
           </div>
-          <div>
-            <h4 className="font-sans text-xs font-black text-red-950 uppercase tracking-wider">
-              Protocolo Emergencial de Cibersegurança Ativado
-            </h4>
-            <p className="text-[11px] text-red-750/90 font-medium mt-1 leading-relaxed">
-              O fluxo automático de dados foi pausado. A emissão de credenciais eletrónicas e as comunicações com os Ministérios parceiros requerem validação manual periódica.
+        </div>
+
+        {/* Info on the right with 2x2 grid */}
+        <div className="flex-1 w-full text-center xl:text-left space-y-4 xl:space-y-6 z-10">
+          <div className="space-y-1">
+            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 justify-center xl:justify-start">
+              <h2 className="text-2xl md:text-5xl font-black text-slate-900 italic tracking-tighter uppercase mb-0">
+                {profileName}
+              </h2>
+              <div className="flex justify-center md:block">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100 shadow-3xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-0.5" /> Estado: Activo
+                </span>
+              </div>
+            </div>
+            <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs">
+              ID Única Digital &bull; República de Angola
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 w-full">
+            {/* National ID Card (BI) */}
+            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
+              <div className="min-w-0 text-left">
+                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  Número de BI
+                </div>
+                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
+                  {showSensitiveData ? bi : bi.replace(/\(?[A-Z0-9]{6}\)?$/, '******')}
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowSensitiveData(!showSensitiveData)}
+                className="p-2.5 text-slate-400 hover:text-slate-700 transition-colors active:scale-95 bg-white rounded-xl shadow-3xs border border-slate-200"
+              >
+                {showSensitiveData ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            {/* Telephone Card */}
+            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
+              <div className="min-w-0 text-left">
+                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  Telefone Principal
+                </div>
+                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
+                  {showSensitiveData ? phone : phone.replace(/\d{3} \d{3}$/, '*** ***')}
+                </div>
+              </div>
+              <div className="p-2.5 text-emerald-500 bg-white rounded-xl shadow-3xs border border-slate-200">
+                <ShieldCheck size={18} />
+              </div>
+            </div>
+
+            {/* Tax ID Contribuinte Card */}
+            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
+              <div className="min-w-0 text-left">
+                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  Contribuinte (NIF)
+                </div>
+                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
+                  {showSensitiveData ? nif : nif.replace(/\d{4}$/, '****')}
+                </div>
+              </div>
+              <div className="p-2.5 text-indigo-500 bg-white rounded-xl shadow-3xs border border-slate-200">
+                <IdCard size={18} />
+              </div>
+            </div>
+
+            {/* Passport Card */}
+            <div className="bg-transparent border border-slate-200 rounded-2xl p-4 flex items-center justify-between group shadow-3xs transition-colors">
+              <div className="min-w-0 text-left">
+                <div className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  Passaporte
+                </div>
+                <div className="text-slate-900 font-mono font-bold text-sm md:text-base tracking-wider truncate">
+                  {showSensitiveData ? passport : passport.replace(/[A-Z0-9]{4}$/, '****')}
+                </div>
+              </div>
+              <div className="p-2.5 text-slate-500 bg-white rounded-xl shadow-3xs border border-slate-200">
+                <Plane size={18} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Second Card: Cadastro Eletrónico Harmonizado */}
+      <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-10 shadow-sm text-left">
+        {/* Forms Field Block - Non-Editable with lock indicators */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
+          {/* Nome Completo */}
+          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
+            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              Nome Completo
+            </span>
+            <div className="text-slate-900 font-black text-sm uppercase tracking-tight flex items-center justify-between">
+              <span>{profileName}</span>
+              <Lock size={12} className="text-slate-300" />
+            </div>
+          </div>
+
+          {/* Número de BI */}
+          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
+            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              Número de BI
+            </span>
+            <div className="text-slate-900 font-mono font-bold text-sm tracking-widest flex items-center justify-between">
+              <span>{bi}</span>
+              <Lock size={12} className="text-slate-300" />
+            </div>
+          </div>
+
+          {/* Data de Nascimento */}
+          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
+            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              Data de Nascimento
+            </span>
+            <div className="text-slate-900 font-mono font-bold text-sm tracking-wider flex items-center justify-between">
+              <span>{userBirthDate}</span>
+              <Lock size={12} className="text-slate-300" />
+            </div>
+          </div>
+
+          {/* Estado Civil */}
+          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group">
+            <span className="block text-[8px] md:text-[9px] font-[900] text-slate-400 uppercase tracking-widest">
+              Estado Civil
+            </span>
+            <div className="text-slate-900 font-black text-sm uppercase tracking-tight flex items-center justify-between">
+              <span>{userMaritalStatus}</span>
+              <Lock size={12} className="text-slate-300" />
+            </div>
+          </div>
+
+          {/* Filiação */}
+          <div className="space-y-1 bg-transparent border border-slate-200 p-4 rounded-2xl relative group sm:col-span-2">
+            <span className="block text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest">
+              Filiação (Progenitores)
+            </span>
+            <div className="text-slate-900 font-extrabold text-sm uppercase tracking-tight flex items-center justify-between">
+              <span>{userFiliation}</span>
+              <Lock size={12} className="text-slate-300" />
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      {/* Third Section: Split Dual Columns layout as shown in attached image */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        
+        {/* Column 1: SEGURANÇA */}
+        <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between text-left relative overflow-hidden">
+          
+          <div className="space-y-6 md:space-y-8">
+            {/* Security Section Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 shadow-sm border border-orange-100 shrink-0">
+                  <Lock size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">
+                    Segurança
+                  </h3>
+                  <p className="text-[9px] @md:text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                    PROTECÇÃO DE IDENTIDADE
+                  </p>
+                </div>
+              </div>
+              {/* Pulse status indicator at top-right corner of card */}
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-550 bg-amber-500 animate-pulse relative">
+                <div className="absolute inset-0 bg-amber-500 rounded-full animate-ping opacity-60" />
+              </div>
+            </div>
+
+            {/* List Rows of Security Settings */}
+            <div className="space-y-3">
+              
+              {/* Autenticação Biométrica */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <span className="text-xs font-bold text-slate-700">Autenticação Biométrica</span>
+                <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${
+                  hasFacialAuth 
+                    ? 'text-emerald-600 bg-emerald-50 border border-emerald-150' 
+                    : 'text-slate-400 bg-slate-100 border border-slate-200'
+                }`}>
+                  {hasFacialAuth ? 'ACTIVADA' : 'INATIVA'}
+                </span>
+              </div>
+
+              {/* Assinatura Digital SME */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <span className="text-xs font-bold text-slate-700">Assinatura Digital SME</span>
+                <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl text-emerald-600 bg-emerald-50 border border-emerald-150">
+                  CERTIFICADA
+                </span>
+              </div>
+
+              {/* Autenticação em Dois Fatores */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <span className="text-xs font-bold text-slate-700 font-sans">Autenticação em Dois Fatores</span>
+                <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${
+                  hasTwoFactor 
+                    ? 'text-emerald-600 bg-emerald-50 border border-emerald-150' 
+                    : 'text-amber-600 bg-amber-50 border border-amber-150'
+                }`}>
+                  {hasTwoFactor ? 'ACTIVADA' : 'INATIVA'}
+                </span>
+              </div>
+
+              {/* Código PIN Governamental */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <span className="text-xs font-bold text-slate-700">Código PIN Governamental</span>
+                <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${
+                  govPin 
+                    ? 'text-emerald-600 bg-emerald-50 border border-emerald-150' 
+                    : 'text-slate-400 bg-slate-100 border border-slate-200'
+                }`}>
+                  {govPin ? 'CONFIGURADO' : 'NÃO DEFINIDO'}
+                </span>
+              </div>
+
+              {/* Histórico de Acessos clickable action */}
+              <button
+                onClick={() => setShowLogs(!showLogs)}
+                className="w-full text-left p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-all group active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-2">
+                  <History size={14} className="text-indigo-600" />
+                  <span className="text-xs font-bold text-slate-700">Histórico de Acessos</span>
+                </div>
+                <span className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors uppercase tracking-wider">
+                  {showLogs ? 'OCULTAR AUDITORIA' : 'VER LOGS DE AUDITORIA'}
+                </span>
+              </button>
+
+            </div>
+          </div>
+          
+        </div>
+
+        {/* Column 2: PREFERÊNCIAS */}
+        <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between text-left relative overflow-hidden">
+          
+          <div className="space-y-6 md:space-y-8">
+            {/* Preferences Section Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-100 shrink-0">
+                  <Settings size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg md:text-xl font-black text-slate-900 italic tracking-tighter uppercase leading-tight">
+                    Preferências
+                  </h3>
+                  <p className="text-[9px] @md:text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                    CONFIGURAÇÃO DO SISTEMA
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Button: ABRIR CENTRAL */}
+              <button 
+                onClick={() => alert("A Central unificada de dados de acesso do utilizador está habilitada localmente.")}
+                className="px-3.5 py-1.5 bg-transparent border border-slate-200 text-slate-800 text-[9px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              >
+                ABRIR CENTRAL
+              </button>
+            </div>
+
+            {/* List Rows of Preferences Settings */}
+            <div className="space-y-3">
+              
+              {/* Idioma da Interface */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <div className="flex items-center gap-2">
+                  <Globe size={13} className="text-slate-400" />
+                  <span className="text-xs font-bold text-slate-700">Idioma da Interface</span>
+                </div>
+                <button
+                  onClick={() => setInterfaceLanguage(prev => prev === 'PT' ? 'EN' : 'PT')}
+                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
+                >
+                  {interfaceLanguage === 'PT' ? 'PORTUGUÊS ▾' : 'ENGLISH ▾'}
+                </button>
+              </div>
+
+              {/* Notificações & Canal */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <div className="flex items-center gap-2">
+                  <Bell size={13} className="text-slate-400" />
+                  <span className="text-xs font-bold text-slate-700">Notificações & Canal</span>
+                </div>
+                <button
+                  onClick={() => setNotificationChannel(prev => prev === 'PUSH' ? 'SMS' : prev === 'SMS' ? 'EMAIL' : 'PUSH')}
+                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
+                >
+                  NOTIFICAÇÃO {notificationChannel} ▾
+                </button>
+              </div>
+
+              {/* Privacidade & Biometria */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck size={13} className="text-slate-400" />
+                  <span className="text-xs font-bold text-slate-700">Privacidade & Biometria</span>
+                </div>
+                <button
+                  onClick={() => setPrivacyMode(prev => prev === 'PADRÃO' ? 'MILITARIZADA' : 'PADRÃO')}
+                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
+                >
+                  {privacyMode === 'PADRÃO' ? 'PADRÃO ▾' : 'CDA MÁXIMA ▾'}
+                </button>
+              </div>
+
+              {/* Sessões & Dispositivos */}
+              <div className="p-4 bg-transparent border border-slate-200 rounded-2xl flex items-center justify-between transition-colors">
+                <div className="flex items-center gap-2">
+                  <Smartphone size={13} className="text-slate-400" />
+                  <span className="text-xs font-bold text-slate-700">Sessões & Dispositivos</span>
+                </div>
+                <button
+                  onClick={() => setActiveSessions(prev => prev === 3 ? 1 : 3)}
+                  className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider bg-white rounded-xl shadow-3xs border border-slate-150 hover:bg-slate-50/50 cursor-pointer"
+                >
+                  {activeSessions} {activeSessions === 1 ? 'ACTIVA' : 'ACTIVAS'} ▾
+                </button>
+              </div>
+
+            </div>
+          </div>
+          
+        </div>
+
+      </div>
+
+      {/* Slide-out System Logs Section */}
+      {showLogs && (
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-slate-150/60 rounded-[32px] p-6 md:p-8 shadow-sm text-left"
+        >
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+            <div className="flex items-center gap-2">
+              <History size={16} className="text-[#2563eb]" />
+              <h4 className="font-sans text-xs md:text-sm font-black text-slate-900 uppercase tracking-widest leading-none">
+                Logs de Auditoria de Acesso unificado (SME/AGT)
+              </h4>
+            </div>
+            <span className="font-mono text-[9px] font-black uppercase text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
+              {logs.length} Registros Activos
+            </span>
+          </div>
+
+          <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+            {logs.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-400 font-semibold uppercase tracking-widest">
+                Sem eventos registados recentemente.
+              </div>
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-2xl bg-slate-50/50 border border-slate-100 hover:bg-slate-100/30 transition-all font-mono text-[10px]">
+                  <div className="flex items-center gap-3">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${
+                      log.type === 'critical' ? 'bg-red-500 animate-pulse' :
+                      log.type === 'warning' ? 'bg-amber-500' :
+                      log.type === 'success' ? 'bg-emerald-505 bg-emerald-500' : 'bg-blue-500'
+                    }`} />
+                    <span className="font-bold text-slate-800 uppercase">{log.action}</span>
+                  </div>
+                  <div className="text-slate-400 font-semibold mt-1.5 sm:mt-0">
+                    {log.timestamp} &bull; <span className="font-bold text-indigo-600 font-sans">{log.user}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </motion.div>
       )}
 
-      {/* Simplified, Modern Bento Grid - 5 Metric cards + 1 Corporate Summary card (Perfect 3x2 Balance) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-        {metrics.map((m, index) => (
-          <motion.div 
-            key={m.key}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.05 }}
-            className="bg-white border border-slate-100/90 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-[320px]"
-          >
-            {/* Metric Info Header */}
-            <div className="flex justify-between items-start mb-4">
-              <div className="max-w-[70%]">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
-                  <span className="font-mono text-[9px] font-black uppercase tracking-wider truncate" style={{ color: m.color }}>
-                    {m.sub}
-                  </span>
-                </div>
-                <h3 className="font-sans text-[11px] md:text-xs font-black text-slate-450 uppercase tracking-widest leading-tight">
-                  {m.title}
-                </h3>
-              </div>
-              <div className="text-right shrink-0">
-                <div className="text-xl md:text-2xl font-black italic tracking-tighter text-slate-900 leading-none mb-1">
-                  {m.value}
-                </div>
-                <div className={`text-[9px] font-bold flex items-center justify-end gap-0.5 ${
-                  m.isPositive ? 'text-emerald-600' : 'text-rose-600'
-                }`}>
-                  {m.isPositive ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
-                  {m.change}
-                </div>
-              </div>
-            </div>
-
-            {/* Minimalist Chart Area */}
-            <div className="flex-1 w-full min-h-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={displayedData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id={m.bgGrad} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={m.color} stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor={m.color} stopOpacity={0.0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#0f172a', 
-                      borderRadius: '12px', 
-                      border: 'none', 
-                      color: '#fff', 
-                      fontSize: '11px', 
-                      fontFamily: 'monospace' 
-                    }} 
-                    itemStyle={{ color: '#fff' }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    name={m.title} 
-                    dataKey={m.key} 
-                    stroke={m.color} 
-                    strokeWidth={2.5} 
-                    fillOpacity={1} 
-                    fill={`url(#${m.bgGrad})`} 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-        ))}
-
-        {/* Card 6: Corporate Integrations and SLAs (Provides geometrical symmetry) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
-          className="bg-white border border-slate-100/90 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-[320px]"
-        >
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-[9px] font-black uppercase tracking-widest text-emerald-600">
-                Integridade do Barramento
-              </span>
-            </div>
-            <h4 className="text-lg md:text-xl font-black italic tracking-tighter uppercase mb-4 leading-none text-slate-950">
-              Resumo Institucional
-            </h4>
-            <div className="space-y-3 font-sans text-xs text-slate-500">
-              <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                <span className="font-medium text-slate-500">Taxa Global de Aprovação Doc:</span>
-                <span className="font-bold text-emerald-600">98.6%</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                <span className="font-medium text-slate-500">Tempo Médio de Resposta:</span>
-                <span className="font-mono text-slate-800 font-bold">1.2s (Militarizado)</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                <span className="font-medium text-slate-500">Uptime do Backend CDA:</span>
-                <span className="text-emerald-600 font-bold">100% Online</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                <span className="font-medium text-slate-500">Instituições Sincronizadas:</span>
-                <span className="text-slate-800 font-bold">SME, AGT, ENDE, EPAL</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2 flex items-center justify-between text-[8px] font-mono tracking-wider text-slate-400 uppercase">
-            <span>Servidor Gateway:</span>
-            <span className="font-bold text-slate-600">Luanda Gate-L04</span>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Footer Branding Status Bar */}
-      <div className="mt-12 bg-slate-50 border border-slate-100 p-6 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Layers className="text-slate-500" size={20} />
-          <div>
-            <h5 className="font-black text-slate-800 text-xs uppercase tracking-wider">
-              Conexão Unificada CDA
-            </h5>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-              Protocolo de segurança robusto de ponta-a-ponta e distribuição certificada de credenciais governamentais.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-1.5 h-1.5 bg-emerald-550 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="font-mono text-[9px] font-black text-slate-500 uppercase tracking-widest">
-            Barramento Activo: L7-Gateway
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

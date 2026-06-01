@@ -138,7 +138,7 @@ export function HomeContent({
           <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Governação Electrónica</div>
         </div>
         <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
-          {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras"].map((name) => (
+          {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras", "INE"].map((name) => (
             <button 
               key={name} 
               onClick={() => {
@@ -146,9 +146,11 @@ export function HomeContent({
                    onCreateRequest?.("NIF", "Média");
                 } else if (name === "SME") {
                    onCreateRequest?.("Visto/BI", "Alta");
+                } else if (name === "INE") {
+                   onCreateRequest?.("Certificação Estatística", "Média");
                 }
               }}
-              className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-slate-50 text-slate-700 border border-slate-200 whitespace-nowrap hover:bg-primary hover:text-white hover:border-primary transition-all cursor-pointer shrink-0 shadow-sm grow-0 text-left"
+              className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-primary text-white border border-primary/20 whitespace-nowrap hover:bg-[#091f46] hover:border-primary transition-all cursor-pointer shrink-0 shadow-md hover:shadow-lg grow-0 text-left"
             >
               {name}
             </button>
@@ -158,7 +160,7 @@ export function HomeContent({
 
       <div className={`grid grid-cols-1 md:grid-cols-2 ${inbox.some(m => m.unread) ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} gap-4`}>
         {inbox.some(m => m.unread) && (
-          <section className="bg-white border border-slate-100 rounded-[28px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col group">
+          <section className={`bg-white border border-slate-100 rounded-[28px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col group ${isInst ? 'order-2' : ''}`}>
             <div className="flex items-center justify-between mb-5 shrink-0">
                <div className="flex items-center gap-2">
                   <Mail size={16} className="text-red-500" />
@@ -180,7 +182,7 @@ export function HomeContent({
           </section>
         )}
 
-        <section className="bg-white border border-slate-100 rounded-[28px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col group">
+        <section className={`bg-white border border-slate-100 rounded-[28px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col group ${isInst ? 'order-1' : ''}`}>
           <div className="flex items-center justify-between mb-5 shrink-0">
              <div className="flex items-center gap-2">
                 <FileText size={16} className="text-emerald-500" />
@@ -201,7 +203,7 @@ export function HomeContent({
           </div>
         </section>
 
-        <section className={`bg-white border border-slate-100 rounded-[28px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col group ${inbox.some(m => m.unread) ? 'md:col-span-2 xl:col-span-1' : ''}`}>
+        <section className={`bg-white border border-slate-100 rounded-[28px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col group ${inbox.some(m => m.unread) ? 'md:col-span-2 xl:col-span-1' : ''} ${isInst ? 'order-3' : ''}`}>
           <div className="flex items-center justify-between mb-5 shrink-0">
              <div className="flex items-center gap-2">
                 <Send size={16} className="text-blue-500" />

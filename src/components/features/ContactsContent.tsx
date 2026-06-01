@@ -64,64 +64,101 @@ export function ContactsContent({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-        <AnimatePresence mode="popLayout">
-          {filteredContacts.map((contact, index) => (
-            <motion.div 
-              layout
-              key={contact.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ delay: index * 0.04 }}
-              className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all relative group overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-4">
-                <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all shadow-sm ${
-                  contact.status === 'Confirmado' 
-                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                    : 'bg-orange-50 text-orange-700 border-orange-100'
-                }`}>
-                  {contact.status}
-                </div>
-              </div>
+      <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6 border-b border-slate-100">
+          <div>
+            <h4 className="font-black text-slate-900 text-lg md:text-xl italic uppercase tracking-tight flex items-center gap-2">
+              <Users size={20} className="text-primary" />
+              Círculo de Confiança: Registos Autorizados
+            </h4>
+            <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mt-1">
+              Lista autenticada de familiares, dependentes e contactos oficiais sincronizados
+            </p>
+          </div>
+        </div>
 
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-primary font-black text-xl border border-slate-200 shadow-inner group-hover:scale-110 transition-transform">
-                  {(contact?.name || 'C').split(' ').map((n: string) => n?.[0] || '').join('').substring(0, 2)}
-                </div>
-                <div className="min-w-0 pr-12">
-                  <strong className="text-slate-950 block text-lg font-black italic tracking-tighter uppercase leading-tight truncate">{contact.name}</strong>
-                  <div className="flex items-center mt-1">
-                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">{contact.relation}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="pt-5 border-t border-slate-50 flex justify-between items-center bg-slate-50/30 -mx-6 -mb-6 px-6 py-4 mt-auto">
-                <div className="space-y-0.5">
-                  <div className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] leading-none mb-1">Identidade BI</div>
-                  <div className="text-slate-950 font-mono font-bold text-xs md:text-sm tracking-wider">{contact.bi}</div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button 
-                    onClick={() => setContactToDelete(contact)}
-                    className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                    title="Remover contacto"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                  <button className="p-2.5 text-slate-300 hover:text-primary hover:bg-primary/5 rounded-xl transition-all">
-                    <Info size={16} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {filteredContacts.length === 0 && (
-          <div className="col-span-full py-12 md:py-20 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-[32px] md:rounded-[40px] space-y-3 md:space-y-4">
+        {filteredContacts.length > 0 ? (
+          <div className="overflow-auto rounded-[24px] border border-slate-100 bg-slate-50/20 custom-scrollbar max-h-[500px]">
+            <table className="w-full text-left border-collapse min-w-[700px]">
+              <thead className="sticky top-0 z-10 bg-primary">
+                <tr className="bg-primary text-white text-[10px] font-black uppercase tracking-wider">
+                  <th className="py-4 px-5 rounded-l-2xl">Contacto / Relação</th>
+                  <th className="py-4 px-5">Identidade BI</th>
+                  <th className="py-4 px-5">Vínculo Família</th>
+                  <th className="py-4 px-5">Estado de Vínculo</th>
+                  <th className="py-4 px-5 text-center rounded-r-2xl">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <AnimatePresence mode="popLayout">
+                  {filteredContacts.map((contact, index) => (
+                    <motion.tr 
+                      layout
+                      key={contact.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="text-xs text-slate-800 hover:bg-slate-50/70 transition-colors"
+                    >
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-primary font-black text-sm border border-slate-200 shadow-3xs uppercase">
+                            {(() => {
+                              const initials = (contact?.name || 'C').split(' ').map((n: string) => n?.[0] || '').join('').substring(0, 2);
+                              return (initials === 'MD' || initials === 'md') ? (
+                                <Users size={16} className="text-primary" />
+                              ) : (
+                                initials
+                              );
+                            })()}
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-slate-900 text-sm block uppercase italic tracking-tight">{contact.name}</span>
+                            <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest block mt-0.5">{contact.relation}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5 font-mono font-bold text-slate-700 tracking-wider">
+                        {contact.bi}
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-1.5 text-indigo-700 font-mono text-[9px] font-black">
+                          <ShieldCheck size={10} className="text-indigo-500" />
+                          Protocolo Ativo
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider ${
+                          contact.status === 'Confirmado' 
+                            ? 'text-emerald-600' 
+                            : 'text-orange-700'
+                        }`}>
+                          {contact.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-5 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => setContactToDelete(contact)}
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border-0 bg-transparent cursor-pointer"
+                            title="Remover contacto"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <button className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all border-0 bg-transparent cursor-pointer">
+                            <Info size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="py-12 md:py-20 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-[32px] md:rounded-[40px] space-y-3 md:space-y-4">
             <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-200">
               <Users size={32} className="md:w-10 md:h-10" />
             </div>

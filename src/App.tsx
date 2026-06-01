@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, Scan, Mail, QrCode, Users, User, Shield, ShieldAlert, Lock, Fingerprint, Smartphone, Key, ShieldCheck, Camera, Wifi, WifiOff, Database, RefreshCw, Signal, AlertTriangle, X } from 'lucide-react';
+import { Loader2, Scan, Mail, QrCode, Users, User, Shield, ShieldAlert, Lock, Fingerprint, Smartphone, Key, ShieldCheck, Camera, Wifi, WifiOff, Database, RefreshCw, Signal, AlertTriangle, X, Mic, ArrowLeft, Check, CheckCircle } from 'lucide-react';
 
 // Components
 import {
@@ -19,6 +19,7 @@ import {
   InviteConfirmModal,
   HomeContent,
   MailContent,
+  DocumentsContent,
   WalletContent,
   ContactsContent,
   ProfileContent,
@@ -33,6 +34,8 @@ import {
   GovSegurancaContent,
   PastaDigitalContent,
   SolicitarDocumentoContent,
+  RegisterStepper,
+  VoiceGuideAssistant,
 } from './components';
 
 // Constants & Types
@@ -52,6 +55,9 @@ import { OfflineManager, OfflineAction } from './utils/offlineManager';
 export default function App() {
   const [stage, setStage] = useState('splash');
   const [tab, setTab] = useState('home');
+  const [showAccessModal, setShowAccessModal] = useState(false);
+  const [accessModalTitle, setAccessModalTitle] = useState('');
+  const [accessModalMessage, setAccessModalMessage] = useState('');
   
   // Persisted States
   const [userRequests, setUserRequests] = useState<UserRequest[]>(() => {
@@ -82,6 +88,24 @@ export default function App() {
     return items.map(ensureProtocolOnMessage);
   });
 
+  const [docInbox, setDocInbox] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('documentos_digital_inbox');
+    let items: Message[] = [];
+    if (!saved) {
+      items = [...INBOX].map(m => ({ ...m, id: m.id + 10000 }));
+    } else {
+      try {
+        const parsed = JSON.parse(saved);
+        const existingIds = new Set(parsed.map((m: any) => m.id));
+        const newItems = INBOX.map(m => ({ ...m, id: m.id + 10000 })).filter(m => !existingIds.has(m.id));
+        items = [...parsed, ...newItems];
+      } catch (e) {
+        items = [...INBOX].map(m => ({ ...m, id: m.id + 10000 }));
+      }
+    }
+    return items.map(ensureProtocolOnMessage);
+  });
+
   const [instInbox, setInstInbox] = useState<Message[]>(() => {
     const saved = localStorage.getItem('correio_digital_inst_inbox');
     let items: Message[] = [];
@@ -97,12 +121,36 @@ export default function App() {
         items = [...INSTITUTIONAL_INBOX];
       }
     }
-    return items.map(ensureProtocolOnMessage);
+    return items.map(ensureProtocolOnMessage).filter(m => m.id !== 1003);
+  });
+
+  const [instDocInbox, setInstDocInbox] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('documentos_digital_inst_inbox');
+    let items: Message[] = [];
+    if (!saved) {
+      items = [...INSTITUTIONAL_INBOX].map(m => ({ ...m, id: m.id + 10000 }));
+    } else {
+      try {
+        const parsed = JSON.parse(saved);
+        const existingIds = new Set(parsed.map((m: any) => m.id));
+        const newItems = INSTITUTIONAL_INBOX.map(m => ({ ...m, id: m.id + 10000 })).filter(m => !existingIds.has(m.id));
+        items = [...parsed, ...newItems];
+      } catch (e) {
+        items = [...INSTITUTIONAL_INBOX].map(m => ({ ...m, id: m.id + 10000 }));
+      }
+    }
+    return items.map(ensureProtocolOnMessage).filter(m => m.id !== 10003 && m.id !== 1003);
   });
   
   const [sentMessages, setSentMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('correio_digital_sent');
     const items = saved ? JSON.parse(saved) : [...SENT_MESSAGES];
+    return items.map(ensureProtocolOnMessage);
+  });
+
+  const [docSentMessages, setDocSentMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('documentos_digital_sent');
+    const items = saved ? JSON.parse(saved) : [...SENT_MESSAGES].map(m => ({ ...m, id: m.id + 10000 }));
     return items.map(ensureProtocolOnMessage);
   });
 
@@ -252,10 +300,13 @@ export default function App() {
   }, [userMaritalStatus]);
 
   // UI States
-  const [loginSubMode, setLoginSubMode] = useState<'normal' | 'two-factor' | 'face-capture' | 'pin-entry'>('normal');
+  const [loginSubMode, setLoginSubMode] = useState<'normal' | 'two-factor' | 'face-capture' | 'register'>('normal');
+  const [showVoiceGuide, setShowVoiceGuide] = useState(false);
+  const [highlightSteps, setHighlightSteps] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
   const [enteredPin, setEnteredPin] = useState('');
   const [faceProgress, setFaceProgress] = useState(0);
+  const [isFaceScanning, setIsFaceScanning] = useState(false);
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -272,15 +323,21 @@ export default function App() {
   const isGovMode = appMode === 'admin';
   const isInstMode = appMode === 'institution';
   
-  const [correspondenciaTab, setCorrespondenciaTab] = useState('naoLidas');
+  const [correspondenciaTab, setCorrespondenciaTab] = useState('lidas');
   const [isComposing, setIsComposing] = useState(false);
   const [composeData, setComposeData] = useState({ to: '', subject: '', body: '' });
+
+  const [documentosTab, setDocumentosTab] = useState('lidas');
+  const [isDocComposing, setIsDocComposing] = useState(false);
+  const [docComposeData, setDocComposeData] = useState({ to: '', subject: '', body: '' });
+
   const [contactForm, setContactForm] = useState({ name: '', bi: '', relation: '' });
   const [activeSlide, setActiveSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [showInviteConfirm, setShowInviteConfirm] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [searchMail, setSearchMail] = useState('');
+  const [searchDocMail, setSearchDocMail] = useState('');
   const [searchDoc, setSearchDoc] = useState('');
   const [searchContact, setSearchContact] = useState('');
   const [showSensitiveData, setShowSensitiveData] = useState(false);
@@ -297,22 +354,39 @@ export default function App() {
   // Face Scan simulated progress for login screen
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (loginSubMode === 'face-capture') {
+    if (loginSubMode === 'face-capture' && isFaceScanning) {
       if (faceProgress < 100) {
         timer = setTimeout(() => {
           setFaceProgress(p => {
-            const next = p + 20;
+            const next = p + 10;
             return next >= 100 ? 100 : next;
           });
-        }, 300);
+        }, 150);
       } else {
-        setLoginSubMode('pin-entry');
+        setIsFaceScanning(false);
       }
-    } else {
-      setFaceProgress(0);
     }
     return () => clearTimeout(timer);
-  }, [loginSubMode, faceProgress]);
+  }, [loginSubMode, isFaceScanning, faceProgress]);
+
+  // Automatic transition upon successful login facial recognition
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loginSubMode === 'face-capture' && faceProgress === 100) {
+      timer = setTimeout(() => {
+        setStage('app');
+        addAuditLog('Acesso concedido via Biometria Facial no Portal', 'success');
+      }, 800);
+    }
+    return () => clearTimeout(timer);
+  }, [faceProgress, loginSubMode]);
+
+  useEffect(() => {
+    if (loginSubMode !== 'face-capture') {
+      setFaceProgress(0);
+      setIsFaceScanning(false);
+    }
+  }, [loginSubMode]);
 
   // Auto-scroll to top on tab/stage change
   useEffect(() => {
@@ -332,12 +406,24 @@ export default function App() {
   }, [inbox]);
 
   useEffect(() => {
+    localStorage.setItem('documentos_digital_inbox', JSON.stringify(docInbox));
+  }, [docInbox]);
+
+  useEffect(() => {
     localStorage.setItem('correio_digital_inst_inbox', JSON.stringify(instInbox));
   }, [instInbox]);
 
   useEffect(() => {
+    localStorage.setItem('documentos_digital_inst_inbox', JSON.stringify(instDocInbox));
+  }, [instDocInbox]);
+
+  useEffect(() => {
     localStorage.setItem('correio_digital_sent', JSON.stringify(sentMessages));
   }, [sentMessages]);
+
+  useEffect(() => {
+    localStorage.setItem('documentos_digital_sent', JSON.stringify(docSentMessages));
+  }, [docSentMessages]);
 
   useEffect(() => {
     localStorage.setItem('correio_digital_contacts', JSON.stringify(contacts));
@@ -477,6 +563,9 @@ export default function App() {
   const currentInbox = isInstMode ? instInbox : inbox;
   const unreadTotal = useMemo(() => currentInbox.reduce((sum, msg) => sum + (msg.unread || 0), 0), [currentInbox]);
 
+  const currentDocInbox = isInstMode ? instDocInbox : docInbox;
+  const unreadDocTotal = useMemo(() => currentDocInbox.reduce((sum, msg) => sum + (msg.unread || 0), 0), [currentDocInbox]);
+
   const filteredMessages = useMemo(() => {
     let base: Message[] = [];
     if (correspondenciaTab === "enviadas") base = sentMessages;
@@ -492,6 +581,22 @@ export default function App() {
       (m.details?.subject?.toLowerCase().includes(term) ?? false)
     );
   }, [correspondenciaTab, currentInbox, sentMessages, searchMail]);
+
+  const filteredDocMessages = useMemo(() => {
+    let base: Message[] = [];
+    if (documentosTab === "enviadas") base = docSentMessages;
+    else if (documentosTab === "lidas") base = currentDocInbox.filter((item) => !item.unread);
+    else base = currentDocInbox.filter((item) => item.unread);
+
+    if (!searchDocMail.trim()) return base;
+    
+    const term = searchDocMail.toLowerCase();
+    return base.filter(m => 
+      (m.org?.toLowerCase().includes(term) ?? false) || 
+      (m.preview?.toLowerCase().includes(term) ?? false) ||
+      (m.details?.subject?.toLowerCase().includes(term) ?? false)
+    );
+  }, [documentosTab, currentDocInbox, docSentMessages, searchDocMail]);
 
   const filteredDocs = useMemo(() => {
     if (!searchDoc.trim()) return documents;
@@ -611,6 +716,56 @@ export default function App() {
     });
     setTab('correspondencias');
     setIsComposing(true);
+  };
+
+  const handleSendDocMessage = () => {
+    if (!docComposeData.to || !docComposeData.subject || !docComposeData.body) return;
+    
+    const messageId = Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`);
+    const protocol = generateProtocol(docComposeData.to, 'message', messageId, docComposeData.subject);
+
+    const newMessage: Message = {
+      id: messageId,
+      org: docComposeData.to,
+      preview: docComposeData.subject,
+      date: "hoje",
+      status: "Informativo",
+      details: {
+        subject: docComposeData.subject,
+        body: docComposeData.body,
+        deadline: "Sem prazo",
+        state: "Entregue & Autenticado",
+        actions: ["Ver detalhes"]
+      },
+      protocol: protocol
+    };
+
+    setDocSentMessages(prev => [newMessage, ...prev]);
+    setIsDocComposing(false);
+    setDocComposeData({ to: '', subject: '', body: '' });
+
+    if (!isOnline) {
+      const q = OfflineManager.queueAction('SEND_DOCUMENT', { messageId, to: docComposeData.to, subject: docComposeData.subject });
+      setOfflineQueue(OfflineManager.getQueue());
+      
+      const fallback = OfflineManager.triggerFallback('SMS', `Enviar Documento: ${docComposeData.subject}`);
+      setActiveFallback({ channel: 'SMS', message: fallback.message, protocol: fallback.protocol });
+      
+      addAuditLog(`Ação Offline: Documento guardado em fila local. Canal SMS ativo.`, 'warning');
+    } else {
+      addAuditLog(`Documento enviado com Protocolo ${protocol.protocolNumber}`, 'info');
+      OfflineManager.createAutomaticBackup();
+    }
+  };
+
+  const handleDocReply = (msg: Message) => {
+    setDocComposeData({
+      to: msg.org,
+      subject: `RE: ${msg.details?.subject || msg.preview.substring(0, 30)}`,
+      body: `\n\n--------------------------------\nEm resposta ao documento de ${msg.date}:\n"${msg.preview}"`
+    });
+    setTab('documentos');
+    setIsDocComposing(true);
   };
 
   const handleDeleteContact = () => {
@@ -844,6 +999,27 @@ export default function App() {
             isInst={isInstMode}
           />
         );
+      case 'documentos':
+        return (
+          <DocumentsContent
+            isComposing={isDocComposing}
+            setIsComposing={setIsDocComposing}
+            composeData={docComposeData}
+            setComposeData={setDocComposeData}
+            handleSendMessage={handleSendDocMessage}
+            unreadTotal={unreadDocTotal}
+            correspondenciaTab={documentosTab}
+            setCorrespondenciaTab={setDocumentosTab}
+            inbox={currentDocInbox}
+            sentMessages={docSentMessages}
+            searchMail={searchDocMail}
+            setSearchMail={setSearchDocMail}
+            filteredMessages={filteredDocMessages}
+            handleSelectMessage={handleSelectMessage}
+            bi={bi}
+            isInst={isInstMode}
+          />
+        );
       case 'mensagem':
         if (!selectedMessage) return null;
         return (
@@ -912,6 +1088,7 @@ export default function App() {
       case 'contatos':
         return appMode === 'institution' ? (
           <GovContactsContent
+            appMode={appMode}
             bi={bi}
             setBi={setBi}
             nif={nif}
@@ -1023,6 +1200,39 @@ export default function App() {
       case 'gov-contatos':
         return (
           <GovContactsContent
+            appMode={appMode}
+            bi={bi}
+            setBi={setBi}
+            nif={nif}
+            setNif={setNif}
+            phone={phone}
+            setPhone={setPhone}
+            passport={passport}
+            setPassport={setPassport}
+            profileName={profileName}
+            setProfileName={setProfileName}
+            userBirthDate={userBirthDate}
+            setUserBirthDate={setUserBirthDate}
+            userFiliation={userFiliation}
+            setUserFiliation={setUserFiliation}
+            userMaritalStatus={userMaritalStatus}
+            setUserMaritalStatus={setUserMaritalStatus}
+            verificationStatus={verificationStatus}
+            setVerificationStatus={setVerificationStatus}
+            hasFacialAuth={hasFacialAuth}
+            setHasFacialAuth={setHasFacialAuth}
+            hasTwoFactor={hasTwoFactor}
+            setHasTwoFactor={setHasTwoFactor}
+            govPin={govPin}
+            setGovPin={setGovPin}
+            addAuditLog={addAuditLog}
+            auditLogs={auditLogs}
+          />
+        );
+      case 'gov-trabalhadores':
+        return (
+          <GovContactsContent
+            appMode="institution"
             bi={bi}
             setBi={setBi}
             nif={nif}
@@ -1056,6 +1266,17 @@ export default function App() {
           <GovPerfilContent 
             logs={auditLogs} 
             emergencyMode={emergencyMode} 
+            bi={bi}
+            phone={phone}
+            nif={nif}
+            passport={passport}
+            profileName={profileName}
+            userBirthDate={userBirthDate}
+            userFiliation={userFiliation}
+            userMaritalStatus={userMaritalStatus}
+            hasFacialAuth={hasFacialAuth}
+            hasTwoFactor={hasTwoFactor}
+            govPin={govPin}
             onToggleEmergency={(active) => {
               setEmergencyMode(active);
               addAuditLog(active ? 'PROTOCOLO DE EMERGÊNCIA ACTIVADO' : 'Protocolo de Emergência Desativado', active ? 'critical' : 'warning');
@@ -1148,52 +1369,80 @@ export default function App() {
     const handleLoginSubmit = () => {
       if (hasTwoFactor) {
         setLoginSubMode('two-factor');
-      } else if (hasFacialAuth) {
-        setLoginSubMode('face-capture');
-        setFaceProgress(0);
-      } else if (govPin && govPin.length === 4) {
-        setLoginSubMode('pin-entry');
-        setEnteredPin('');
       } else {
         setStage('app');
         addAuditLog('Login de Cidadão via Autenticação Segura', 'success');
       }
     };
 
-    const handleLoginFacial = () => {
-      setLoginSubMode('face-capture');
-      setFaceProgress(0);
-    };
-
     return (
-      <section className="min-h-screen p-6 bg-slate-50 flex items-center justify-center">
-        <div className="max-w-[1100px] w-full mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-6 items-center">
+      <section className="min-h-screen p-6 bg-slate-50 flex items-center justify-center font-sans">
+        <div className="max-w-[1100px] w-full mx-auto grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-6 items-stretch">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="hidden md:flex bg-white rounded-[40px] p-12 border border-slate-100 flex-col items-center justify-center text-center shadow-sm h-[580px] relative overflow-hidden"
+            className={`hidden md:flex bg-white rounded-[40px] ${loginSubMode === 'face-capture' ? 'p-8 min-h-[480px]' : 'p-12 min-h-[580px]'} border border-slate-100 flex-col items-center justify-center text-center shadow-sm h-full relative overflow-hidden transition-all duration-300`}
           >
             <div className="absolute top-0 right-0 w-80 h-80 bg-primary/2 rounded-full -mr-40 -mt-40 blur-3xl pointer-events-none" />
-            <img 
-              src="https://i.postimg.cc/cCkwskty/Logomarca-Correio-Digital.png" 
-              alt="Correio Digital" 
-              className="w-72 h-auto mb-10 relative z-10"
-            />
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 leading-tight italic uppercase tracking-tight">
-              O seu novo endereço digital oficial
-            </h1>
-            <p className="text-slate-500 leading-relaxed max-w-sm text-sm font-semibold">
-              Receba, assine e despache correspondência governamental com validade jurídica do Estado da República de Angola.
-            </p>
-            <div className="mt-8 flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
-              <ShieldCheck size={14} className="text-emerald-500" /> Infraestrutura Oficial Segura SME & AGT
-            </div>
+            
+            {showVoiceGuide ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full relative z-10"
+              >
+                <VoiceGuideAssistant
+                  onScrollDown={() => {
+                    const el = document.getElementById('cda-login-form-container');
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                      window.scrollTo({ top: 350, behavior: 'smooth' });
+                    }
+                  }}
+                  onFocusSteps={() => {
+                    setHighlightSteps(true);
+                    setTimeout(() => setHighlightSteps(false), 5000);
+                  }}
+                  onCollapseStart={() => {
+                    setLoginSubMode('register');
+                  }}
+                  onCloseAssistant={() => {
+                    setShowVoiceGuide(false);
+                  }}
+                />
+              </motion.div>
+            ) : (
+              <div className="flex flex-col items-center relative z-10">
+                <img 
+                  src="https://i.postimg.cc/cCkwskty/Logomarca-Correio-Digital.png" 
+                  alt="Correio Digital" 
+                  className={loginSubMode === 'face-capture' ? "w-48 h-auto mb-4" : "w-72 h-auto mb-8"}
+                />
+                <h1 className={`${loginSubMode === 'face-capture' ? 'text-xl md:text-2xl mb-2' : 'text-2xl md:text-3xl mb-4'} font-black text-slate-900 leading-tight italic uppercase tracking-tight`}>
+                  O seu novo endereço digital oficial
+                </h1>
+                <p className="text-slate-500 leading-relaxed max-w-sm text-sm font-semibold">
+                  Receba, assine e despache correspondência governamental com validade jurídica do Estado da República de Angola.
+                </p>
+                <div className={`${loginSubMode === 'face-capture' ? 'mt-4' : 'mt-8'} flex flex-col items-center`}>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+                    <ShieldCheck size={14} className="text-emerald-500" /> Infraestrutura Oficial Segura SME & AGT
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           <motion.div 
+            id="cda-login-form-container"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-[40px] p-8 md:p-12 shadow-xl border border-slate-100 min-h-[585px] flex flex-col justify-between"
+            className={`bg-white rounded-[40px] ${loginSubMode === 'face-capture' ? 'p-5 md:p-6 min-h-[480px]' : 'p-8 md:p-12 min-h-[580px]'} shadow-xl border border-slate-100 flex flex-col justify-between h-full transition-all duration-300 relative ${
+              highlightSteps 
+                ? 'ring-4 ring-blue-500 ring-offset-4 shadow-[0_0_30px_rgba(37,99,235,0.35)] scale-[1.01]' 
+                : ''
+            }`}
           >
             <AnimatePresence mode="wait">
               {loginSubMode === 'normal' && (
@@ -1204,20 +1453,22 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                   className="space-y-6 flex-1 flex flex-col justify-center"
                 >
-                  <div>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">República de Angola</span>
-                    <h2 className="text-2xl font-black text-slate-905 italic uppercase tracking-tight">Acesso Seguro</h2>
-                    <p className="text-slate-500 text-xs font-semibold">Introduza o número de BI nacional para consultar as suas credenciais.</p>
+                  <div className="text-center">
+                    <h2 className="text-2xl font-black text-slate-900 italic uppercase tracking-tight">
+                      {isInstMode ? "Login Instituicional" : isGovMode ? "Login Admin" : "Login"}
+                    </h2>
                   </div>
 
                   <div className="space-y-4 pt-2">
                     <label className="grid gap-1.5">
-                      <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">Número de BI de Cidadão</span>
+                      <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">
+                        {(isInstMode || isGovMode) ? "Número de Agente" : "Número de BI de Cidadão"}
+                      </span>
                       <input 
                         className="border border-slate-200 bg-slate-50/50 focus:bg-white rounded-2xl p-4 outline-none focus:border-primary transition-all font-mono font-bold tracking-wider text-slate-800"
                         value={bi}
                         onChange={(e) => setBi(e.target.value.toUpperCase())}
-                        placeholder="002931298LA045"
+                        placeholder={isInstMode ? "AGT-9921-SR" : isGovMode ? "ADM-8812-OP" : "002931298LA045"}
                         maxLength={14}
                       />
                     </label>
@@ -1231,27 +1482,60 @@ export default function App() {
                       />
                     </label>
 
-                    <div className="pt-4 grid gap-3">
+                    <div className="pt-4 flex flex-col gap-5">
                       <button 
                         onClick={handleLoginSubmit}
-                        className="w-full bg-primary text-white rounded-2xl py-4 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/15 hover:opacity-95 transition-all cursor-pointer border-0"
+                        className="w-full bg-primary text-white rounded-[20px] py-4 font-black text-xs uppercase tracking-widest shadow-xl shadow-primary/15 hover:opacity-95 transition-all cursor-pointer border-0"
                       >
                         Entrar no Portal
                       </button>
 
-                      <div className="relative py-2 flex items-center justify-center">
-                        <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t border-slate-150"></div>
-                        </div>
-                        <span className="relative z-10 bg-white px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ou</span>
+                      {/* Separador Horizontal Moderno "Ou" */}
+                      <div className="relative flex items-center py-1">
+                        <div className="flex-grow border-t border-slate-100"></div>
+                        <span className="flex-shrink mx-4 text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] bg-white px-3 select-none">Ou</span>
+                        <div className="flex-grow border-t border-slate-100"></div>
                       </div>
 
+                      {/* Botão Principal Login Facial */}
                       <button 
-                        onClick={handleLoginFacial}
-                        className="w-full bg-white border border-slate-200 text-primary rounded-2xl py-4 font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        type="button"
+                        onClick={() => {
+                          setFaceProgress(0);
+                          setLoginSubMode('face-capture');
+                          addAuditLog('Iniciado Login Biométrico Facial', 'info');
+                        }}
+                        className="w-full bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-100 hover:border-slate-200 rounded-[20px] py-3.5 font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-sm hover:shadow-md"
                       >
-                        <Scan size={16} /> Login Facial Biométrico
+                        <Fingerprint size={16} className="text-primary animate-pulse" />
+                        Login Facial
                       </button>
+
+                      {/* Links de Ação Registar e Esqueci Senha apenas para Cidadão/Usuário */}
+                      {!(isInstMode || isGovMode) && (
+                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest pt-2 border-t border-slate-50 px-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLoginSubMode('register');
+                            }}
+                            className="text-slate-400 hover:text-primary transition-colors bg-transparent border-0 cursor-pointer text-[10px] font-black uppercase tracking-widest font-sans"
+                          >
+                            Registar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAccessModalTitle('Recuperação de Credenciais');
+                              setAccessModalMessage('Para recuperar a sua senha ou o seu código de segurança governamental (PIN), por favor dirija-se a um guiché físico de atendimento do SME, AGT ou contacte a linha oficial de suporte do Correio Digital de Angola.');
+                              setShowAccessModal(true);
+                            }}
+                            className="text-slate-400 hover:text-primary transition-colors bg-transparent border-0 cursor-pointer text-[10px] font-black uppercase tracking-widest font-sans"
+                          >
+                            Esqueci Senha
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -1300,16 +1584,8 @@ export default function App() {
                       <button 
                         onClick={() => {
                           if (enteredOtp === '123456' || enteredOtp.length === 6) {
-                            if (hasFacialAuth) {
-                              setLoginSubMode('face-capture');
-                              setFaceProgress(0);
-                            } else if (govPin && govPin.length === 4) {
-                              setLoginSubMode('pin-entry');
-                              setEnteredPin('');
-                            } else {
-                              setStage('app');
-                              addAuditLog('Login concluído com factor duplo SMS', 'success');
-                            }
+                            setStage('app');
+                            addAuditLog('Login concluído com factor duplo SMS', 'success');
                           } else {
                             alert("Código de verificação OTP incorrecto. Utilize o código de simulação 123456.");
                           }
@@ -1329,108 +1605,291 @@ export default function App() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="space-y-6 flex-1 flex flex-col justify-center text-center"
+                  className="space-y-4 flex-1 flex flex-col justify-center text-center p-2 relative"
                 >
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tight">Detetor Biométrico Facial</h3>
-                    <p className="text-slate-500 text-xs font-semibold mt-1">
-                      A validar os seus vetores criptográficos nacionais com o SME.
+                  {/* Badge top */}
+                  <div className="inline-flex items-center gap-1 bg-blue-50/70 border border-blue-100/50 px-3 py-1 rounded-full text-blue-600 font-extrabold text-[9px] uppercase tracking-[0.15em] mx-auto w-fit">
+                    <Shield size={11} className="text-blue-500" />
+                    LOGIN FACIAL
+                  </div>
+
+                  {/* Title & Subtitle with relative Back button on left */}
+                  <div className="space-y-1 relative">
+                    <div className="flex items-center justify-center gap-2 relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLoginSubMode('normal');
+                          addAuditLog('Sair do login facial', 'info');
+                        }}
+                        className="absolute left-1 p-1.5 hover:bg-slate-100 rounded-full transition-all text-slate-500 hover:text-slate-800 border-0 cursor-pointer flex items-center justify-center focus:outline-none"
+                        title="Voltar"
+                      >
+                        <ArrowLeft size={18} />
+                      </button>
+                      <h2 className="text-xl md:text-2xl font-black text-[#0f172a] tracking-tight leading-none">
+                        Login Facial
+                      </h2>
+                    </div>
+                    <p className="text-slate-500 text-[11px] font-semibold max-w-sm mx-auto leading-normal px-8">
+                      Registe o seu padrão facial tridimensional codificado na infraestrutura do <strong className="font-extrabold text-blue-600">SME</strong>.
                     </p>
                   </div>
 
-                  <div className="relative mx-auto w-52 h-52 rounded-full border-4 border-slate-100 overflow-hidden shadow-2xl bg-slate-900 flex items-center justify-center p-2">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none z-10" />
-                    
-                    {/* Laser Scanner motion bar */}
-                    <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)] z-20" style={{
-                      animation: 'scan-motion 2.5s infinite ease-in-out',
-                      position: 'absolute'
-                    }} />
+                  {/* Circle Scanning area */}
+                  <div className="relative flex justify-center py-1">
+                    <div className="relative w-38 h-38 rounded-full flex items-center justify-center bg-white shadow-lg">
+                      {/* SVG Ring Progress */}
+                      <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-10" viewBox="0 0 100 100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="46"
+                          fill="none"
+                          stroke="#f1f5f9"
+                          strokeWidth="2.5"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="46"
+                          fill="none"
+                          stroke="#2563eb"
+                          strokeWidth="3"
+                          strokeDasharray={`${2 * Math.PI * 46}`}
+                          strokeDashoffset={`${2 * Math.PI * 46 * (1 - faceProgress / 100)}`}
+                          className="transition-all duration-150 ease-out"
+                          strokeLinecap="round"
+                        />
+                        {/* Indicator Slider Dot */}
+                        {faceProgress > 0 && faceProgress < 100 && (
+                          <circle
+                            cx={50 + 46 * Math.cos((faceProgress / 100) * 2 * Math.PI - Math.PI / 2)}
+                            cy={50 + 46 * Math.sin((faceProgress / 100) * 2 * Math.PI - Math.PI / 2)}
+                            r="2.5"
+                            fill="#3b82f6"
+                            className="shadow-sm"
+                          />
+                        )}
+                      </svg>
 
-                    <div className="absolute inset-0 border-2 border-emerald-500 rounded-full animate-pulse pointer-events-none z-15" />
+                      {/* Main dark vector circle */}
+                      <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] relative flex items-center justify-center border-4 border-white shadow-inner z-5">
+                        {/* Faint Tech Grid */}
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#334155_1px,transparent_1px),linear-gradient(to_bottom,#334155_1px,transparent_1px)] bg-[size:10px_10px] opacity-25" />
 
-                    <div className="flex flex-col items-center justify-center text-indigo-200 gap-1.5 z-10 max-w-xs px-4">
-                      <Camera size={28} className="text-emerald-400 animate-bounce" />
-                      <span className="text-[10px] uppercase font-black tracking-widest text-emerald-400">Reconhecimento Facial</span>
-                      <span className="text-[11px] font-mono font-bold text-white bg-emerald-950/80 px-2 py-0.5 rounded-full mt-1">
-                        A mapear face: {faceProgress}%
-                      </span>
+                        {/* Scanner Laser Bar */}
+                        {isFaceScanning && (
+                          <div 
+                            className="absolute top-0 left-0 right-0 h-1 bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.9)] z-20 pointer-events-none" 
+                            style={{
+                              animation: 'scan-motion 2.5s infinite ease-in-out',
+                              position: 'absolute'
+                            }} 
+                          />
+                        )}
+
+                        {/* Bracket Corners */}
+                        <div className="absolute top-4 left-4 w-3.5 h-3.5 border-t border-l border-white rounded-tl-xs opacity-80 pointer-events-none" />
+                        <div className="absolute top-4 right-4 w-3.5 h-3.5 border-t border-r border-white rounded-tr-xs opacity-80 pointer-events-none" />
+                        <div className="absolute bottom-4 left-4 w-3.5 h-3.5 border-b border-l border-white rounded-bl-xs opacity-80 pointer-events-none" />
+                        <div className="absolute bottom-4 right-4 w-3.5 h-3.5 border-b border-r border-white rounded-br-xs opacity-80 pointer-events-none" />
+
+                        {/* Beautiful Face Wireframe SVG */}
+                        <svg className="w-18 h-18 text-blue-400/30 filter drop-shadow-[0_0_8px_rgba(59,130,246,0.4)] pointer-events-none z-10" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8">
+                          {/* Outer Face Grid Oval */}
+                          <path d="M50,15 C28,15 28,65 50,85 C72,65 72,15 50,15 Z" strokeDasharray="2 2" className="opacity-40" />
+                          <path d="M50,15 L50,85" strokeDasharray="1 3" className="opacity-30" />
+                          <path d="M22,50 L78,50" strokeDasharray="1 3" className="opacity-30" />
+                          
+                          {/* Face Geodesics */}
+                          <path d="M34,30 Q50,40 66,30" />
+                          <path d="M30,45 Q50,57 70,45" />
+                          <path d="M32,60 Q50,72 68,60" />
+                          <path d="M38,72 Q50,81 62,72" />
+                          <path d="M38,18 Q44,45 38,72" />
+                          <path d="M62,18 Q56,45 62,72" />
+                          
+                          {/* Eyes & nose indicators */}
+                          <circle cx="42" cy="42" r="1" className="fill-blue-300" />
+                          <circle cx="58" cy="42" r="1" className="fill-blue-300" />
+                          <polygon points="50,45 47,55 53,55" strokeWidth="0.6" />
+                          
+                          {/* Glowing blue vertices */}
+                          <circle cx="50" cy="15" r="1.5" className="fill-blue-400 animate-pulse" />
+                          <circle cx="50" cy="30" r="1" className="fill-blue-400" />
+                          <circle cx="50" cy="45" r="1" className="fill-blue-400" />
+                          <circle cx="50" cy="60" r="1" className="fill-blue-400" />
+                          <circle cx="50" cy="85" r="1.5" className="fill-blue-400 animate-pulse" />
+                          <circle cx="34" cy="30" r="1" className="fill-blue-400" />
+                          <circle cx="66" cy="30" r="1" className="fill-blue-400" />
+                          <circle cx="30" cy="45" r="1" className="fill-blue-400" />
+                          <circle cx="70" cy="45" r="1" className="fill-blue-400" />
+                          <circle cx="38" cy="72" r="1" className="fill-blue-400" />
+                          <circle cx="62" cy="72" r="1" className="fill-blue-400" />
+                        </svg>
+
+                        {/* Overlapping Camera button indicator */}
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-slate-950/70 border border-white/20 flex items-center justify-center text-white z-20 shadow-lg">
+                          <Camera size={10} className={isFaceScanning ? "animate-pulse text-blue-400" : "text-slate-200"} />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="text-[10px] text-indigo-600 font-extrabold uppercase tracking-widest animate-pulse">
-                    Por favor, permaneça imóvel focado no círculo...
+                  {/* Verification Status Banner */}
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5 justify-center">
+                      <CheckCircle size={13} className={faceProgress === 100 ? "text-emerald-500" : isFaceScanning ? "text-blue-500 animate-spin" : "text-emerald-500"} />
+                      <span className="text-emerald-600 font-extrabold uppercase tracking-widest text-[8.5px] font-sans">
+                        {faceProgress === 100 ? "Pronto para submissão" : isFaceScanning ? `A digitalizar: ${faceProgress}%` : "Pronto para captura"}
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-[9.5px] font-semibold">
+                      {faceProgress === 100 ? "Biometria processada com sucesso." : isFaceScanning ? "Mantenha o rosto imóvel no círculo." : "Posicione o rosto no centro da moldura."}
+                    </p>
                   </div>
 
-                  <button 
-                    onClick={() => setLoginSubMode('normal')}
-                    className="py-3.5 bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-200 max-w-xs mx-auto w-full cursor-pointer border-0"
+                  {/* Main Action Button to Start scan */}
+                  <button
+                    type="button"
+                    disabled={isFaceScanning || faceProgress === 100}
+                    onClick={() => {
+                      setFaceProgress(0);
+                      setIsFaceScanning(true);
+                      addAuditLog('Iniciou digitalização biométrica facial no portal', 'info');
+                    }}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-5 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15 hover:opacity-95 active:scale-95 transition-all disabled:opacity-40 disabled:scale-100 disabled:shadow-none cursor-pointer border-0"
                   >
-                    Usar Senha
+                    <Fingerprint size={14} />
+                    INICIAR CAPTURA FACIAL
                   </button>
+
+                  {/* Encryption Footer label */}
+                  <div className="flex items-center justify-center gap-1.5 text-slate-400 text-[8.5px] font-bold">
+                    <Lock size={11} className="text-slate-400" />
+                    <span>Os seus dados biométricos estão protegidos e criptografados.</span>
+                  </div>
                 </motion.div>
               )}
 
-              {loginSubMode === 'pin-entry' && (
+              {loginSubMode === 'register' && (
                 <motion.div
-                  key="login-pin"
+                  key="login-register"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="space-y-6 flex-1 flex flex-col justify-center text-center"
+                  className="flex-1 flex flex-col justify-center"
                 >
-                  <div className="mx-auto w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shadow-xs border border-amber-100">
-                    <Key size={26} />
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tight">PIN Governamental</h3>
-                    <p className="text-slate-500 text-xs font-semibold mt-1">
-                      Insira o seu PIN de 4 dígitos para concluir a autorização do portal.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <input 
-                      type="password"
-                      maxLength={4}
-                      value={enteredPin}
-                      placeholder="••••"
-                      onChange={(e) => setEnteredPin(e.target.value.replace(/\D/g, ''))}
-                      className="w-full text-center font-mono font-black text-3xl tracking-[0.6em] p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-amber-500 transition-all focus:bg-white"
-                    />
-
-                    <div className="bg-amber-50 border border-amber-105 rounded-xl p-3 text-[10.5px] text-amber-800 font-bold leading-normal">
-                      Insira o PIN governamental que configurou no perfil (Padrão: <strong>{govPin || '1234'}</strong>)
-                    </div>
-
-                    <div className="pt-2 grid grid-cols-2 gap-3">
-                      <button 
-                        onClick={() => setLoginSubMode('normal')}
-                        className="py-4 bg-slate-50 border border-slate-200 text-slate-600 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-100 cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
-                      <button 
-                        onClick={() => {
-                          if (enteredPin === govPin || (!govPin && enteredPin === '1234')) {
-                            setStage('app');
-                            addAuditLog('Login assinado digitalmente com PIN', 'success');
-                          } else {
-                            alert("Código PIN incorreto civil de Angola. Tente novamente.");
-                          }
-                        }}
-                        className="py-4 bg-primary text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:opacity-95 shadow-lg shadow-primary/10 cursor-pointer border-0"
-                      >
-                        Desbloquear Portal
-                      </button>
-                    </div>
-                  </div>
+                  <RegisterStepper 
+                    onCancel={() => setLoginSubMode('normal')} 
+                    onSuccess={() => setLoginSubMode('normal')}
+                    addAuditLog={addAuditLog}
+                  />
                 </motion.div>
               )}
+
+
             </AnimatePresence>
           </motion.div>
         </div>
+
+        {/* Modal de Detalhes Adicionais (Registar / Esqueci Senha) */}
+        <AnimatePresence>
+          {showAccessModal && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowAccessModal(false)}
+                className="fixed inset-0 bg-slate-950/65 backdrop-blur-sm z-[300]"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="fixed inset-x-4 bottom-4 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-md bg-white rounded-[32px] shadow-2xl z-[301] overflow-hidden border border-slate-100 text-left font-sans flex flex-col max-h-[85vh]"
+              >
+                {/* Header */}
+                <div className="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 text-white relative">
+                  <button
+                    onClick={() => setShowAccessModal(false)}
+                    className="absolute top-5 right-5 p-1.5 hover:bg-white/10 rounded-full transition-all cursor-pointer border-0 text-white bg-transparent flex items-center justify-center placeholder:hidden"
+                    type="button"
+                  >
+                    <X size={18} />
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/10 rounded-[14px] flex items-center justify-center text-white border border-white/20">
+                      <Shield size={20} className="text-indigo-200" />
+                    </div>
+                    <div>
+                      <div className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-300 font-bold">Correio Digital de Angola</div>
+                      <h3 className="text-base font-black italic tracking-tight uppercase leading-none mt-1">
+                        {accessModalTitle}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 md:p-8 space-y-4 overflow-y-auto custom-scrollbar">
+                  <p className="text-slate-600 text-xs font-semibold leading-relaxed">
+                    {accessModalMessage}
+                  </p>
+                  
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex gap-3 text-left">
+                    <ShieldCheck size={18} className="text-primary shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-black text-slate-800 uppercase tracking-tight">Segurança Validada pelo Estado</p>
+                      <p className="text-[9px] text-slate-450 font-medium leading-relaxed uppercase">
+                        Todas as transações e acessos a este portal estão associados de forma única à sua identidade civil nacional.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowAccessModal(false)}
+                    className="px-6 py-3 bg-primary hover:bg-indigo-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer border-0 shadow-lg shadow-primary/10"
+                  >
+                    Compreendido
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Floating Voice Guide Assistant for Mobile Screens */}
+        {showVoiceGuide && (
+          <div className="fixed bottom-6 right-6 z-[150] max-w-sm w-[calc(100vw-32px)] md:hidden block">
+            <VoiceGuideAssistant
+              onScrollDown={() => {
+                const el = document.getElementById('cda-login-form-container');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                  window.scrollTo({ top: 350, behavior: 'smooth' });
+                }
+              }}
+              onFocusSteps={() => {
+                setHighlightSteps(true);
+                setTimeout(() => setHighlightSteps(false), 5000);
+              }}
+              onCollapseStart={() => {
+                setLoginSubMode('register');
+              }}
+              onCloseAssistant={() => {
+                setShowVoiceGuide(false);
+              }}
+            />
+          </div>
+        )}
       </section>
     );
   }
@@ -1462,6 +1921,12 @@ export default function App() {
         handleLogout={handleLogout}
         appMode={appMode}
         setAppMode={setAppMode}
+        setStage={(s) => {
+          setStage(s);
+          if (s === 'splash') {
+            setLoginSubMode('normal');
+          }
+        }}
       />
       <MobileNavBar 
         tab={tab} 

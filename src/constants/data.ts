@@ -418,19 +418,6 @@ export const INSTITUTIONAL_INBOX: Message[] = [
     },
   },
   {
-    id: 1003,
-    org: "Empresa: TechLuanda Lda",
-    preview: "Solicitação de Certidão de Não Devedor urgente.",
-    date: "10:15",
-    unread: 1,
-    status: "Urgente",
-    details: {
-      subject: "Certidão de Não Devedor",
-      body: "Solicitamos a emissão urgente da Certidão de Não Devedor para efeitos de concurso público. Todos os impostos encontram-se liquidados à data de hoje.\n\nNIF: 5412889210\n\nAguardamos feedback célere.",
-      actions: ["Emitir Certidão", "Verificar Débitos", "Responder"],
-    },
-  },
-  {
     id: 1004,
     org: "Cidadão: José Kalunga",
     preview: "Dedução fiscal não aplicada em fatura de saúde.",
@@ -610,8 +597,8 @@ export const GOV_HIGHLIGHT_SLIDES: Slide[] = [
   },
   {
     id: 3,
-    title: "Interoperabilidade Ativa",
-    subtitle: "Conectividade avançada entre as diferentes instituições governamentais.",
+    title: "Instituições Conectadas",
+    subtitle: "Gestão de agências e conectividade avançada entre instituições governamentais.",
     image: "https://i.postimg.cc/4ddkRkHY/2.png",
     btn: "Monitorar Rede",
     action: "gov-interoperabilidade"

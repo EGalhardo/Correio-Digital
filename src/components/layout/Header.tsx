@@ -4,7 +4,7 @@
  */
 
 import { motion } from 'motion/react';
-import { Mic, Bell } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { USER_PROFILE_PHOTO } from '../../constants/data';
 import { AppNotification, AppMode } from '../../types';
 import type { JSX } from 'react';
@@ -133,28 +133,21 @@ export function Header({
             />
           </button>
           
-          <div className="relative">
-            <button 
+          <div className="relative flex items-center justify-center">
+            <img 
+              src={USER_PROFILE_PHOTO} 
+              alt="Perfil" 
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative cursor-pointer p-2 active:bg-white/5 rounded-full transition-all group flex items-center justify-center outline-none"
-            >
-              {notifications.length > 0 && (
-                <div className="bg-red-600 text-white font-black text-[7px] min-w-[12px] h-[12px] flex items-center justify-center rounded-full ring-1 ring-white absolute top-1.5 right-1.5 z-10 shadow-sm leading-none">
-                  {notifications.length}
-                </div>
-              )}
-              <Bell size={18} className={isAdmin ? 'text-slate-600' : 'text-slate-600'} />
-            </button>
+              className={`w-8 h-8 rounded-full object-cover border shadow-sm ml-1 cursor-pointer transition-all border-slate-100 ring-2 ring-primary/5 hover:ring-primary/20`}
+              referrerPolicy="no-referrer"
+            />
+            {notifications.length > 0 && (
+              <div className="bg-red-600 text-white font-black text-[7px] min-w-[12px] h-[12px] px-0.5 flex items-center justify-center rounded-full ring-1 ring-white absolute -top-0.5 -right-0.5 z-10 shadow-sm pointer-events-none leading-none">
+                {notifications.length}
+              </div>
+            )}
             <NotificationDropdown />
           </div>
-
-          <img 
-            src={USER_PROFILE_PHOTO} 
-            alt="Perfil" 
-            onClick={() => setTab(isAdmin ? 'gov-perfil' : 'perfil')}
-            className={`w-7 h-7 rounded-full object-cover border shadow-sm ml-1 cursor-pointer border-slate-100`}
-            referrerPolicy="no-referrer"
-          />
         </div>
       </header>
 
@@ -222,33 +215,20 @@ export function Header({
             />
           </button>
           
-          <div className="relative">
-            <button 
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative cursor-pointer p-2 hover:bg-slate-50 hover:bg-opacity-10 rounded-full transition-all group flex items-center justify-center outline-none"
-            >
-              {notifications.length > 0 && (
-                <div className="bg-red-600 text-white font-black text-[9px] min-w-[16px] h-[16px] flex items-center justify-center rounded-full ring-2 ring-white absolute top-1 right-1 z-10 transition-transform group-hover:scale-110 shadow-sm">
-                  {notifications.length}
-                </div>
-              )}
-              <Bell size={21} className={`transition-colors ${
-                isAdmin ? 'text-slate-600 group-hover:text-slate-900' : 
-                isInst ? 'text-slate-600 group-hover:text-red-600' : 
-                'text-slate-700 group-hover:text-primary'}`} 
-              />
-            </button>
-            <NotificationDropdown />
-          </div>
-
-          <div className="flex items-center gap-2">
+          <div className="relative flex items-center">
             <img 
               src={USER_PROFILE_PHOTO} 
               alt="Perfil" 
-              onClick={() => setTab(isAdmin ? 'gov-perfil' : 'perfil')}
+              onClick={() => setShowNotifications(!showNotifications)}
               className={`w-10 h-10 rounded-full object-cover border-2 shadow-sm cursor-pointer transition-all border-white ring-2 ring-primary/10 hover:ring-primary/30`}
               referrerPolicy="no-referrer"
             />
+            {notifications.length > 0 && (
+              <div className="bg-red-600 text-white font-black text-[9px] min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full ring-2 ring-white absolute -top-1 -right-1 z-10 shadow-sm pointer-events-none">
+                {notifications.length}
+              </div>
+            )}
+            <NotificationDropdown />
           </div>
         </div>
       </div>

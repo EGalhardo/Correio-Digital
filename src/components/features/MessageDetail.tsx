@@ -52,7 +52,22 @@ import {
   Send,
   RefreshCw,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Trash2,
+  Undo,
+  Redo,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Quote,
+  Eraser
 } from 'lucide-react';
 import { Message, SENSITIVITY_LEVELS, SensitivityConfig, PRIORITY_CONFIGS } from '../../types';
 import { generateProtocol, generateTimelineEvents, getCategoryMetadata } from '../../utils/protocolGenerator';
@@ -252,7 +267,38 @@ export function MessageDetail({
     text: string;
     digitalSeal: string;
     documentHash: string;
+    files?: { name: string; size: string }[];
   } | null>(null);
+
+  const [inlineAttachedFiles, setInlineAttachedFiles] = useState<{ name: string; size: string }[]>([]);
+
+  const handleInlineFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const isFileExist = (name: string) => inlineAttachedFiles.some(f => f.name === name);
+      const newFiles: { name: string; size: string }[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!isFileExist(file.name)) {
+          const sz = file.size;
+          let sizeStr = '';
+          if (sz < 1024) {
+            sizeStr = `${sz} B`;
+          } else if (sz < 1024 * 1024) {
+            sizeStr = `${(sz / 1024).toFixed(1)} KB`;
+          } else {
+            sizeStr = `${(sz / (1024 * 1024)).toFixed(1)} MB`;
+          }
+          newFiles.push({ name: file.name, size: sizeStr });
+        }
+      }
+      setInlineAttachedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleInlineFileRemove = (name: string) => {
+    setInlineAttachedFiles(prev => prev.filter(f => f.name !== name));
+  };
 
   // States for the 8 official government actions requested
   const [activeOfficialAction, setActiveOfficialAction] = useState<string | null>(null);
@@ -266,6 +312,114 @@ export function MessageDetail({
   } | null>(null);
 
   const [replyText, setReplyText] = useState('');
+  const [editorBold, setEditorBold] = useState(false);
+  const [editorItalic, setEditorItalic] = useState(false);
+  const [editorUnderline, setEditorUnderline] = useState(false);
+  const [editorFont, setEditorFont] = useState('sans-serif');
+  const [editorFontSize, setEditorFontSize] = useState('base');
+  const [editorAlignment, setEditorAlignment] = useState('left');
+  const [editorColor, setEditorColor] = useState('#1e293b');
+  const [editorIsQuote, setEditorIsQuote] = useState(false);
+  const [editorListType, setEditorListType] = useState<string | null>(null);
+
+  const [textHistory, setTextHistory] = useState<string[]>(['']);
+  const [historyIndex, setHistoryIndex] = useState(0);
+
+  const updateReplyText = (newText: string) => {
+    setReplyText(newText);
+    const updatedHistory = textHistory.slice(0, historyIndex + 1);
+    if (updatedHistory[updatedHistory.length - 1] !== newText) {
+      const nextHistory = [...updatedHistory, newText];
+      if (nextHistory.length > 25) {
+        nextHistory.shift();
+      }
+      setTextHistory(nextHistory);
+      setHistoryIndex(nextHistory.length - 1);
+    }
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const prevIndex = historyIndex - 1;
+      setHistoryIndex(prevIndex);
+      setReplyText(textHistory[prevIndex]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < textHistory.length - 1) {
+      const nextIndex = historyIndex + 1;
+      setHistoryIndex(nextIndex);
+      setReplyText(textHistory[nextIndex]);
+    }
+  };
+
+  const clearFormatting = () => {
+    setEditorBold(false);
+    setEditorItalic(false);
+    setEditorUnderline(false);
+    setEditorFont('sans-serif');
+    setEditorFontSize('base');
+    setEditorAlignment('left');
+    setEditorColor('#1e293b');
+    setEditorIsQuote(false);
+    setEditorListType(null);
+  };
+
+  const [detailEditorBold, setDetailEditorBold] = useState(false);
+  const [detailEditorItalic, setDetailEditorItalic] = useState(false);
+  const [detailEditorUnderline, setDetailEditorUnderline] = useState(false);
+  const [detailEditorFont, setDetailEditorFont] = useState('sans-serif');
+  const [detailEditorFontSize, setDetailEditorFontSize] = useState('base');
+  const [detailEditorAlignment, setDetailEditorAlignment] = useState('left');
+  const [detailEditorColor, setDetailEditorColor] = useState('#1e293b');
+  const [detailEditorIsQuote, setDetailEditorIsQuote] = useState(false);
+  const [detailEditorListType, setDetailEditorListType] = useState<string | null>(null);
+
+  const [detailTextHistory, setDetailTextHistory] = useState<string[]>(['']);
+  const [detailHistoryIndex, setDetailHistoryIndex] = useState(0);
+
+  const updateDetailReplyText = (newText: string) => {
+    setDetailReplyText(newText);
+    const updatedHistory = detailTextHistory.slice(0, detailHistoryIndex + 1);
+    if (updatedHistory[updatedHistory.length - 1] !== newText) {
+      const nextHistory = [...updatedHistory, newText];
+      if (nextHistory.length > 25) {
+        nextHistory.shift();
+      }
+      setDetailTextHistory(nextHistory);
+      setDetailHistoryIndex(nextHistory.length - 1);
+    }
+  };
+
+  const handleDetailUndo = () => {
+    if (detailHistoryIndex > 0) {
+      const prevIndex = detailHistoryIndex - 1;
+      setDetailHistoryIndex(prevIndex);
+      setDetailReplyText(detailTextHistory[prevIndex]);
+    }
+  };
+
+  const handleDetailRedo = () => {
+    if (detailHistoryIndex < detailTextHistory.length - 1) {
+      const nextIndex = detailHistoryIndex + 1;
+      setDetailHistoryIndex(nextIndex);
+      setDetailReplyText(detailTextHistory[nextIndex]);
+    }
+  };
+
+  const clearDetailFormatting = () => {
+    setDetailEditorBold(false);
+    setDetailEditorItalic(false);
+    setDetailEditorUnderline(false);
+    setDetailEditorFont('sans-serif');
+    setDetailEditorFontSize('base');
+    setDetailEditorAlignment('left');
+    setDetailEditorColor('#1e293b');
+    setDetailEditorIsQuote(false);
+    setDetailEditorListType(null);
+  };
+
   const [confirmReadCheckbox, setConfirmReadCheckbox] = useState(false);
   const [signatureMethod, setSignatureMethod] = useState('BI-DIGITAL');
   const [signaturePin, setSignaturePin] = useState('');
@@ -526,11 +680,10 @@ export function MessageDetail({
           <button 
             type="button"
             onClick={() => setActiveAction(null)}
-            className="flex items-center gap-2.5 px-6 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs md:text-sm text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+            className="text-[#384e6e] hover:text-slate-900 hover:bg-slate-100/60 p-2 rounded-full transition-all cursor-pointer flex items-center justify-center border-0 outline-none"
             title="Voltar"
           >
-            <ArrowLeft size={16} className="text-[#384e6e]" />
-            <span>Voltar</span>
+            <ArrowLeft size={24} />
           </button>
         </div>
 
@@ -588,6 +741,21 @@ export function MessageDetail({
                       {detailReplySuccess.text}
                     </p>
                   </div>
+                  {detailReplySuccess.files && detailReplySuccess.files.length > 0 && (
+                    <div>
+                      <span className="text-[9px] font-black text-slate-450 block uppercase mb-1">Ficheiros Oficiais Anexados ({detailReplySuccess.files.length})</span>
+                      <div className="space-y-1 bg-slate-50 border border-slate-150 p-2.5 rounded-lg">
+                        {detailReplySuccess.files.map((file, fIdx) => (
+                          <div key={fIdx} className="flex items-center gap-2 text-[10.5px] font-mono text-slate-600 leading-none">
+                            <span className="text-emerald-500 font-extrabold text-xs">✓</span>
+                            <span className="font-semibold truncate max-w-[200px] md:max-w-xs">{file.name}</span>
+                            <span className="text-slate-400 text-[9.5px]">({file.size})</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-slate-150">
                     <div>
                       <span className="text-[9px] font-black text-slate-450 block uppercase">Data & Hora Registo</span>
@@ -648,73 +816,375 @@ export function MessageDetail({
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl text-xs text-slate-600 leading-relaxed font-semibold">
-                      Introduza o teor da sua resposta oficial para a entidade <strong className="text-primary">{selectedMessage.org}</strong>. Esta ação gerará um protocolo eletrónico assinado com validade administrativa.
-                    </div>
-
                     <div>
+                      {/* Rich text Toolbar for details view, styled exactly like the attached image */}
+                      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50/85 border border-slate-200 rounded-2xl mb-2 shadow-sm">
+                        {/* Undo / Redo */}
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={handleDetailUndo}
+                            disabled={detailHistoryIndex === 0}
+                            title="Desfazer (Undo)"
+                            className={`p-2 rounded-xl hover:bg-slate-200/80 active:scale-95 transition-all ${
+                              detailHistoryIndex === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-650 hover:text-slate-900'
+                            }`}
+                          >
+                            <Undo size={14} className="stroke-[2.5]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDetailRedo}
+                            disabled={detailHistoryIndex >= detailTextHistory.length - 1}
+                            title="Refazer (Redo)"
+                            className={`p-2 rounded-xl hover:bg-slate-200/80 active:scale-95 transition-all ${
+                              detailHistoryIndex >= detailTextHistory.length - 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-650 hover:text-slate-900'
+                            }`}
+                          >
+                            <Redo size={14} className="stroke-[2.5]" />
+                          </button>
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                        {/* Font Family Selector Dropdown */}
+                        <div className="relative">
+                          <select
+                            value={detailEditorFont}
+                            onChange={(e) => setDetailEditorFont(e.target.value)}
+                            className="bg-transparent text-slate-700 text-xs font-semibold py-1 pl-2 pr-5 border border-transparent rounded-xl hover:bg-slate-200/60 cursor-pointer focus:outline-none appearance-none font-sans"
+                          >
+                            <option value="sans-serif">Sans Serif</option>
+                            <option value="serif">Serif (Editorial)</option>
+                            <option value="monospace">Monospace</option>
+                          </select>
+                          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px] font-black">▼</div>
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                        {/* Font Size Selector Dropdown "tT" */}
+                        <div className="relative flex items-center">
+                          <span className="text-[10px] font-black mr-1 text-slate-500">tT</span>
+                          <select
+                            value={detailEditorFontSize}
+                            onChange={(e) => setDetailEditorFontSize(e.target.value)}
+                            className="bg-transparent text-slate-700 text-xs font-semibold py-1 pl-1.5 pr-4 border border-transparent rounded-xl hover:bg-slate-200/60 cursor-pointer focus:outline-none appearance-none font-sans"
+                          >
+                            <option value="sm">Pequeno</option>
+                            <option value="base">Normal</option>
+                            <option value="lg">Grande</option>
+                            <option value="xl">Título</option>
+                          </select>
+                          <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-slate-405 text-[8px] font-black">▼</div>
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                        {/* Inline formatting styles B, I, U */}
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setDetailEditorBold(!detailEditorBold)}
+                            title="Negrito (Bold)"
+                            className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                              detailEditorBold 
+                                ? 'bg-indigo-100/80 text-indigo-700 border border-indigo-200/30' 
+                                : 'text-slate-655 hover:bg-slate-200/60 hover:text-slate-900'
+                            }`}
+                          >
+                            <Bold size={13} className="stroke-[3]" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setDetailEditorItalic(!detailEditorItalic)}
+                            title="Itálico (Italic)"
+                            className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                              detailEditorItalic 
+                                ? 'bg-indigo-100/80 text-indigo-700 border border-indigo-200/30' 
+                                : 'text-slate-655 hover:bg-slate-200/60 hover:text-slate-900'
+                            }`}
+                          >
+                            <Italic size={13} className="stroke-[3]" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setDetailEditorUnderline(!detailEditorUnderline)}
+                            title="Sublinhado (Underline)"
+                            className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                              detailEditorUnderline 
+                                ? 'bg-indigo-100/80 text-indigo-700 border border-indigo-200/30' 
+                                : 'text-slate-655 hover:bg-slate-200/60 hover:text-slate-900'
+                            }`}
+                          >
+                            <Underline size={13} className="stroke-[3]" />
+                          </button>
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                        {/* Font Color Selection */}
+                        <div className="relative group">
+                          <button
+                            type="button"
+                            title="Cor do Texto"
+                            className="p-1.5 rounded-xl text-slate-650 hover:bg-slate-200/60 hover:text-slate-900 active:scale-95 transition-all flex items-center gap-1"
+                          >
+                            <span className="font-extrabold text-xs border-b-2 leading-none" style={{ borderColor: detailEditorColor }}>A</span>
+                            <span className="text-[6px]">▼</span>
+                          </button>
+                          <div className="absolute left-0 top-8 hidden group-hover:flex group-focus-within:flex flex-col bg-white border border-slate-200 rounded-xl p-2 shadow-xl z-20 min-w-[130px] gap-1">
+                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest px-1">Cor da Fonte</span>
+                            <div className="grid grid-cols-5 gap-1 pt-1">
+                              {[
+                                { label: 'Slate', value: '#1e293b', bgClass: 'bg-slate-800' },
+                                { label: 'Red', value: '#dc2626', bgClass: 'bg-red-600' },
+                                { label: 'Blue', value: '#2563eb', bgClass: 'bg-blue-600' },
+                                { label: 'Green', value: '#16a34a', bgClass: 'bg-green-600' },
+                                { label: 'Gold', value: '#ca8a04', bgClass: 'bg-yellow-600' }
+                              ].map((color) => (
+                                <button
+                                  key={color.value}
+                                  type="button"
+                                  onClick={() => setDetailEditorColor(color.value)}
+                                  title={color.label}
+                                  className={`w-3.5 h-3.5 rounded-full border transition-all ${color.bgClass} ${
+                                    detailEditorColor === color.value ? 'ring-2 ring-indigo-500 ring-offset-1 border-white' : 'border-black/5'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                        {/* Paragraph Alignment Selector Button Row */}
+                        <div className="flex items-center gap-0.5">
+                          {[
+                            { val: 'left', icon: <AlignLeft size={13} />, title: 'Alinhar à Esquerda' },
+                            { val: 'center', icon: <AlignCenter size={13} />, title: 'Alinhar ao Centro' },
+                            { val: 'right', icon: <AlignRight size={13} />, title: 'Alinhar à Direita' },
+                            { val: 'justify', icon: <AlignJustify size={13} />, title: 'Justificar' }
+                          ].map((align) => (
+                            <button
+                              key={align.val}
+                              type="button"
+                              onClick={() => setDetailEditorAlignment(align.val)}
+                              title={align.title}
+                              className={`p-1.5 rounded-xl active:scale-95 transition-all text-slate-655 ${
+                                detailEditorAlignment === align.val 
+                                  ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30' 
+                                  : 'hover:bg-slate-200/60 hover:text-slate-900'
+                              }`}
+                            >
+                              {align.icon}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                        {/* List Type Bullet/Ordered Toggles */}
+                        <div className="flex items-center gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (detailEditorListType === 'bullet') {
+                                setDetailEditorListType(null);
+                              } else {
+                                setDetailEditorListType('bullet');
+                                if (!detailReplyText.trim().startsWith('•') && !detailReplyText.trim().startsWith('-')) {
+                                  updateDetailReplyText(`• ` + detailReplyText);
+                                }
+                              }
+                            }}
+                            title="Lista de Marcadores (Bullets)"
+                            className={`p-1.5 rounded-xl active:scale-95 transition-all ${
+                              detailEditorListType === 'bullet'
+                                ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30'
+                                : 'text-slate-605 hover:bg-slate-200/60 hover:text-slate-900'
+                            }`}
+                          >
+                            <List size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (detailEditorListType === 'ordered') {
+                                setDetailEditorListType(null);
+                              } else {
+                                setDetailEditorListType('ordered');
+                                if (!/^\d+\./.test(detailReplyText.trim())) {
+                                  updateDetailReplyText(`1. ` + detailReplyText);
+                                }
+                              }
+                            }}
+                            title="Lista Numerada"
+                            className={`p-1.5 rounded-xl active:scale-95 transition-all ${
+                              detailEditorListType === 'ordered'
+                                ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30'
+                                : 'text-slate-605 hover:bg-slate-200/60 hover:text-slate-900'
+                            }`}
+                          >
+                            <ListOrdered size={13} />
+                          </button>
+                        </div>
+
+                        <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                        {/* Blockquote Quote */}
+                        <button
+                          type="button"
+                          onClick={() => setDetailEditorIsQuote(!detailEditorIsQuote)}
+                          title="Formatar como Citação (Blockquote)"
+                          className={`p-1.5 rounded-xl active:scale-95 transition-all ${
+                            detailEditorIsQuote
+                              ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30'
+                              : 'text-slate-605 hover:bg-slate-200/60 hover:text-slate-900'
+                          }`}
+                        >
+                          <Quote size={13} />
+                        </button>
+
+                        {/* Clear formatting Eraser */}
+                        <button
+                          type="button"
+                          onClick={clearDetailFormatting}
+                          title="Limpar Formatação"
+                          className="p-1.5 rounded-xl text-slate-600 hover:bg-slate-250 hover:text-red-650 hover:bg-red-50/70 active:scale-95 transition-all ml-auto"
+                        >
+                          <Eraser size={13} />
+                        </button>
+                      </div>
+
                       <textarea
                         value={detailReplyText}
-                        onChange={(e) => setDetailReplyText(e.target.value)}
+                        onChange={(e) => updateDetailReplyText(e.target.value)}
                         placeholder="Escreva aqui a sua resposta oficial..."
-                        rows={5}
-                        className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-xl p-3.5 text-xs md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0c2340]/20 focus:border-[#0c2340] shadow-inner transition-all"
+                        rows={12}
+                        className={`w-full bg-slate-50 border border-slate-300 rounded-xl p-3.5 text-xs md:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0c2340]/20 focus:border-[#0c2340] shadow-inner transition-all min-h-[260px] ${
+                          detailEditorFont === 'serif' ? 'font-serif' : detailEditorFont === 'monospace' ? 'font-mono' : 'font-sans'
+                        } ${
+                          detailEditorFontSize === 'sm' ? 'text-xs' : detailEditorFontSize === 'lg' ? 'text-base md:text-lg' : detailEditorFontSize === 'xl' ? 'text-lg md:text-xl font-bold' : 'text-sm'
+                        } ${
+                          detailEditorAlignment === 'center' ? 'text-center' : detailEditorAlignment === 'right' ? 'text-right' : detailEditorAlignment === 'justify' ? 'text-justify' : 'text-left'
+                        }`}
+                        style={{
+                          fontWeight: detailEditorBold ? 'bold' : 'normal',
+                          fontStyle: detailEditorItalic ? 'italic' : 'normal',
+                          textDecoration: detailEditorUnderline ? 'underline' : 'none',
+                          color: detailEditorColor,
+                          borderLeft: detailEditorIsQuote ? '4px solid #6366f1' : undefined,
+                          paddingLeft: detailEditorIsQuote ? '1rem' : undefined,
+                        }}
                       />
                     </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!detailReplyText.trim()) return;
+                    <div className="flex flex-col gap-3">
+                      {inlineAttachedFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-205 rounded-2xl">
+                          {inlineAttachedFiles.map((file, fIdx) => (
+                            <div 
+                              key={fIdx} 
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-[11px] font-bold text-slate-700"
+                            >
+                              <FileText size={13} className="text-[#0c2340]/80 shrink-0" />
+                              <span className="truncate max-w-[160px] select-none">{file.name}</span>
+                              <span className="text-[9px] text-slate-400 font-mono select-none">({file.size})</span>
+                              <button 
+                                type="button"
+                                onClick={() => handleInlineFileRemove(file.name)}
+                                className="p-0.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer ml-1"
+                                title="Remover anexo"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
-                          const newProtocol = generateProtocol(
-                            selectedMessage.org,
-                            'message',
-                            selectedMessage.id,
-                            `Resposta: ${selectedMessage.details?.subject || selectedMessage.preview}`
-                          );
-                          const now = new Date();
-                          const timestampStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-                          const dmyStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-                          const fullTimestamp = `${dmyStr} ${timestampStr}`;
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!detailReplyText.trim()) return;
 
-                          const auditLogAction = `Resposta Oficial submetida via Conteúdo do Documento (Prot: ${newProtocol.protocolNumber})`;
-                          const logEntry = `${timestampStr} - ${auditLogAction}`;
-                          const updatedLogs = [...(selectedMessage.auditLogs || []), logEntry];
+                            const newProtocol = generateProtocol(
+                              selectedMessage.org,
+                              'message',
+                              selectedMessage.id,
+                              `Resposta: ${selectedMessage.details?.subject || selectedMessage.preview}`
+                            );
+                            const now = new Date();
+                            const timestampStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                            const dmyStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                            const fullTimestamp = `${dmyStr} ${timestampStr}`;
 
-                          if (onUpdateMessage) {
-                            onUpdateMessage({
-                              ...selectedMessage,
-                              details: selectedMessage.details ? {
-                                ...selectedMessage.details,
-                                state: 'Respondida'
-                              } : {
-                                subject: selectedMessage.preview,
-                                body: selectedMessage.preview,
-                                state: 'Respondida'
-                              },
-                              auditLogs: updatedLogs
+                            const filesListLog = inlineAttachedFiles.length > 0 
+                              ? ` contendo ${inlineAttachedFiles.length} anexo(s) [${inlineAttachedFiles.map(f => f.name).join(', ')}]`
+                              : '';
+                            const auditLogAction = `Resposta Oficial submetida via Conteúdo do Documento (Prot: ${newProtocol.protocolNumber})${filesListLog}`;
+                            const logEntry = `${timestampStr} - ${auditLogAction}`;
+                            const updatedLogs = [...(selectedMessage.auditLogs || []), logEntry];
+
+                            if (onUpdateMessage) {
+                              onUpdateMessage({
+                                ...selectedMessage,
+                                details: selectedMessage.details ? {
+                                  ...selectedMessage.details,
+                                  state: 'Respondida'
+                                } : {
+                                  subject: selectedMessage.preview,
+                                  body: selectedMessage.preview,
+                                  state: 'Respondida'
+                                },
+                                auditLogs: updatedLogs
+                              });
+                            }
+
+                            setDetailReplySuccess({
+                              protocolNumber: newProtocol.protocolNumber,
+                              timestamp: fullTimestamp,
+                              text: detailReplyText,
+                              digitalSeal: newProtocol.digitalSeal,
+                              documentHash: newProtocol.documentHash,
+                              files: inlineAttachedFiles
                             });
-                          }
 
-                          setDetailReplySuccess({
-                            protocolNumber: newProtocol.protocolNumber,
-                            timestamp: fullTimestamp,
-                            text: detailReplyText,
-                            digitalSeal: newProtocol.digitalSeal,
-                            documentHash: newProtocol.documentHash
-                          });
+                            setDetailReplyText('');
+                            setInlineAttachedFiles([]);
+                            setIsReplyingInDetails(false);
+                          }}
+                          disabled={!detailReplyText.trim()}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-[#0c2340] text-white font-extrabold text-xs md:text-sm rounded-full shadow-md hover:bg-[#152e4d] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                        >
+                          <Send size={14} className="text-white" />
+                          <span>Enviar Resposta Oficial</span>
+                        </button>
 
-                          setDetailReplyText('');
-                          setIsReplyingInDetails(false);
-                        }}
-                        disabled={!detailReplyText.trim()}
-                        className="flex items-center gap-2 px-5 py-2.5 bg-[#0c2340] text-white font-extrabold text-xs md:text-sm rounded-full shadow-md hover:bg-[#152e4d] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
-                      >
-                        <Send size={14} className="text-white" />
-                        <span>Enviar Resposta Oficial</span>
-                      </button>
+                        <label 
+                          className="flex items-center justify-center p-2.5 bg-transparent hover:bg-slate-100/70 text-[#0c2340] hover:text-indigo-700 rounded-full transition-all cursor-pointer active:scale-95 border border-slate-300 relative group"
+                          title="Anexar múltiplos ficheiros"
+                        >
+                          <Paperclip size={16} className="stroke-[2.5]" />
+                          <input
+                            type="file"
+                            multiple
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx"
+                            className="hidden"
+                            onChange={handleInlineFileAdd}
+                          />
+                          {inlineAttachedFiles.length > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-[#0c2340] text-white font-black text-[9px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                              {inlineAttachedFiles.length}
+                            </span>
+                          )}
+                        </label>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -758,11 +1228,10 @@ export function MessageDetail({
             setTab('correspondencias');
             setSelectedMessage(null);
           }}
-          className="flex items-center gap-2.5 px-6 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs md:text-sm text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+          className="text-[#384e6e] hover:text-slate-900 hover:bg-slate-100/60 p-2 rounded-full transition-all cursor-pointer flex items-center justify-center border-0 outline-none"
           title="Voltar ao Correio"
         >
-          <LogOut size={16} className="text-[#384e6e]" />
-          <span>Voltar ao Correio</span>
+          <ArrowLeft size={24} />
         </button>
         
         <button 
@@ -840,12 +1309,270 @@ export function MessageDetail({
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1.5">Corpo do Ofício de Resposta</label>
+                    
+                    {/* Rich text Toolbar styled exactly like the attached image */}
+                    <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50/85 border border-slate-200 rounded-2xl mb-2 shadow-sm">
+                      {/* Undo / Redo */}
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={handleUndo}
+                          disabled={historyIndex === 0}
+                          title="Desfazer (Undo)"
+                          className={`p-2 rounded-xl hover:bg-slate-200/80 active:scale-95 transition-all ${
+                            historyIndex === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-650 hover:text-slate-900'
+                          }`}
+                        >
+                          <Undo size={14} className="stroke-[2.5]" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRedo}
+                          disabled={historyIndex >= textHistory.length - 1}
+                          title="Refazer (Redo)"
+                          className={`p-2 rounded-xl hover:bg-slate-200/80 active:scale-95 transition-all ${
+                            historyIndex >= textHistory.length - 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-650 hover:text-slate-900'
+                          }`}
+                        >
+                          <Redo size={14} className="stroke-[2.5]" />
+                        </button>
+                      </div>
+
+                      <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                      {/* Font Family Selector Dropdown */}
+                      <div className="relative">
+                        <select
+                          value={editorFont}
+                          onChange={(e) => setEditorFont(e.target.value)}
+                          className="bg-transparent text-slate-700 text-xs font-semibold py-1 pl-2 pr-5 border border-transparent rounded-xl hover:bg-slate-200/60 cursor-pointer focus:outline-none appearance-none font-sans"
+                        >
+                          <option value="sans-serif">Sans Serif</option>
+                          <option value="serif">Serif (Editorial)</option>
+                          <option value="monospace">Monospace</option>
+                        </select>
+                        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px] font-black">▼</div>
+                      </div>
+
+                      <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                      {/* Font Size Selector Dropdown "tT" */}
+                      <div className="relative flex items-center">
+                        <span className="text-[10px] font-black mr-1 text-slate-500">tT</span>
+                        <select
+                          value={editorFontSize}
+                          onChange={(e) => setEditorFontSize(e.target.value)}
+                          className="bg-transparent text-slate-700 text-xs font-semibold py-1 pl-1.5 pr-4 border border-transparent rounded-xl hover:bg-slate-200/60 cursor-pointer focus:outline-none appearance-none font-sans"
+                        >
+                          <option value="sm">Pequeno</option>
+                          <option value="base">Normal</option>
+                          <option value="lg">Grande</option>
+                          <option value="xl">Título</option>
+                        </select>
+                        <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px] font-black">▼</div>
+                      </div>
+
+                      <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                      {/* Inline formatting styles B, I, U */}
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setEditorBold(!editorBold)}
+                          title="Negrito (Bold)"
+                          className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                            editorBold 
+                              ? 'bg-indigo-100/80 text-indigo-700 border border-indigo-200/30' 
+                              : 'text-slate-655 hover:bg-slate-200/60 hover:text-slate-900'
+                          }`}
+                        >
+                          <Bold size={13} className="stroke-[3]" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setEditorItalic(!editorItalic)}
+                          title="Itálico (Italic)"
+                          className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                            editorItalic 
+                              ? 'bg-indigo-100/80 text-indigo-700 border border-indigo-200/30' 
+                              : 'text-slate-655 hover:bg-slate-200/60 hover:text-slate-900'
+                          }`}
+                        >
+                          <Italic size={13} className="stroke-[3]" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setEditorUnderline(!editorUnderline)}
+                          title="Sublinhado (Underline)"
+                          className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                            editorUnderline 
+                              ? 'bg-indigo-100/80 text-indigo-700 border border-indigo-200/30' 
+                              : 'text-slate-655 hover:bg-slate-200/60 hover:text-slate-900'
+                          }`}
+                        >
+                          <Underline size={13} className="stroke-[3]" />
+                        </button>
+                      </div>
+
+                      <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                      {/* Font Color Selection */}
+                      <div className="relative group">
+                        <button
+                          type="button"
+                          title="Cor do Texto"
+                          className="p-1.5 rounded-xl text-slate-650 hover:bg-slate-200/60 hover:text-slate-900 active:scale-95 transition-all flex items-center gap-1"
+                        >
+                          <span className="font-extrabold text-xs border-b-2 leading-none" style={{ borderColor: editorColor }}>A</span>
+                          <span className="text-[6px]">▼</span>
+                        </button>
+                        <div className="absolute left-0 top-8 hidden group-hover:flex group-focus-within:flex flex-col bg-white border border-slate-200 rounded-xl p-2 shadow-xl z-20 min-w-[130px] gap-1">
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest px-1">Cor da Fonte</span>
+                          <div className="grid grid-cols-5 gap-1 pt-1">
+                            {[
+                              { label: 'Slate', value: '#1e293b', bgClass: 'bg-slate-800' },
+                              { label: 'Red', value: '#dc2626', bgClass: 'bg-red-600' },
+                              { label: 'Blue', value: '#2563eb', bgClass: 'bg-blue-600' },
+                              { label: 'Green', value: '#16a34a', bgClass: 'bg-green-600' },
+                              { label: 'Gold', value: '#ca8a04', bgClass: 'bg-yellow-600' }
+                            ].map((color) => (
+                              <button
+                                key={color.value}
+                                type="button"
+                                onClick={() => setEditorColor(color.value)}
+                                title={color.label}
+                                className={`w-3.5 h-3.5 rounded-full border transition-all ${color.bgClass} ${
+                                  editorColor === color.value ? 'ring-2 ring-indigo-500 ring-offset-1 border-white' : 'border-black/5'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                      {/* Paragraph Alignment Selector Button Row */}
+                      <div className="flex items-center gap-0.5">
+                        {[
+                          { val: 'left', icon: <AlignLeft size={13} />, title: 'Alinhar à Esquerda' },
+                          { val: 'center', icon: <AlignCenter size={13} />, title: 'Alinhar ao Centro' },
+                          { val: 'right', icon: <AlignRight size={13} />, title: 'Alinhar à Direita' },
+                          { val: 'justify', icon: <AlignJustify size={13} />, title: 'Justificar' }
+                        ].map((align) => (
+                          <button
+                            key={align.val}
+                            type="button"
+                            onClick={() => setEditorAlignment(align.val)}
+                            title={align.title}
+                            className={`p-1.5 rounded-xl active:scale-95 transition-all text-slate-655 ${
+                              editorAlignment === align.val 
+                                ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30' 
+                                : 'hover:bg-slate-200/60 hover:text-slate-900'
+                            }`}
+                          >
+                            {align.icon}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                      {/* List Type Bullet/Ordered Toggles */}
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editorListType === 'bullet') {
+                              setEditorListType(null);
+                            } else {
+                              setEditorListType('bullet');
+                              if (!replyText.trim().startsWith('•') && !replyText.trim().startsWith('-')) {
+                                updateReplyText(`• ` + replyText);
+                              }
+                            }
+                          }}
+                          title="Lista de Marcadores (Bullets)"
+                          className={`p-1.5 rounded-xl active:scale-95 transition-all ${
+                            editorListType === 'bullet'
+                              ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30'
+                              : 'text-slate-605 hover:bg-slate-200/60 hover:text-slate-900'
+                          }`}
+                        >
+                          <List size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editorListType === 'ordered') {
+                              setEditorListType(null);
+                            } else {
+                              setEditorListType('ordered');
+                              if (!/^\d+\./.test(replyText.trim())) {
+                                updateReplyText(`1. ` + replyText);
+                              }
+                            }
+                          }}
+                          title="Lista Numerada"
+                          className={`p-1.5 rounded-xl active:scale-95 transition-all ${
+                            editorListType === 'ordered'
+                              ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30'
+                              : 'text-slate-605 hover:bg-slate-200/60 hover:text-slate-900'
+                          }`}
+                        >
+                          <ListOrdered size={13} />
+                        </button>
+                      </div>
+
+                      <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+                      {/* Blockquote Quote */}
+                      <button
+                        type="button"
+                        onClick={() => setEditorIsQuote(!editorIsQuote)}
+                        title="Formatar como Citação (Blockquote)"
+                        className={`p-1.5 rounded-xl active:scale-95 transition-all ${
+                          editorIsQuote
+                            ? 'bg-indigo-100/85 text-indigo-700 border border-indigo-200/30'
+                            : 'text-slate-605 hover:bg-slate-200/60 hover:text-slate-900'
+                        }`}
+                      >
+                        <Quote size={13} />
+                      </button>
+
+                      {/* Clear formatting Eraser */}
+                      <button
+                        type="button"
+                        onClick={clearFormatting}
+                        title="Limpar Formatação"
+                        className="p-1.5 rounded-xl text-slate-600 hover:bg-slate-250 hover:text-red-650 hover:bg-red-50/70 active:scale-95 transition-all ml-auto"
+                      >
+                        <Eraser size={13} />
+                      </button>
+                    </div>
+
                     <textarea
                       value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
+                      onChange={(e) => updateReplyText(e.target.value)}
                       placeholder="Introduza a sua mensagem de resposta formal aqui..."
-                      rows={5}
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-3 text-xs md:text-sm font-semibold focus:outline-none focus:border-indigo-500 shadow-inner"
+                      rows={6}
+                      className={`w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs md:text-sm font-semibold focus:outline-none focus:border-indigo-500 shadow-inner h-44 resize-y transition-all ${
+                        editorFont === 'serif' ? 'font-serif' : editorFont === 'monospace' ? 'font-mono' : 'font-sans'
+                      } ${
+                        editorFontSize === 'sm' ? 'text-xs' : editorFontSize === 'lg' ? 'text-base md:text-lg' : editorFontSize === 'xl' ? 'text-lg md:text-xl font-bold' : 'text-sm'
+                      } ${
+                        editorAlignment === 'center' ? 'text-center' : editorAlignment === 'right' ? 'text-right' : editorAlignment === 'justify' ? 'text-justify' : 'text-left'
+                      }`}
+                      style={{
+                        fontWeight: editorBold ? 'bold' : 'normal',
+                        fontStyle: editorItalic ? 'italic' : 'normal',
+                        textDecoration: editorUnderline ? 'underline' : 'none',
+                        color: editorColor,
+                        borderLeft: editorIsQuote ? '4px solid #6366f1' : undefined,
+                        paddingLeft: editorIsQuote ? '1rem' : undefined,
+                      }}
                     />
                   </div>
                 </div>
@@ -1324,7 +2051,7 @@ export function MessageDetail({
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Prioridade</span>
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-md inline-block ${
-                          protocol.priority === 'Alta' ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-slate-100 text-slate-800 border border-slate-200'
+                          protocol.priority === 'Alta' ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800'
                         }`}>{protocol.priority}</span>
                       </div>
                       <div>
@@ -1652,7 +2379,7 @@ export function MessageDetail({
                                   <small className="text-slate-505 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Tipo de Correspondência</small>
                                   <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                     <span className={`text-xs md:text-sm font-bold leading-none ${style.text}`}>{meta.name}</span>
-                                    <span className="bg-red-50 border border-red-100 px-1.5 py-0.5 rounded text-[8px] font-bold text-red-650 tracking-wider font-mono uppercase">Prioridade: {meta.priority}</span>
+                                    <span className="bg-red-50 px-1.5 py-0.5 rounded text-[8px] font-bold text-red-650 tracking-wider font-mono uppercase">Prioridade: {meta.priority}</span>
                                   </div>
                                 </div>
                               </div>

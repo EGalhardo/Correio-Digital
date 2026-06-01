@@ -3,16 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useMemo } from 'react';
+import { motion } from 'motion/react';
 import { 
   ArrowLeft, 
   Send, 
   ShieldCheck, 
-  Mail, 
+  Folder, 
   Plus, 
-  Clock, 
   Search, 
-  Fingerprint,
   Bell,
   Scroll,
   ShieldAlert,
@@ -27,10 +26,9 @@ import {
   Coins,
   Scale,
   FileText,
-  Lock
+  Building2
 } from 'lucide-react';
-import { Message, SENSITIVITY_LEVELS, PRIORITY_CONFIGS } from '../../types';
-import { getCategoryMetadata } from '../../utils/protocolGenerator';
+import { Message } from '../../types';
 
 function renderCategoryIcon(iconName: string, size = 10) {
   switch (iconName) {
@@ -51,7 +49,7 @@ function renderCategoryIcon(iconName: string, size = 10) {
   }
 }
 
-interface MailContentProps {
+interface DocumentsContentProps {
   isComposing: boolean;
   setIsComposing: (composing: boolean) => void;
   composeData: { to: string; subject: string; body: string };
@@ -70,7 +68,7 @@ interface MailContentProps {
   isInst?: boolean;
 }
 
-export function MailContent({
+export function DocumentsContent({
   isComposing,
   setIsComposing,
   composeData,
@@ -87,7 +85,35 @@ export function MailContent({
   handleSelectMessage,
   bi,
   isInst
-}: MailContentProps) {
+}: DocumentsContentProps) {
+  const [selectedInst, setSelectedInst] = useState<string>('Todas');
+
+  const allDocsCombined = useMemo(() => {
+    return [...inbox, ...sentMessages];
+  }, [inbox, sentMessages]);
+
+  const getCountForInst = (name: string) => {
+    if (name === 'Todas') return allDocsCombined.length;
+    const term = name.toLowerCase();
+    return allDocsCombined.filter(item => {
+      const orgName = item.org?.toLowerCase() || '';
+      const subjectText = item.details?.subject?.toLowerCase() || '';
+      const categoryText = item.protocol?.category?.toLowerCase() || '';
+      return orgName.includes(term) || subjectText.includes(term) || categoryText.includes(term);
+    }).length;
+  };
+
+  const finalFilteredDocs = useMemo(() => {
+    if (selectedInst === 'Todas') return allDocsCombined;
+    const term = selectedInst.toLowerCase();
+    return allDocsCombined.filter(item => {
+      const orgName = item.org?.toLowerCase() || '';
+      const subjectText = item.details?.subject?.toLowerCase() || '';
+      const categoryText = item.protocol?.category?.toLowerCase() || '';
+      return orgName.includes(term) || subjectText.includes(term) || categoryText.includes(term);
+    });
+  }, [allDocsCombined, selectedInst]);
+
   if (isComposing) {
     return (
       <motion.div 
@@ -102,11 +128,11 @@ export function MailContent({
             aria-label="Voltar"
           >
             <ArrowLeft size={16} className="text-[#384e6e]" />
-            <span>Voltar ao Correio</span>
+            <span>Voltar aos Documentos</span>
           </button>
           <div>
-            <h3 className="text-base md:text-xl font-black text-primary leading-none">Nova Mensagem</h3>
-            <p className="text-[9px] md:text-[10px] text-slate-700 font-black uppercase tracking-widest mt-1">Comunicação Oficial Directa</p>
+            <h3 className="text-base md:text-xl font-black text-primary leading-none">Novo Documento Oficial</h3>
+            <p className="text-[9px] md:text-[10px] text-slate-700 font-black uppercase tracking-widest mt-1">Submissão Oficial Homologada</p>
           </div>
         </div>
 
@@ -114,7 +140,7 @@ export function MailContent({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
             <div className="space-y-2">
               <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
-                {isInst ? 'Destinatário' : 'Destinatário Institucional'}
+                {isInst ? 'Destinatário do Documento' : 'Destinatário Institucional'}
               </label>
               <div className="relative">
                 {isInst ? (
@@ -146,10 +172,10 @@ export function MailContent({
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Assunto</label>
+              <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Assunto / Título do Documento</label>
               <input 
                 type="text"
-                placeholder="Qual o tema da sua mensagem?"
+                placeholder="Qual o tipo ou assunto do documento?"
                 value={composeData.subject}
                 onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
                 className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
@@ -158,10 +184,10 @@ export function MailContent({
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Conteúdo da Mensagem</label>
+            <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Conteúdo principal / Teor do Documento</label>
             <textarea 
               rows={8}
-              placeholder="Descreva detalhadamente o seu pedido ou informação..."
+              placeholder="Descreva detalhadamente o teor e dados do documento oficial..."
               value={composeData.body}
               onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
               className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-medium text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none leading-relaxed"
@@ -175,11 +201,11 @@ export function MailContent({
               className="flex-[2] bg-primary text-white py-4 rounded-2xl font-black text-sm md:text-base shadow-xl shadow-primary/25 hover:bg-primary/95 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 md:gap-3"
             >
               <Send size={18} />
-              Enviar Mensagem Oficial
+              Submeter Documento Oficial
             </button>
             <button 
               onClick={() => {
-                if(confirm("Deseja descartar este rascunho?")) setIsComposing(false);
+                if(confirm("Deseja descartar este rascunho de documento?")) setIsComposing(false);
               }}
               className="flex-1 px-8 py-3.5 md:py-4.5 rounded-2xl font-bold text-xs md:text-sm text-slate-500 hover:bg-slate-100 transition-colors"
             >
@@ -193,9 +219,9 @@ export function MailContent({
             <ShieldCheck size={18} />
           </div>
           <div>
-            <h4 className="text-primary font-black text-[10px] md:text-sm uppercase tracking-wider mb-1">Criptografia de Ponta a Ponta</h4>
+            <h4 className="text-primary font-black text-[10px] md:text-sm uppercase tracking-wider mb-1">Criptografia e Assinatura Militar do Estado</h4>
             <p className="text-[11px] md:text-sm text-slate-600 leading-relaxed">
-              Esta mensagem será assinada digitalmente com o seu BI <strong>{bi}</strong>. A comunicação é encriptada e os destinatários são obrigados a responder nos termos da Lei do Cidadão Digital.
+              Este arquivo de documento será assinado digitalmente com o seu BI <strong>{bi}</strong>. O documento possui plena validade regulamentar, encriptação estatal e integridade com carimbo de tempo inviolável.
             </p>
           </div>
         </div>
@@ -209,11 +235,11 @@ export function MailContent({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-            <Mail size={20} className="md:w-6 md:h-6" />
+            <Folder size={20} className="md:w-6 md:h-6" />
           </div>
           <div>
-            <h3 className="text-lg md:text-2xl font-black text-primary leading-tight">Correio Digital</h3>
-            <p className="text-[10px] md:text-sm text-slate-600 font-black uppercase tracking-widest">{unreadTotal} mensagens por ler</p>
+            <h3 className="text-lg md:text-2xl font-black text-primary leading-tight">Documentos Digitais</h3>
+            <p className="text-[10px] md:text-sm text-slate-600 font-black uppercase tracking-widest">{unreadTotal} novos arquivados</p>
           </div>
         </div>
         <button 
@@ -221,81 +247,77 @@ export function MailContent({
           className="bg-primary text-white rounded-2xl px-6 py-3.5 flex items-center justify-center gap-3 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all text-xs md:text-sm font-black"
         >
           <Plus size={18} />
-          Nova Mensagem
+          Submeter Documento
         </button>
       </div>
 
-      {/* Filters & Tabs Container */}
-      <div className="bg-white border border-slate-100 rounded-[32px] p-2 shadow-sm flex flex-col lg:flex-row gap-3">
-        <div className="flex gap-1 p-1 bg-slate-50 rounded-2xl lg:min-w-[420px]">
-          {[
-            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length, color: 'text-emerald-600', dot: 'bg-emerald-600' },
-            { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length, color: 'text-red-600', dot: 'bg-red-600' },
-            { id: 'enviadas', label: 'Enviadas', count: sentMessages.length, color: 'text-blue-600', dot: 'bg-blue-600' }
-          ].map(t => (
-            <button 
-              key={t.id}
-              onClick={() => setCorrespondenciaTab(t.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all ${
-                correspondenciaTab === t.id 
-                  ? `bg-white ${t.color} shadow-md shadow-slate-200 ring-1 ring-slate-100` 
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
-              }`}
-            >
-              {t.label}
-              {t.count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
-                  correspondenciaTab === t.id ? `${t.dot} text-white` : 'bg-slate-300 text-slate-600'
+      {/* 1. Contentor "Instituições Conectadas" */}
+      <section className="bg-white border border-slate-200 rounded-[32px] p-5 md:p-6 shadow-sm overflow-hidden relative group">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-1.5 h-6 bg-primary rounded-full" />
+            <h3 className="text-slate-950 font-black text-xs md:text-sm italic tracking-tighter uppercase">Instituições Conectadas</h3>
+          </div>
+          <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded border border-slate-100">Canais Digitais de Interoperabilidade</div>
+        </div>
+        
+        <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
+          {["Todas", "SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Registo Civil", "INE", "Ministérios"].map((name) => {
+            const isActive = selectedInst === name;
+            const countForInst = getCountForInst(name);
+            return (
+              <button 
+                key={name}
+                onClick={() => setSelectedInst(name)}
+                className={`px-5 py-3 rounded-2xl text-[11px] md:text-xs font-black uppercase transition-all cursor-pointer shrink-0 shadow-sm text-left flex items-center gap-2.5 border ${
+                  isActive 
+                    ? 'bg-primary border-primary text-white shadow-lg' 
+                    : 'bg-slate-50 border-slate-100 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                }`}
+              >
+                <Building2 size={13} className={isActive ? 'text-white/80' : 'text-slate-400'} />
+                <span>{name}</span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                  isActive ? 'bg-indigo-950 text-white' : 'bg-slate-200 text-slate-500'
                 }`}>
-                  {t.count}
+                  {countForInst}
                 </span>
-              )}
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
-
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-          <input 
-            type="text"
-            placeholder="Pesquisar correspondência oficial..."
-            value={searchMail}
-            onChange={(e) => setSearchMail(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 py-3 md:py-3.5 text-xs md:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-primary/5 focus:bg-white focus:border-primary/20 transition-all outline-none placeholder:text-slate-400"
-          />
-        </div>
-      </div>
+      </section>
 
       {/* Message List */}
       <div className="bg-white rounded-[32px] p-6 md:p-8 shadow-sm space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6">
           <div>
             <h4 className="font-black text-slate-900 text-lg md:text-xl italic uppercase tracking-tight flex items-center gap-2">
-              <Mail size={20} className="text-indigo-600" />
-              {isInst ? 'Correio Institucional: Expediente de Entrada' : 'Correio Oficial Digital: Caixa de Entrada'}
+              <FolderOpen size={20} className="text-indigo-600" />
+              {isInst ? 'Repositório de Documentos: Expediente de Entrada' : 'Pasta Digital de Documentos Homologados'}
             </h4>
             <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mt-1">
-              {isInst ? 'Gestão de submissões de cidadãos, requerimentos e auditorias pendentes de resposta' : 'Consulta e acompanhamento de certidões, avisos, pendências tributárias e faturas oficiais'}
+              {isInst ? 'Gestão de submissões de cidadãos, requerimentos de certidão e documentos para validação administrativa' : 'Consulta e acompanhamento de certidões, autenticações de assinatura, alvarás digitais e termos oficiais'}
             </p>
           </div>
         </div>
 
-        {filteredMessages.length > 0 ? (
+        {finalFilteredDocs.length > 0 ? (
           <div className="overflow-auto rounded-[24px] bg-slate-50/20 custom-scrollbar max-h-[500px]">
             <table className="w-full text-left border-collapse min-w-[900px]">
               <thead className="sticky top-0 z-10 bg-primary">
                 <tr className="bg-primary text-white text-[10px] font-black uppercase tracking-widest">
                   <th className="py-4 px-5 rounded-l-2xl">{isInst ? 'CIDADÃO / REQUERENTE' : 'ÓRGÃO EMISSOR'}</th>
-                  <th className="py-4 px-5">ASSUNTO TEMA</th>
+                  <th className="py-4 px-5">TIPO DE DOCUMENTO / ASSUNTO</th>
                   <th className="py-4 px-5">CONTEÚDO / DETALHE</th>
-                  <th className="py-4 px-5">DATA DE EXPIRAÇÃO</th>
-                  <th className="py-4 px-5 text-center">HORA / DATA</th>
-                  <th className="py-4 px-5 text-center">PRIORIDADE</th>
+                  <th className="py-4 px-5">PRAZO DE VALIDADE</th>
+                  <th className="py-4 px-5 text-center">EMISSÃO (HORA / DATA)</th>
+                  <th className="py-4 px-5 text-center">NÍVEL DE RESTRICÇÃO</th>
                   <th className="py-4 px-5 text-center rounded-r-2xl">AÇÕES</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {filteredMessages.map((item) => {
+                {finalFilteredDocs.map((item) => {
                   const isUrgente = item.status === 'Urgente' || item.priorityScale === 'Crítico' || item.priorityScale === 'Urgente';
                   return (
                     <tr key={item.id} className="text-xs text-[#334155] hover:bg-slate-50/60 transition-colors">
@@ -308,9 +330,9 @@ export function MailContent({
                                 ? 'bg-[#fff5f5] text-[#e05252] border border-[#fdd8d8]' 
                                 : 'bg-slate-100 text-slate-500 border border-slate-200'
                             }`}>
-                              {item.unread ? 'Não Lida' : 'Lida'}
+                              {item.unread ? 'Não Lido' : 'Consultado'}
                             </span>
-                            <span className="text-[9px] font-bold text-slate-400 font-mono">ID: #{item.id}</span>
+                            <span className="text-[9px] font-bold text-slate-400 font-mono">DOC: #{item.id}</span>
                             {item.unread && (
                               <span className="w-1.5 h-1.5 rounded-full bg-[#f87171] inline-block animate-pulse shrink-0" />
                             )}
@@ -334,7 +356,7 @@ export function MailContent({
                             {item.details?.subject || item.preview.substring(0, 30)}
                           </div>
                           <div className="text-[9px] text-[#94a3b8] font-black uppercase tracking-widest leading-none">
-                            {isInst ? 'REQUERIMENTO FISCAL' : (item.protocol?.category || 'NOTIFICAÇÃO DIGITAL')}
+                            {isInst ? 'REQUERIMENTO DE CERTIDÃO' : (item.protocol?.category || 'PROVA DE VIDA DIGITAL')}
                           </div>
                         </div>
                       </td>
@@ -351,7 +373,7 @@ export function MailContent({
                         <div className="flex items-center">
                           <span className="inline-flex items-center gap-1.5 text-[#e05252] text-[9px] font-semibold tracking-wider font-sans">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#f87171] animate-pulse shrink-0" />
-                            EXPIRA: {item.details?.deadline || item.protocol?.deadlineDate || '30 DE JUNHO DE 2026'}
+                            EXPIRA: {item.details?.deadline || item.protocol?.deadlineDate || 'UNLIMITED'}
                           </span>
                         </div>
                       </td>
@@ -371,7 +393,7 @@ export function MailContent({
                             ? 'text-[#e05252]'
                             : 'text-indigo-600'
                         }`}>
-                          {isUrgente ? 'Urgente' : 'Normal'}
+                          {item.sensitivity || (isUrgente ? 'Restrito' : 'Público')}
                         </span>
                       </td>
 
@@ -382,7 +404,7 @@ export function MailContent({
                           onClick={() => handleSelectMessage(item)}
                           className="text-[9.5px] font-black uppercase text-indigo-650 hover:text-indigo-850 transition-colors tracking-widest hover:underline cursor-pointer bg-transparent border-0 outline-none"
                         >
-                          {isInst ? 'ANALISAR PLEITO' : 'ABRIR OFÍCIO'}
+                          {isInst ? 'ANALISAR DOCUMENTO' : 'ABRIR DOCUMENTO'}
                         </button>
                       </td>
                     </tr>
@@ -393,13 +415,13 @@ export function MailContent({
           </div>
         ) : (
           <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[24px] md:rounded-[32px] p-12 md:p-20 text-center space-y-4">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-200">
-              <Mail size={32} />
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm text-slate-400 border border-slate-200">
+              <Folder size={32} />
             </div>
             <div>
-              <h4 className="text-base md:text-lg font-black text-slate-600 uppercase">Silêncio de Comunicações</h4>
+              <h4 className="text-base md:text-lg font-black text-slate-600 uppercase">Sem Documentos Registados</h4>
               <p className="text-xs md:text-sm text-slate-600 font-bold">
-                {searchMail ? `Nenhuma mensagem localizada para "${searchMail}"` : 'Todas as correspondências oficiais e petições encontram-se despachadas.'}
+                {selectedInst !== 'Todas' ? `Nenhum documento localizado para "${selectedInst}"` : 'Todas certidões, alvarás, notificações administrativas validadas constam como arquivadas.'}
               </p>
             </div>
           </div>

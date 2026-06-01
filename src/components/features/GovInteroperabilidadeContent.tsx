@@ -23,7 +23,11 @@ import {
   HelpCircle,
   Clock,
   ExternalLink,
-  Lock
+  Lock,
+  MapPin,
+  Building2,
+  ChevronDown,
+  SlidersHorizontal
 } from 'lucide-react';
 
 interface Organismo {
@@ -36,6 +40,105 @@ interface Organismo {
   type: string;
 }
 
+interface Agency {
+  id: string;
+  name: string;
+  institution: string;
+  province: string;
+  municipio: string;
+  address: string;
+  contact: string;
+  status: 'Ativa' | 'Manutenção' | 'Offline';
+  institutionalId?: string;
+}
+
+const MUNICIPALITIES_BY_PROVINCE: { [key: string]: string[] } = {
+  'Todas': ['Todos'],
+  'Luanda': ['Todos', 'Viana', 'Belas', 'Cazenga', 'Cacuaco', 'Luanda', 'Talatona', 'Kilamba Kiaxi', 'Maianga', 'Rangel', 'Ingombota'],
+  'Benguela': ['Todos', 'Benguela', 'Lobito', 'Catumbela', 'Baía Farta'],
+  'Huíla': ['Todos', 'Lubango', 'Chibia', 'Humpata', 'Caconda'],
+  'Cabinda': ['Todos', 'Cabinda', 'Cacongo', 'Buco-Zau'],
+  'Bengo': ['Todos', 'Dande', 'Ambriz', 'Nambuangongo'],
+  'Huambo': ['Todos', 'Huambo', 'Caála', 'Bailundo']
+};
+
+const INITIAL_AGENCIES: Agency[] = [
+  // AGT
+  { id: 'a1', name: 'Repartição Fiscal de Luanda', institution: 'AGT', province: 'Luanda', municipio: 'Luanda', address: 'Rua Rainha Ginga, Baixa de Luanda', contact: '+244 923 100 001', status: 'Ativa' },
+  { id: 'a2', name: 'Posto Aduaneiro do Porto de Luanda', institution: 'AGT', province: 'Luanda', municipio: 'Ingombota', address: 'Zona Portuária de Luanda', contact: '+244 923 100 002', status: 'Ativa' },
+  { id: 'a3', name: 'Repartição de Benguela', institution: 'AGT', province: 'Benguela', municipio: 'Benguela', address: 'Rua Manuel de Abreu', contact: '+244 923 100 003', status: 'Ativa' },
+  { id: 'a4', name: 'Posto Fiscal do Lobito', institution: 'AGT', province: 'Benguela', municipio: 'Lobito', address: 'Avenida da Independência', contact: '+244 923 100 004', status: 'Ativa' },
+  { id: 'a5', name: 'Repartição Fiscal de Caxito', institution: 'AGT', province: 'Bengo', municipio: 'Dande', address: 'Avenida Principal de Caxito', contact: '+244 923 100 005', status: 'Ativa' },
+  { id: 'a6', name: 'Repartição Fiscal do Huambo', institution: 'AGT', province: 'Huambo', municipio: 'Huambo', address: 'Largo dr. António Agostinho Neto', contact: '+244 923 100 006', status: 'Ativa' },
+  { id: 'a7', name: 'Delegação Aduaneira de Cabinda', institution: 'AGT', province: 'Cabinda', municipio: 'Cabinda', address: 'Rua do Porto de Cabinda', contact: '+244 923 100 007', status: 'Ativa' },
+  { id: 'a8', name: 'Posto Fiscal de Lubango', institution: 'AGT', province: 'Huíla', municipio: 'Lubango', address: 'Avenida Agostinho Neto, Lubango', contact: '+244 923 100 008', status: 'Ativa' },
+
+  // SME
+  { id: 'sme1', name: 'Direção Nacional do SME', institution: 'SME', province: 'Luanda', municipio: 'Maianga', address: 'Rua do Comércio, Luanda', contact: '+244 924 200 001', status: 'Ativa' },
+  { id: 'sme2', name: 'Posto de Atendimento do SME Viana', institution: 'SME', province: 'Luanda', municipio: 'Viana', address: 'Estrada de Catete, Km 14', contact: '+244 924 200 002', status: 'Ativa' },
+  { id: 'sme3', name: 'Delegação de SME do Lobito', institution: 'SME', province: 'Benguela', municipio: 'Lobito', address: 'Zona Comercial do Lobito', contact: '+244 924 200 003', status: 'Ativa' },
+  { id: 'sme4', name: 'Posto de Fronteira do Aeroporto', institution: 'SME', province: 'Luanda', municipio: 'Luanda', address: 'Aeroporto 4 de Fevereiro', contact: '+244 924 200 004', status: 'Ativa' },
+  { id: 'sme5', name: 'Delegação Provincial do Huambo', institution: 'SME', province: 'Huambo', municipio: 'Huambo', address: 'Centro Cívico do Huambo', contact: '+244 924 200 005', status: 'Ativa' },
+
+  // ENDE
+  { id: 'ende1', name: 'Posto de Atendimento Talatona', institution: 'ENDE', province: 'Luanda', municipio: 'Talatona', address: 'Avenida Via S8, Lar do Patriota', contact: '+244 925 300 001', status: 'Ativa' },
+  { id: 'ende2', name: 'Agência de Distribuição de Viana', institution: 'ENDE', province: 'Luanda', municipio: 'Viana', address: 'Regedoria de Viana, Luanda', contact: '+244 925 300 002', status: 'Ativa' },
+  { id: 'ende3', name: 'Posto Regional de Benguela', institution: 'ENDE', province: 'Benguela', municipio: 'Benguela', address: 'Avenida 11 de Novembro', contact: '+244 925 300 003', status: 'Ativa' },
+  { id: 'ende4', name: 'Agência Comercial de Cabinda', institution: 'ENDE', province: 'Cabinda', municipio: 'Cabinda', address: 'Zassa, Cabinda', contact: '+244 925 300 004', status: 'Ativa' },
+
+  // EPAL
+  { id: 'epal1', name: 'Agência Comercial de Maianga', institution: 'EPAL', province: 'Luanda', municipio: 'Maianga', address: 'Rua Commandante Gika', contact: '+244 926 400 001', status: 'Ativa' },
+  { id: 'epal2', name: 'Delegação Comercial de Cazenga', institution: 'EPAL', province: 'Luanda', municipio: 'Cazenga', address: 'Rua do Saneamento, Cazenga', contact: '+244 926 400 002', status: 'Ativa' },
+  { id: 'epal3', name: 'Posto de Atendimento de Viana', institution: 'EPAL', province: 'Luanda', municipio: 'Viana', address: 'Próximo ao mercado de Viana', contact: '+244 926 400 003', status: 'Ativa' },
+
+  // Tribunal
+  { id: 'tr1', name: 'Tribunal Supremo de Angola', institution: 'Tribunal', province: 'Luanda', municipio: 'Luanda', address: 'Largo do Palácio, Luanda', contact: '+244 927 500 001', status: 'Ativa' },
+  { id: 'tr2', name: 'Tribunal de Comarca de Belas', institution: 'Tribunal', province: 'Luanda', municipio: 'Belas', address: 'Centralidade do Kilamba', contact: '+244 927 500 002', status: 'Ativa' },
+  { id: 'tr3', name: 'Tribunal de Comarca de Lobito', institution: 'Tribunal', province: 'Benguela', municipio: 'Lobito', address: 'Praça da Independência', contact: '+244 927 500 003', status: 'Ativa' },
+  { id: 'tr4', name: 'Tribunal de Comarca de Lubango', institution: 'Tribunal', province: 'Huíla', municipio: 'Lubango', address: 'Centro do Lubango', contact: '+244 927 500 004', status: 'Ativa' },
+
+  // Hospital
+  { id: 'hp1', name: 'Hospital Geral de Luanda', institution: 'Hospital', province: 'Luanda', municipio: 'Kilamba Kiaxi', address: 'Bairro Neves Bendinha', contact: '+244 928 600 001', status: 'Ativa' },
+  { id: 'hp2', name: 'Hospital Américo Boavida', institution: 'Hospital', province: 'Luanda', municipio: 'Rangel', address: 'Avenida Hoji ya Henda', contact: '+244 928 600 002', status: 'Ativa' },
+  { id: 'hp3', name: 'Hospital Geral de Benguela', institution: 'Hospital', province: 'Benguela', municipio: 'Benguela', address: 'Zona Hospitalar de Benguela', contact: '+244 928 600 003', status: 'Ativa' },
+  { id: 'hp4', name: 'Hospital Provincial de Cabinda', institution: 'Hospital', province: 'Cabinda', municipio: 'Cabinda', address: 'Avenida Principal Cabinda', contact: '+244 928 600 004', status: 'Ativa' },
+
+  // Ministerios
+  { id: 'm1', name: 'Ministério da Justiça e dos Direitos Humanos', institution: 'Ministerios', province: 'Luanda', municipio: 'Luanda', address: 'Rua 17 de Setembro, Luanda', contact: '+244 929 700 001', status: 'Ativa' },
+  { id: 'm2', name: 'Ministério das Finanças - MINFIN', institution: 'Ministerios', province: 'Luanda', municipio: 'Luanda', address: 'Largo da Mutamba', contact: '+244 929 700 002', status: 'Ativa' },
+  { id: 'm3', name: 'Ministério da Saúde - MINSA', institution: 'Ministerios', province: 'Luanda', municipio: 'Luanda', address: 'Marginal de Luanda', contact: '+244 929 700 003', status: 'Ativa' },
+
+  // Polícia Nacional
+  { id: 'pol1', name: 'Comando Geral da Polícia Nacional', institution: 'Polícia Nacional', province: 'Luanda', municipio: 'Ingombota', address: 'Avenida 4 de Fevereiro', contact: '+244 930 800 001', status: 'Ativa' },
+  { id: 'pol2', name: '1ª Esquadra de Viana', institution: 'Polícia Nacional', province: 'Luanda', municipio: 'Viana', address: 'Viana Sede', contact: '+244 930 800 002', status: 'Ativa' },
+  { id: 'pol3', name: 'Comando Provincial de Benguela', institution: 'Polícia Nacional', province: 'Benguela', municipio: 'Benguela', address: 'Zona Centro, Benguela', contact: '+244 930 800 003', status: 'Ativa' },
+
+  // Notário
+  { id: 'not1', name: 'Cartório Notarial de Luanda', institution: 'Notário', province: 'Luanda', municipio: 'Ingombota', address: 'Largo Luther King', contact: '+244 931 900 001', status: 'Ativa' },
+  { id: 'not2', name: '2º Cartório Notarial de Viana', institution: 'Notário', province: 'Luanda', municipio: 'Viana', address: 'Viana Vila', contact: '+244 931 900 002', status: 'Ativa' },
+  { id: 'not3', name: 'Cartório Provincial de Benguela', institution: 'Notário', province: 'Benguela', municipio: 'Benguela', address: 'Rua Cabral Moncada', contact: '+244 931 900 003', status: 'Ativa' },
+
+  // Registo Civil
+  { id: 'civ1', name: 'Conservatória do Registo Civil de Luanda', institution: 'Registo Civil', province: 'Luanda', municipio: 'Maianga', address: 'Rua Frederico Welwitsch', contact: '+244 932 000 001', status: 'Ativa' },
+  { id: 'civ2', name: 'Posto de Registo Civil de Belas', institution: 'Registo Civil', province: 'Luanda', municipio: 'Belas', address: 'Centralidade do Kilamba', contact: '+244 932 000 002', status: 'Ativa' },
+  { id: 'civ3', name: 'Delegação Civil de Benguela', institution: 'Registo Civil', province: 'Benguela', municipio: 'Benguela', address: 'Centro Cívico de Benguela', contact: '+244 932 000 003', status: 'Ativa' },
+
+  // Seguro Social
+  { id: 'inss1', name: 'Direção Geral do INSS', institution: 'Seguro Social', province: 'Luanda', municipio: 'Ingombota', address: 'Largo da Maianga, Luanda', contact: '+244 933 100 001', status: 'Ativa' },
+  { id: 'inss2', name: 'Posto de Atendimento do INSS Viana', institution: 'Seguro Social', province: 'Luanda', municipio: 'Viana', address: 'Viana Centro', contact: '+244 933 100 002', status: 'Ativa' },
+  { id: 'inss3', name: 'Delegação Regional de Cabinda', institution: 'Seguro Social', province: 'Cabinda', municipio: 'Cabinda', address: 'Largo do Comércio', contact: '+244 933 100 003', status: 'Ativa' },
+
+  // Administradoras
+  { id: 'adm1', name: 'Administração Municipal de Belas', institution: 'Administradoras', province: 'Luanda', municipio: 'Belas', address: 'Belas, Luanda', contact: '+244 934 200 001', status: 'Ativa' },
+  { id: 'adm2', name: 'Administração Municipal de Viana', institution: 'Administradoras', province: 'Luanda', municipio: 'Viana', address: 'Viana Sede', contact: '+244 934 200 002', status: 'Ativa' },
+  { id: 'adm3', name: 'Administração Municipal de Benguela', institution: 'Administradoras', province: 'Benguela', municipio: 'Benguela', address: 'Largo do Governo Provincial', contact: '+244 934 200 003', status: 'Ativa' },
+
+  // INE
+  { id: 'ine1', name: 'Sede Central do INE', institution: 'INE', province: 'Luanda', municipio: 'Luanda', address: 'Avenida 4 de Fevereiro, Edifício Real', contact: '+244 935 300 001', status: 'Ativa' },
+  { id: 'ine2', name: 'Gabinete de Estatísticas de Benguela', institution: 'INE', province: 'Benguela', municipio: 'Benguela', address: 'Rua do Comércio de Benguela', contact: '+244 935 300 002', status: 'Ativa' },
+  { id: 'ine3', name: 'Posto de Censo Populacional Viana', institution: 'INE', province: 'Luanda', municipio: 'Viana', address: 'Viana Vila, Luanda', contact: '+244 935 300 003', status: 'Ativa' }
+];
+
 const INITIAL_ORGS: Organismo[] = [
   { id: 'agt', name: 'AGT', desc: 'Administração Geral Tributária', status: 'Ligado', protocol: 'SOAP/XML', token: 'AGT_KEY_v2_9901', type: 'Finanças/Tributos' },
   { id: 'ende', name: 'ENDE', desc: 'Empresa Nac. de Distribuição de Electricidade', status: 'Ligado', protocol: 'REST/JSON', token: 'ENDE_PROD_5511_B', type: 'Infraestrutura' },
@@ -44,7 +147,8 @@ const INITIAL_ORGS: Organismo[] = [
   { id: 'ministerios', name: 'MINISTÉRIOS', desc: 'Ministérios da Justiça, Finanças & Saúde', status: 'Ligado', protocol: 'gRPC', token: 'GOV_MIN_SEC_8892', type: 'Governo' },
   { id: 'tribunais', name: 'TRIBUNAIS', desc: 'Tribunal Supremo & Tribunais de Comarca', status: 'Ligado', protocol: 'REST/JSON', token: 'TRIB_SUP_AUTH_KEY', type: 'Judiciário' },
   { id: 'hospitais', name: 'HOSPITAIS', desc: 'Hospital Geral de Luanda & Américo Boavida', status: 'Ligado', protocol: 'FHIR/JSON', token: 'HOSP_CLINICAL_9011', type: 'Saúde / Hospitalar' },
-  { id: 'registo-civil', name: 'CIVIL', desc: 'Conservatória do Registo Civil de Luanda', status: 'Ligado', protocol: 'GraphQL', token: 'REG_CIVIL_MUTUAL_TLS', type: 'Registo Civil' }
+  { id: 'registo-civil', name: 'CIVIL', desc: 'Conservatória do Registo Civil de Luanda', status: 'Ligado', protocol: 'GraphQL', token: 'REG_CIVIL_MUTUAL_TLS', type: 'Registo Civil' },
+  { id: 'ine', name: 'INE', desc: 'Instituto Nacional de Estatística', status: 'Ligado', protocol: 'REST/JSON', token: 'INE_STAT_KEY_7744', type: 'Estatística / Censo' }
 ];
 
 interface ForwardingRule {
@@ -154,7 +258,15 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
   // App states with LocalStorage persistence where matching
   const [orgs, setOrgs] = useState<Organismo[]>(() => {
     const saved = localStorage.getItem('gov_interop_orgs_v2');
-    return saved ? JSON.parse(saved) : INITIAL_ORGS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (!parsed.some((o: any) => o.name === 'INE')) {
+        parsed.push({ id: 'ine', name: 'INE', desc: 'Instituto Nacional de Estatística', status: 'Ligado', protocol: 'REST/JSON', token: 'INE_STAT_KEY_7744', type: 'Estatística / Censo' });
+        localStorage.setItem('gov_interop_orgs_v2', JSON.stringify(parsed));
+      }
+      return parsed;
+    }
+    return INITIAL_ORGS;
   });
 
   const [forwardingRules, setForwardingRules] = useState<ForwardingRule[]>(() => {
@@ -176,6 +288,46 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
     const saved = localStorage.getItem('gov_interop_flows');
     return saved ? JSON.parse(saved) : INITIAL_FLOWS;
   });
+
+  // Geographic and Agency filters state
+  const [selectedInst, setSelectedInst] = useState<string>('AGT');
+  const [filterProvince, setFilterProvince] = useState<string>('Todas');
+  const [filterMunicipio, setFilterMunicipio] = useState<string>('Todos');
+
+  const [agencies, setAgencies] = useState<Agency[]>(() => {
+    const saved = localStorage.getItem('gov_local_agencies_v2');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (!parsed.some((a: any) => a.institution === 'INE')) {
+        const ineAgencies = [
+          { id: 'ine1', name: 'Sede Central do INE', institution: 'INE', province: 'Luanda', municipio: 'Luanda', address: 'Avenida 4 de Fevereiro, Edifício Real', contact: '+244 935 300 001', status: 'Ativa' },
+          { id: 'ine2', name: 'Gabinete de Estatísticas de Benguela', institution: 'INE', province: 'Benguela', municipio: 'Benguela', address: 'Rua do Comércio de Benguela', contact: '+244 935 300 002', status: 'Ativa' },
+          { id: 'ine3', name: 'Posto de Censo Populacional Viana', institution: 'INE', province: 'Luanda', municipio: 'Viana', address: 'Viana Vila, Luanda', contact: '+244 935 300 003', status: 'Ativa' }
+        ];
+        const merged = [...parsed, ...ineAgencies];
+        localStorage.setItem('gov_local_agencies_v2', JSON.stringify(merged));
+        return merged;
+      }
+      return parsed;
+    }
+    return INITIAL_AGENCIES;
+  });
+
+  // Modal open flag and creation inputs
+  const [isAddInstModalOpen, setIsAddInstModalOpen] = useState(false);
+  const [selectedAgencyDetail, setSelectedAgencyDetail] = useState<Agency | null>(null);
+  const [addAgencyName, setAddAgencyName] = useState('');
+  const [addAgencyInstitution, setAddAgencyInstitution] = useState('AGT');
+  const [addAgencyProvince, setAddAgencyProvince] = useState('Luanda');
+  const [addAgencyMunicipio, setAddAgencyMunicipio] = useState('Luanda');
+  const [addAgencyAddress, setAddAgencyAddress] = useState('');
+  const [addAgencyContact, setAddAgencyContact] = useState('');
+  const [addAgencyInstitutionalId, setAddAgencyInstitutionalId] = useState('');
+
+  // Persist agency list
+  useEffect(() => {
+    localStorage.setItem('gov_local_agencies_v2', JSON.stringify(agencies));
+  }, [agencies]);
 
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ id: string, status: 'success' | 'error', log: string } | null>(null);
@@ -219,30 +371,37 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
 
   // Actions
   const toggleStatus = (id: string) => {
+    let nextStatus: Organismo['status'] | undefined;
+    let orgName = '';
+    let orgDesc = '';
+
     setOrgs(prev => prev.map(org => {
       if (org.id === id) {
         const statuses: Organismo['status'][] = ['Ligado', 'Manutenção', 'Offline'];
         const currentIndex = statuses.indexOf(org.status);
-        const nextStatus = statuses[(currentIndex + 1) % statuses.length];
-        
-        onLog?.(`Interoperabilidade: ${org.name} alterado para ${nextStatus}`, nextStatus === 'Ligado' ? 'success' : 'warning');
-        
-        // Add log entry
-        const newLog: InteropLog = {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toLocaleTimeString('pt-AO'),
-          source: 'CDA-GATEWAY',
-          target: org.name,
-          operation: 'STATUS_TOGGLE',
-          status: nextStatus === 'Ligado' ? 'success' : nextStatus === 'Manutenção' ? 'warning' : 'error',
-          payload: `Operador alterou o status administrativo da interface do organismo ${org.desc} para ${nextStatus}.`
-        };
-        setLogs(prevLogs => [newLog, ...prevLogs]);
-
+        nextStatus = statuses[(currentIndex + 1) % statuses.length];
+        orgName = org.name;
+        orgDesc = org.desc;
         return { ...org, status: nextStatus };
       }
       return org;
     }));
+
+    if (nextStatus) {
+      onLog?.(`Instituição: ${orgName} alterada para ${nextStatus}`, nextStatus === 'Ligado' ? 'success' : 'warning');
+      
+      // Add log entry
+      const newLog: InteropLog = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString('pt-AO'),
+        source: 'CDA-GATEWAY',
+        target: orgName,
+        operation: 'STATUS_TOGGLE',
+        status: nextStatus === 'Ligado' ? 'success' : nextStatus === 'Manutenção' ? 'warning' : 'error',
+        payload: `Operador alterou o status administrativo da interface do organismo ${orgDesc} para ${nextStatus}.`
+      };
+      setLogs(prevLogs => [newLog, ...prevLogs]);
+    }
   };
 
   const handleTestConnection = (id: string) => {
@@ -285,50 +444,64 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
   };
 
   const handleSaveToken = (id: string, newToken: string) => {
+    let orgName = '';
     setOrgs(prev => prev.map(org => {
       if (org.id === id) {
-        onLog?.(`Token de integração ${org.name} atualizado com novas credenciais`, 'info');
-        
-        const newLog: InteropLog = {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toLocaleTimeString('pt-AO'),
-          source: 'CDA-GATEWAY',
-          target: org.name,
-          operation: 'ROTATE_SECRET_TOKEN',
-          status: 'success',
-          payload: `Chave criptográfica do organismo ${org.name} rotacionada com novas diretrizes de autenticidade.`
-        };
-        setLogs(prevLogs => [newLog, ...prevLogs]);
-
+        orgName = org.name;
         return { ...org, token: newToken };
       }
       return org;
     }));
+
+    if (orgName) {
+      onLog?.(`Token de integração ${orgName} atualizado com novas credenciais`, 'info');
+      
+      const newLog: InteropLog = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString('pt-AO'),
+        source: 'CDA-GATEWAY',
+        target: orgName,
+        operation: 'ROTATE_SECRET_TOKEN',
+        status: 'success',
+        payload: `Chave criptográfica do organismo ${orgName} rotacionada com novas diretrizes de autenticidade.`
+      };
+      setLogs(prevLogs => [newLog, ...prevLogs]);
+    }
     setEditingOrg(null);
   };
 
   // Toggle forwarding rule state
   const toggleForwarding = (id: string) => {
+    let nextState: boolean | undefined;
+    let ruleSource = '';
+    let ruleTarget = '';
+    let ruleDocType = '';
+
     setForwardingRules(prev => prev.map(rule => {
       if (rule.id === id) {
-        const nextState = !rule.active;
-        onLog?.(`Regra de Encaminhamento ${rule.source}➔${rule.target} ${nextState ? 'activada' : 'desactivada'}`, 'info');
-
-        const newLog: InteropLog = {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toLocaleTimeString('pt-AO'),
-          source: rule.source,
-          target: rule.target,
-          operation: nextState ? 'ROUTING_RULE_ENABLE' : 'ROUTING_RULE_DISABLE',
-          status: 'success',
-          payload: `Roteamento de documentos do tipo '${rule.docType}' foi ${nextState ? 'ativado' : 'retirado'}.`
-        };
-        setLogs(prevLogs => [newLog, ...prevLogs]);
-
+        nextState = !rule.active;
+        ruleSource = rule.source;
+        ruleTarget = rule.target;
+        ruleDocType = rule.docType;
         return { ...rule, active: nextState };
       }
       return rule;
     }));
+
+    if (nextState !== undefined) {
+      onLog?.(`Regra de Encaminhamento ${ruleSource}➔${ruleTarget} ${nextState ? 'activada' : 'desactivada'}`, 'info');
+
+      const newLog: InteropLog = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString('pt-AO'),
+        source: ruleSource,
+        target: ruleTarget,
+        operation: nextState ? 'ROUTING_RULE_ENABLE' : 'ROUTING_RULE_DISABLE',
+        status: 'success',
+        payload: `Roteamento de documentos do tipo '${ruleDocType}' foi ${nextState ? 'ativado' : 'retirado'}.`
+      };
+      setLogs(prevLogs => [newLog, ...prevLogs]);
+    }
   };
 
   // Add new forwarding rule
@@ -364,26 +537,38 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
 
   // Toggle sharing consent state
   const toggleSharingConsent = (id: string) => {
+    let nextStatus: 'Ativo' | 'Suspenso' | undefined;
+    let citizenName = '';
+    let citizenBi = '';
+    let entity = '';
+    let scope = '';
+
     setSharingRules(prev => prev.map(rule => {
       if (rule.id === id) {
-        const nextStatus = rule.status === 'Ativo' ? 'Suspenso' : 'Ativo';
-        onLog?.(`Consentimento de partilha unificada para ${rule.citizenName} foi ${nextStatus === 'Ativo' ? 'reativado' : 'suspenso'}.`, 'warning');
-
-        const newLog: InteropLog = {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toLocaleTimeString('pt-AO'),
-          source: 'CDA-CONSENT-DESK',
-          target: rule.entity,
-          operation: nextStatus === 'Ativo' ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED',
-          status: nextStatus === 'Ativo' ? 'success' : 'warning',
-          payload: `Acesso a dados (${rule.scope}) do cidadão BI ${rule.citizenBi} para ${rule.entity} alterado para ${nextStatus}.`
-        };
-        setLogs(prevLogs => [newLog, ...prevLogs]);
-
+        nextStatus = rule.status === 'Ativo' ? 'Suspenso' : 'Ativo';
+        citizenName = rule.citizenName;
+        citizenBi = rule.citizenBi;
+        entity = rule.entity;
+        scope = rule.scope;
         return { ...rule, status: nextStatus };
       }
       return rule;
     }));
+
+    if (nextStatus) {
+      onLog?.(`Consentimento de partilha unificada para ${citizenName} foi ${nextStatus === 'Ativo' ? 'reativado' : 'suspenso'}.`, 'warning');
+
+      const newLog: InteropLog = {
+        id: `log-${Date.now()}`,
+        timestamp: new Date().toLocaleTimeString('pt-AO'),
+        source: 'CDA-CONSENT-DESK',
+        target: entity,
+        operation: nextStatus === 'Ativo' ? 'CONSENT_GRANTED' : 'CONSENT_REVOKED',
+        status: nextStatus === 'Ativo' ? 'success' : 'warning',
+        payload: `Acesso a dados (${scope}) do cidadão BI ${citizenBi} para ${entity} alterado para ${nextStatus}.`
+      };
+      setLogs(prevLogs => [newLog, ...prevLogs]);
+    }
   };
 
   // Add new sharing consent
@@ -425,8 +610,14 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
 
     // Simulate stepping through institutions
     setTimeout(() => {
+      let currentPendingStep: { institution: string; action: string } | undefined;
+      let flowName = '';
+
       setFlows(prevFlows => prevFlows.map(flow => {
         if (flow.id === flowId) {
+          flowName = flow.name;
+          currentPendingStep = flow.steps.find(s => s.status === 'Pendente');
+
           // Advance peding steps to Concluído
           const updatedSteps = flow.steps.map((step, idx) => {
             if (step.status === 'Pendente') {
@@ -437,24 +628,25 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
             }
             return step;
           });
-
-          // Log step completion
-          const currentPendingStep = flow.steps.find(s => s.status === 'Pendente');
-          const nextLog: InteropLog = {
-            id: `log-${Date.now()}`,
-            timestamp: new Date().toLocaleTimeString('pt-AO'),
-            source: 'SYSTEM_FLOW_ORCHESTRATOR',
-            target: currentPendingStep?.institution || 'MULTIPLOS',
-            operation: 'FLOW_STEP_COMPLETED',
-            status: 'success',
-            payload: `Barramento interoperável concluiu etapa de integração "${currentPendingStep?.action}" no fluxo ${flow.name}.`
-          };
-          setLogs(prevLogs => [nextLog, ...prevLogs]);
           
           return { ...flow, steps: updatedSteps };
         }
         return flow;
       }));
+
+      // Perform side-effects outside setFlows updater
+      if (currentPendingStep) {
+        const nextLog: InteropLog = {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString('pt-AO'),
+          source: 'SYSTEM_FLOW_ORCHESTRATOR',
+          target: currentPendingStep.institution || 'MULTIPLOS',
+          operation: 'FLOW_STEP_COMPLETED',
+          status: 'success',
+          payload: `Barramento interoperável concluiu etapa de integração "${currentPendingStep.action}" no fluxo ${flowName}.`
+        };
+        setLogs(prevLogs => [nextLog, ...prevLogs]);
+      }
 
       setSimulatingFlowId(null);
       onLog?.(`Fase de fluxo multi-institucional automatizado atualizada com sucesso.`, 'success');
@@ -467,6 +659,57 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
     onLog?.(`Fluxos cooperativos repostos ao estado inicial de simulação.`, 'info');
   };
 
+  const filteredAgencies = agencies.filter(agency => {
+    const matchesInst = agency.institution.toLowerCase() === selectedInst.toLowerCase();
+    const matchesProvince = filterProvince === 'Todas' || agency.province === filterProvince;
+    const matchesMunicipio = filterMunicipio === 'Todos' || agency.municipio === filterMunicipio;
+    return matchesInst && matchesProvince && matchesMunicipio;
+  });
+
+  const handleAddAgency = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addAgencyName || !addAgencyAddress || !addAgencyContact) {
+      alert('Por favor preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const newAgency: Agency = {
+      id: `ag-${Date.now()}`,
+      name: addAgencyName,
+      institution: addAgencyInstitution,
+      province: addAgencyProvince,
+      municipio: addAgencyMunicipio,
+      address: addAgencyAddress,
+      contact: addAgencyContact,
+      status: 'Ativa',
+      institutionalId: addAgencyInstitutionalId.trim() || `ID-${addAgencyInstitution}-${Date.now().toString().slice(-4)}`
+    };
+
+    setAgencies(prev => [newAgency, ...prev]);
+    setIsAddInstModalOpen(false);
+
+    // Reset input fields
+    setAddAgencyName('');
+    setAddAgencyAddress('');
+    setAddAgencyContact('');
+    setAddAgencyInstitutionalId('');
+
+    // Trigger log & notification
+    onLog?.(`Instituição: ${newAgency.name} adicionada com sucesso em ${newAgency.province}.`, 'success');
+
+    // Add interop log entry
+    const newLogEntry: InteropLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString('pt-AO'),
+      source: 'CDA-GATEWAY',
+      target: newAgency.institution,
+      operation: 'INSTITUTION_REGISTERED',
+      status: 'success',
+      payload: `Nova agência de atendimento "${newAgency.name}" adicionada ao cadastro de cooperantes estatais em ${newAgency.province}, ${newAgency.municipio}.`
+    };
+    setLogs(prev => [newLogEntry, ...prev]);
+  };
+
   return (
     <div className="pb-32 md:pt-2">
       {/* Header */}
@@ -476,10 +719,10 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
             <Activity size={28} />
           </div>
           <div>
-            <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Interoperabilidade</h1>
+            <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Instituição</h1>
             <div className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
                <div className="w-1 h-3 bg-emerald-500 rounded-full" />
-               Barramento Governamental & Cooperação Privada
+               Canais de Conetividade e Cooperação Institucional
             </div>
           </div>
         </div>
@@ -498,690 +741,454 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
         </div>
       </div>
 
-      {/* Internal Ribbon Styling sub-navigation tabs (Strictly styled, no visuals broken) */}
-      <div className="flex flex-wrap items-center gap-2 mb-10 border-b border-slate-100 pb-4 overflow-x-auto whitespace-nowrap scrollbar-hide py-1">
-        {[
-          { id: 'barramento', label: 'Barramento Activo', icon: Landmark, count: orgs.length },
-          { id: 'encaminhamento', label: 'Encaminhamento Interno', icon: Shuffle, count: forwardingRules.length },
-          { id: 'compartilhamento', label: 'Partilha Autorizada', icon: Users, count: sharingRules.length },
-          { id: 'fluxos', label: 'Fluxos de Rede', icon: GitBranch, count: flows.length },
-          { id: 'historico', label: 'Histórico Institucional', icon: Clock, count: logs.length }
-        ].map((t) => {
-          const Icon = t.icon;
-          const isActive = currentTab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => {
-                setCurrentTab(t.id as any);
-                setTestResult(null);
-              }}
-              className={`flex items-center gap-2.5 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.08em] transition-all border ${
-                isActive 
-                  ? 'bg-emerald-600 border-emerald-500 text-white shadow-xl shadow-emerald-500/10' 
-                  : 'bg-white border-slate-100 text-slate-600 hover:text-slate-900 hover:border-slate-200'
-              }`}
-            >
-              <Icon size={14} />
-              {t.label}
-              <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-black ${
-                isActive ? 'bg-emerald-800 text-emerald-100' : 'bg-slate-50 text-slate-400'
-              }`}>
-                {t.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <div className="space-y-8 animate-fade-in">
 
-      {/* TABS CONTENT */}
-      <div className="space-y-10">
-
-        {/* TAB 1: Core Gateway Interop status */}
-        {currentTab === 'barramento' && (
-          <div className="space-y-8">
-            <div className="bg-gradient-to-r from-slate-900 to-emerald-950 p-8 rounded-[40px] text-white border border-slate-800 shadow-2xl shadow-slate-950/20 relative overflow-hidden">
-               <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-x-12 translate-y-12 select-none">
-                 <Landmark size={280} />
-               </div>
-               
-               <div className="max-w-xl relative shrink-0">
-                  <span className="text-[9px] font-black bg-emerald-700/60 uppercase tracking-[0.3em] px-3 py-1 rounded border border-emerald-500/30">CANAL SEGURO CDA V4</span>
-                  <h2 className="text-2xl md:text-3xl font-black italic tracking-tighter uppercase mt-4 leading-none">Canal Único de Conetividade</h2>
-                  <p className="text-slate-300 font-medium text-xs mt-3 leading-relaxed">
-                    Sincronização robusta em barramento seguro das bases cadastrais angolanas. O protocolo assegura a troca bilateral de informações sensíveis sem necessidade de integração ponto-a-ponto tradicional.
-                  </p>
-                  
-                  <div className="flex flex-wrap items-center gap-5 mt-6 font-mono text-[10px] font-black text-emerald-300">
-                    <div className="flex items-center gap-2">
-                       <Shield size={14} className="text-emerald-400" />
-                       AUDITORIA COMPLETA
-                    </div>
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                    <div className="flex items-center gap-2">
-                       <Key size={14} className="text-emerald-400" />
-                       TLS MÚTUO ATIVO
-                    </div>
-                  </div>
-               </div>
+        {/* 1. Contentor "Instituições Conectadas" */}
+        <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm overflow-hidden relative group">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+               <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+               <h3 className="text-slate-950 font-black text-xs md:text-md italic tracking-tighter uppercase">Instituições Conectadas</h3>
             </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 md:gap-8">
-              {orgs.map((org) => (
-                <motion.div 
-                  key={org.id}
-                  layoutId={org.id}
-                  className="bg-white p-6 md:p-8 rounded-[40px] border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-2xl hover:shadow-slate-100 transition-all flex flex-col gap-6 group"
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded border border-slate-100">Versão Administrativa</div>
+          </div>
+          
+          <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar pb-3">
+            {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras", "INE"].map((name) => {
+              const isActive = selectedInst.toLowerCase() === name.toLowerCase();
+              const countForInst = agencies.filter(a => a.institution.toLowerCase() === name.toLowerCase()).length;
+              return (
+                <button 
+                  key={name}
+                  onClick={() => {
+                    setSelectedInst(name);
+                  }}
+                  className={`px-5 py-3 rounded-2xl text-[11px] md:text-xs font-black uppercase transition-all cursor-pointer shrink-0 shadow-sm text-left flex items-center gap-2.5 border ${
+                    isActive 
+                      ? 'bg-[#0e2b64] border-[#0e2b64] text-white shadow-lg' 
+                      : 'bg-slate-50 border-slate-100 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                  }`}
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-5">
-                      <div className="w-16 h-16 bg-slate-50 rounded-[24px] flex items-center justify-center font-black text-xl text-slate-950 shadow-inner group-hover:scale-110 transition-all border border-slate-100 group-hover:bg-emerald-50 group-hover:text-emerald-600 uppercase">
-                        {org.name}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 uppercase tracking-widest px-2 py-0.5 rounded">
-                            {org.type}
-                          </span>
-                        </div>
-                        <h4 className="font-black text-slate-900 text-lg md:text-xl italic tracking-tighter uppercase mt-2 leading-none">{org.desc}</h4>
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
-                          <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded border border-slate-100">PROTOCOLO: {org.protocol}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => toggleStatus(org.id)}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.1em] transition-all border shadow-sm ${
-                        org.status === 'Ligado' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                        org.status === 'Manutenção' ? 'bg-amber-50 text-amber-600 border-amber-100' : 
-                        'bg-slate-50 text-slate-400 border-slate-100'
-                      }`}
-                    >
-                      <Power size={12} className={org.status === 'Ligado' ? 'animate-pulse' : ''} />
-                      {org.status}
-                    </button>
-                  </div>
-
-                  {/* Actions Bar */}
-                  <div className="flex items-center gap-4 pt-4 border-t border-slate-50">
-                    <button 
-                      onClick={() => handleTestConnection(org.id)}
-                      disabled={testingId !== null}
-                      className="flex-1 bg-slate-50 text-slate-600 p-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-3 disabled:opacity-50 border border-slate-100"
-                    >
-                      {testingId === org.id ? <RefreshCw size={16} className="animate-spin" /> : <Activity size={16} />}
-                      Testar Ligação
-                    </button>
-                    
-                    <button 
-                      onClick={() => setEditingOrg(org)}
-                      className="flex-1 bg-slate-950 text-white p-4 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200 active:scale-95"
-                    >
-                      <Settings2 size={16} /> Parâmetros
-                    </button>
-                  </div>
-
-                  {/* Test Result Indicator */}
-                  <AnimatePresence>
-                    {testResult && testResult.id === org.id && (
-                      <motion.div 
-                        initial={{ height: 0, opacity: 0, y: -10 }}
-                        animate={{ height: 'auto', opacity: 1, y: 0 }}
-                        exit={{ height: 0, opacity: 0, y: -10 }}
-                        className={`p-5 rounded-[24px] border flex items-start gap-4 ${
-                          testResult.status === 'success' ? 'bg-emerald-50/50 border-emerald-100 text-emerald-800 shadow-sm shadow-emerald-900/5' : 'bg-red-50/50 border-red-100 text-red-800 shadow-sm shadow-red-900/5'
-                        }`}
-                      >
-                        <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${testResult.status === 'success' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200' : 'bg-red-500 text-white shadow-lg shadow-red-200'}`}>
-                          {testResult.status === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-                        </div>
-                        <div className="flex-1">
-                            <div className="text-[10px] font-black uppercase tracking-widest mb-1">{testResult.status === 'success' ? 'Sincronização Ativa' : 'Falha no Barramento'}</div>
-                            <span className="text-[11px] font-bold leading-relaxed italic">{testResult.log}</span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
+                  <Building2 size={13} className={isActive ? 'text-white/80' : 'text-slate-400'} />
+                  <span>{name}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                    isActive ? 'bg-[#0a204b] text-white' : 'bg-slate-200 text-slate-500'
+                  }`}>
+                    {countForInst}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        )}
+        </section>
 
-        {/* TAB 2: Encaminhamento Interno */}
-        {currentTab === 'encaminhamento' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Form Column - Left banner layout matching original styling */}
-            <div className="lg:col-span-1 space-y-6">
-              <div className="bg-slate-950 p-8 rounded-[40px] text-white border border-slate-900 shadow-xl space-y-6">
-                <div>
-                  <span className="text-[8px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-[0.2em] px-2.5 py-1 rounded">ROTEAMENTO INTERNO</span>
-                  <h3 className="text-xl font-black italic tracking-tighter uppercase mt-4 leading-none">Novas Regras de Direcionamento</h3>
-                  <p className="text-[11px] text-slate-400 mt-2 font-medium leading-relaxed">
-                     Configure caminhos lógicos para encaminhar dados de certidões, isenções e NIFs em tempo de execução para os departamentos internos cabíveis.
-                  </p>
-                </div>
-
-                <form onSubmit={handleAddForwardingRule} className="space-y-4 pt-4 border-t border-slate-800">
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Origem do Fluxo (Organismo)</label>
-                    <select 
-                      value={newRuleSource}
-                      onChange={(e) => setNewRuleSource(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold"
-                    >
-                      {orgs.map(o => <option key={o.id} value={o.name}>{o.desc} ({o.name})</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Destino / Encaminhamento</label>
-                    <select 
-                      value={newRuleTarget}
-                      onChange={(e) => setNewRuleTarget(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold"
-                    >
-                      {orgs.map(o => <option key={o.id} value={o.name}>{o.desc} ({o.name})</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Tipo de Trâmite de Documento</label>
-                    <input 
-                      type="text" 
-                      value={newRuleDocType}
-                      onChange={(e) => setNewRuleDocType(e.target.value)}
-                      placeholder="Ex: Certidão Predial Digital"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-600 font-bold"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Descrição Regulamentar do Encaminhamento</label>
-                    <textarea 
-                      value={newRuleDesc}
-                      onChange={(e) => setNewRuleDesc(e.target.value)}
-                      placeholder="Indique a utilidade ou ato de estado associado..."
-                      rows={3}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-600 font-medium"
-                      required
-                    />
-                  </div>
-
-                  <button 
-                    type="submit"
-                    className="w-full bg-emerald-600 text-white p-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-emerald-950/20"
-                  >
-                    <Plus size={14} /> Ativar Rota Automática
-                  </button>
-                </form>
-              </div>
+        {/* 2 & 3. Real-Time Dynamic Listing and Location Filters Row */}
+        <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6 border-b border-slate-100">
+            <div>
+              <h4 className="font-black text-slate-900 text-lg md:text-xl italic uppercase tracking-tight flex items-center gap-2">
+                <Building2 size={20} className="text-indigo-600" />
+                Instituição Governamental: {selectedInst}
+              </h4>
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mt-1">
+                Visualização e filtragem do contingente territorial de atendimento
+              </p>
             </div>
 
-            {/* List Column - Right side 2 columns */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white p-6 md:p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-xl font-black italic tracking-tighter uppercase leading-none text-slate-900">Regras de Encaminhamento Ativas</h3>
-                    <p className="text-[11px] text-slate-400 font-bold mt-1.5 uppercase tracking-widest">Controlo de Redirecionamentos Internos</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {forwardingRules.map((rule) => (
-                    <div 
-                      key={rule.id}
-                      className={`p-6 rounded-[28px] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 ${
-                        rule.active ? 'bg-slate-50 border-slate-100 hover:border-indigo-100' : 'bg-slate-50/50 border-slate-100/60 opacity-60'
-                      }`}
-                    >
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="shrink-0 w-12 h-12 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center font-black text-xs text-slate-800">
-                          {rule.source}
-                        </div>
-                        
-                        <div className="flex items-center justify-center w-8 h-12 text-slate-400">
-                          <ArrowRight size={16} className="animate-pulse" />
-                        </div>
-
-                        <div className="shrink-0 w-12 h-12 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center font-black text-xs text-slate-800">
-                          {rule.target}
-                        </div>
-
-                        <div className="space-y-1 ml-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100/50 uppercase tracking-wider">
-                              {rule.docType}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-700 font-bold leading-relaxed mt-1">{rule.desc}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 self-end md:self-auto shrink-0">
-                        <button 
-                          onClick={() => toggleForwarding(rule.id)}
-                          className={`px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm ${
-                            rule.active 
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' 
-                              : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
-                          }`}
-                        >
-                          {rule.active ? 'Ativo' : 'Inativo'}
-                        </button>
-                      </div>
-                    </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Select Provincia */}
+              <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <MapPin size={14} className="text-slate-400" />
+                <select
+                  value={filterProvince}
+                  onChange={(e) => {
+                    setFilterProvince(e.target.value);
+                    setFilterMunicipio('Todos'); // Reset municipality when province shifts
+                  }}
+                  className="bg-transparent border-0 outline-none text-xs text-slate-700 font-bold pr-6 cursor-pointer"
+                >
+                  <option value="Todas">Província: Todas</option>
+                  {Object.keys(MUNICIPALITIES_BY_PROVINCE).filter(p => p !== 'Todas').map(prov => (
+                    <option key={prov} value={prov}>{prov}</option>
                   ))}
-                </div>
+                </select>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* TAB 3: Compartilhamento Autorizado */}
-        {currentTab === 'compartilhamento' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            {/* Form Column */}
-            <div className="lg:col-span-1 space-y-6">
-              <div className="bg-slate-950 p-8 rounded-[40px] text-white border border-slate-900 shadow-xl space-y-6">
-                <div>
-                  <span className="text-[8px] font-black bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-[0.2em] px-2.5 py-1 rounded">MECANISMO DE CONSENTIMENTO</span>
-                  <h3 className="text-xl font-black italic tracking-tighter uppercase mt-4 leading-none">Novas Permissões</h3>
-                  <p className="text-[11px] text-slate-400 mt-2 font-medium leading-relaxed">
-                     Emita uma nova simulação de consentimento unificado pelo cidadão. Isso autoriza o consumo legítimo de dados nos termos do regulamento de identificação digital.
-                  </p>
-                </div>
-
-                <form onSubmit={handleAddSharingConsent} className="space-y-4 pt-4 border-t border-slate-800">
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nome do Cidadão</label>
-                    <input 
-                      type="text" 
-                      value={newShareCitizen}
-                      onChange={(e) => setNewShareCitizen(e.target.value)}
-                      placeholder="Ex: Edlasio Galhardo"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-600 font-bold"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Número do Bilhete de Identidade (BI)</label>
-                    <input 
-                      type="text" 
-                      value={newShareBi}
-                      onChange={(e) => setNewShareBi(e.target.value)}
-                      placeholder="Ex: 009874562LA041"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-600 font-bold"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Entidade Autorizada</label>
-                    <select 
-                      value={newShareEntity}
-                      onChange={(e) => setNewShareEntity(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold"
-                    >
-                      <option value="Banco BAI">Banco BAI</option>
-                      <option value="Banco BFA">Banco BFA</option>
-                      <option value="ENDE">ENDE</option>
-                      <option value="EPAL">EPAL</option>
-                      <option value="Hospital Geral de Luanda">Hospital Geral de Luanda</option>
-                      <option value="Ministério das Finanças">Ministério das Finanças</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Âmbito de Consulta Autorizada</label>
-                    <input 
-                      type="text" 
-                      value={newShareScope}
-                      onChange={(e) => setNewShareScope(e.target.value)}
-                      placeholder="Ex: NIF, Certidão Digital, IPU"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-600 font-bold"
-                      required
-                    />
-                  </div>
-
-                  <button 
-                    type="submit"
-                    className="w-full bg-indigo-600 text-white p-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-950/20"
-                  >
-                    <Plus size={14} /> Registar Consentimento Expresso
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* List Column */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white p-6 md:p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-xl font-black italic tracking-tighter uppercase leading-none text-slate-900">Autorizações & Partilha de Dados Unificados</h3>
-                  <p className="text-[11px] text-slate-400 font-bold mt-1.5 uppercase tracking-widest">Matriz de Compartilhamento Legítimo sob Consentimento RGPD/CDA</p>
-                </div>
-
-                <div className="space-y-4">
-                  {sharingRules.map((rule) => (
-                    <div 
-                      key={rule.id}
-                      className={`p-6 rounded-[28px] border transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 ${
-                        rule.status === 'Ativo' ? 'bg-slate-50 border-slate-100 hover:border-emerald-100' : 'bg-slate-50/40 border-slate-100/60 opacity-60'
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black shrink-0 ${
-                          rule.status === 'Ativo' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50/50 text-red-500 border border-red-100'
-                        }`}>
-                          <Lock size={18} />
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-extrabold text-slate-900 text-sm">{rule.citizenName}</span>
-                            <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded font-black">BI: {rule.citizenBi}</span>
-                          </div>
-                          
-                          <p className="text-xs text-slate-500 leading-relaxed font-bold">
-                            Autorizou <span className="text-slate-900">{rule.entity}</span> a ler dados de: <span className="text-indigo-600 italic">{rule.scope}</span>
-                          </p>
-
-                          <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400 font-bold">
-                             <Clock size={12} />
-                             Validade: {rule.expires}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="shrink-0">
-                        <button 
-                          onClick={() => toggleSharingConsent(rule.id)}
-                          className={`px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border shadow-sm ${
-                            rule.status === 'Ativo' 
-                              ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' 
-                              : 'bg-red-50 text-red-600 border-red-100 hover:bg-red-100'
-                          }`}
-                        >
-                          {rule.status === 'Ativo' ? 'Ativo / Revogar' : 'Suspenso / Ativar'}
-                        </button>
-                      </div>
-                    </div>
+              {/* Select Municipio */}
+              <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <MapPin size={14} className="text-slate-400" />
+                <select
+                  value={filterMunicipio}
+                  onChange={(e) => setFilterMunicipio(e.target.value)}
+                  className="bg-transparent border-0 outline-none text-xs text-slate-700 font-bold pr-6 cursor-pointer"
+                >
+                  <option value="Todos">Município: Todos</option>
+                  {(MUNICIPALITIES_BY_PROVINCE[filterProvince] || ['Todos']).filter(m => m !== 'Todos').map(mun => (
+                    <option key={mun} value={mun}>{mun}</option>
                   ))}
-                </div>
+                </select>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* TAB 4: Fluxos Multi-institucionais */}
-        {currentTab === 'fluxos' && (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-black italic tracking-tighter uppercase leading-none text-slate-900">Fluxos Multi-institucionais Ativos</h3>
-                <p className="text-[11px] text-slate-400 font-bold mt-1.5 uppercase tracking-widest">Orquestração em Tempo Real de Atos Interinstitucionais</p>
-              </div>
-              <button 
-                onClick={handleResetFlows}
-                className="bg-slate-50 border border-slate-100 text-slate-600 hover:bg-slate-100 px-4 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
+              {/* 4. Action button to Add Institution */}
+              <button
+                onClick={() => {
+                  setAddAgencyInstitution(selectedInst);
+                  setIsAddInstModalOpen(true);
+                }}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md hover:-translate-y-0.5"
               >
-                Repor Simulação
+                <Plus size={16} />
+                Adicionar Instituição
               </button>
             </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {flows.map((flow) => {
-                const isSimulating = simulatingFlowId === flow.id;
-                const nextStepIndex = flow.steps.findIndex(s => s.status === 'Pendente');
-                const isComplete = !flow.steps.some(s => s.status !== 'Concluído');
-
-                return (
-                  <div 
-                    key={flow.id}
-                    className="bg-white p-6 md:p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-2xl hover:shadow-slate-100/50 transition-all h-full"
-                  >
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded border-2 ${
-                          isComplete 
-                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                            : 'bg-indigo-50 text-indigo-600 border-indigo-100 animate-pulse'
-                        }`}>
-                          {isComplete ? 'Totalmente Concluído' : 'Processamento Ativo'}
-                        </span>
-                        
-                        <div className="text-slate-300">
-                          <GitBranch size={20} />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h4 className="font-black text-slate-900 text-lg italic tracking-tighter uppercase leading-snug">{flow.name}</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed font-medium">{flow.description}</p>
-                      </div>
-
-                      {/* Visual Timeline Steps */}
-                      <div className="space-y-4 pt-4 border-t border-slate-50">
-                        {flow.steps.map((step, idx) => {
-                          return (
-                            <div key={idx} className="flex gap-4 relative">
-                              {/* Connection line */}
-                              {idx < flow.steps.length - 1 && (
-                                <div className={`absolute top-6 left-3 w-0.5 h-10 ${
-                                  step.status === 'Concluído' ? 'bg-emerald-400' : 'bg-slate-200'
-                                }`} />
-                              )}
-
-                              <div className={`w-6.5 h-6.5 rounded-full flex items-center justify-center font-black text-[9px] border shadow-sm shrink-0 mt-0.5 ${
-                                step.status === 'Concluído' ? 'bg-emerald-500 border-emerald-400 text-white' :
-                                step.status === 'Pendente' ? 'bg-amber-400 border-amber-300 text-slate-900 animate-pulse' :
-                                'bg-white border-slate-100 text-slate-400'
-                              }`}>
-                                {step.status === 'Concluído' ? <Check size={10} strokeWidth={3} /> : idx + 1}
-                              </div>
-
-                              <div className="space-y-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] font-mono font-black text-slate-800 uppercase tracking-widest">{step.institution}</span>
-                                  <span className={`w-1 h-3 rounded-full ${
-                                    step.status === 'Concluído' ? 'bg-emerald-600' :
-                                    step.status === 'Pendente' ? 'bg-amber-500' : 'bg-slate-200'
-                                  }`} />
-                                </div>
-                                <span className="text-[11px] font-bold text-slate-500 italic block">{step.action}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="pt-8 mt-8 border-t border-slate-50">
-                      <button
-                        onClick={() => handleExecuteFlowSimulation(flow.id)}
-                        disabled={isSimulating || isComplete}
-                        className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-3 active:scale-95 ${
-                          isComplete 
-                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none border border-slate-200/50' 
-                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/10'
-                        }`}
-                      >
-                        {isSimulating ? (
-                          <>
-                            <RefreshCw size={14} className="animate-spin" />
-                            Sincronizando Barramento...
-                          </>
-                        ) : isComplete ? (
-                          'Fluxo Consolidado'
-                        ) : (
-                          <>
-                            <ExternalLink size={14} />
-                            Despachar Próxima Etapa
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
-        )}
 
-        {/* TAB 5: Histórico Institucional */}
-        {currentTab === 'historico' && (
-          <div className="bg-white p-6 md:p-8 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-xl font-black italic tracking-tighter uppercase leading-none text-slate-900">Histórico de Transações do Barramento</h3>
-                <p className="text-[11px] text-slate-400 font-bold mt-1.5 uppercase tracking-widest">Log Auditável de Permuta e Acesso a Dados entre Instituições</p>
-              </div>
-              <div className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-100 text-[10px] font-mono text-slate-500">
-                <Shield size={12} className="text-emerald-500 text-xs shrink-0" />
-                <span>VERIFICAÇÃO DE ENVELOPE SEGURO CRIPTOGRÁFICO ATIVA</span>
+          {/* Dynamic Agency List Rendering */}
+          {filteredAgencies.length === 0 ? (
+            <div className="py-12 text-center animate-fade-in">
+              <div className="max-w-sm mx-auto space-y-3">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+                  <Building2 size={24} />
+                </div>
+                <h5 className="font-extrabold text-slate-900 text-sm uppercase">Nenhuma instituição localizada</h5>
+                <p className="text-xs text-slate-400">
+                  Não existem filiais cadastradas para a instituição {selectedInst} em {filterProvince === 'Todas' ? 'todas as províncias' : filterProvince}{filterMunicipio !== 'Todos' && `, município ${filterMunicipio}`}.
+                </p>
               </div>
             </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 pb-4 text-[9px] font-black uppercase text-slate-400 tracking-wider">
-                    <th className="pb-3 pl-3">Hora</th>
-                    <th className="pb-3">Agente Emissor</th>
-                    <th className="pb-3">Agente Receptor</th>
-                    <th className="pb-3">Diretiva / Evento</th>
-                    <th className="pb-3">Status Rota</th>
-                    <th className="pb-3 pr-3 text-right">Envelope JSON / Log</th>
+          ) : (
+            <div className="overflow-auto rounded-[24px] border border-slate-100 bg-slate-50/20 custom-scrollbar max-h-[500px]">
+              <table className="w-full text-left border-collapse min-w-[900px]">
+                <thead className="sticky top-0 z-10 bg-[#0e2b64]">
+                  <tr className="border-b border-primary/20 bg-[#0e2b64] text-[10px] font-black uppercase tracking-wider text-white">
+                    <th className="py-4 px-5">Nome da Instituição</th>
+                    <th className="py-4 px-5">ID Institucional</th>
+                    <th className="py-4 px-5">Província</th>
+                    <th className="py-4 px-5">Município</th>
+                    <th className="py-4 px-5">Endereço</th>
+                    <th className="py-4 px-5">Contacto</th>
+                    <th className="py-4 px-5 font-black">Status</th>
+                    <th className="py-4 px-5 text-center">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {logs.map((log) => (
-                    <tr key={log.id} className="text-xs hover:bg-slate-50/60 transition-colors">
-                      <td className="py-4 pl-3 font-mono font-bold text-[10px] text-slate-400">{log.timestamp}</td>
-                      <td className="py-4">
-                        <span className="font-black text-slate-800 bg-slate-100 px-2 py-1 rounded text-[10px] tracking-tight uppercase">
-                          {log.source}
+                <tbody className="divide-y divide-slate-100">
+                  {filteredAgencies.map((agency) => (
+                    <tr 
+                      key={agency.id} 
+                      onClick={() => setSelectedAgencyDetail(agency)}
+                      className="text-xs text-slate-800 hover:bg-slate-50 hover:text-slate-900 transition-all duration-150 cursor-pointer group"
+                    >
+                      <td className="py-4 px-5">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-[9px] text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full uppercase tracking-wider group-hover:bg-indigo-100/50">
+                              {agency.institution}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-400">ID: {agency.id.toUpperCase()}</span>
+                          </div>
+                          <div className="font-extrabold text-slate-900 group-hover:text-indigo-600 text-sm uppercase italic tracking-tight transition-colors">{agency.name}</div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5 text-slate-900 font-bold uppercase font-mono tracking-wider">
+                        <span className="bg-slate-100 px-2.5 py-1 rounded border border-slate-200 block text-center max-w-[150px] leading-tight text-[11px]">
+                          {agency.institutionalId || `ID-${agency.institution}-${agency.id.substring(0, 5).toUpperCase()}`}
                         </span>
                       </td>
-                      <td className="py-4">
-                        <span className="font-black text-slate-800 bg-slate-100 px-2 py-1 rounded text-[10px] tracking-tight uppercase">
-                          {log.target}
-                        </span>
+                      <td className="py-4 px-5 font-bold text-slate-700">{agency.province}</td>
+                      <td className="py-4 px-5 font-medium text-slate-600">{agency.municipio}</td>
+                      <td className="py-4 px-5 text-slate-500 font-medium max-w-[220px] truncate" title={agency.address}>
+                        {agency.address}
                       </td>
-                      <td className="py-4">
-                        <span className="font-bold text-slate-900 block">{log.operation}</span>
-                        <span className="text-[11px] text-slate-500 italic font-medium leading-relaxed block mt-0.5">{log.payload}</span>
+                      <td className="py-4 px-5 font-bold text-slate-600">{agency.contact}</td>
+                      <td className="py-4 px-5" onClick={(e) => e.stopPropagation()}>
+                        <select
+                          value={agency.status}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            const newStatus = e.target.value as any;
+                            setAgencies(prev => prev.map(a => a.id === agency.id ? { ...a, status: newStatus } : a));
+                            onLog?.(`Alteração de status: ${agency.name} alterada para ${newStatus}`, newStatus === 'Ativa' ? 'success' : 'warning');
+                          }}
+                          className={`text-[9px] font-black uppercase tracking-wider border rounded-lg px-2 py-1 outline-none cursor-pointer ${
+                            agency.status === 'Ativa' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                            agency.status === 'Manutenção' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                            'bg-red-50 text-red-650 border-red-100'
+                          }`}
+                        >
+                          <option value="Ativa">Ativa</option>
+                          <option value="Manutenção">Em Manutenção</option>
+                          <option value="Offline">Offline</option>
+                        </select>
                       </td>
-                      <td className="py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                          log.status === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                          log.status === 'warning' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                          'bg-red-50 text-red-600 border-red-100'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            log.status === 'success' ? 'bg-emerald-500' :
-                            log.status === 'warning' ? 'bg-amber-500' :
-                            'bg-red-500'
-                          }`} />
-                          {log.status === 'success' ? 'Sucesso' : log.status === 'warning' ? 'Latência' : 'Erro Link'}
-                        </span>
-                      </td>
-                      <td className="py-4 pr-3 text-right font-mono text-[9px] text-slate-400">
-                        {log.id.toUpperCase()}
+                      <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Remover agência "${agency.name}" permanentemente?`)) {
+                              setAgencies(prev => prev.filter(a => a.id !== agency.id));
+                              onLog?.(`Remoção: Agência ${agency.name} removida permanentemente do cadastro.`, 'critical');
+                            }
+                          }}
+                          className="text-[9px] font-black uppercase text-red-500 hover:text-red-700 hover:underline cursor-pointer px-3 py-1.5 rounded-xl hover:bg-red-50/50 transition-all font-bold"
+                        >
+                          Eliminar
+                        </button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
       </div>
 
-      {/* Configuration Modal */}
+      {/* Modal de Cadastro de Parceiro Institucional / Agência */}
       <AnimatePresence>
-        {editingOrg && (
+        {isAddInstModalOpen && (
           <>
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setEditingOrg(null)}
+              onClick={() => setIsAddInstModalOpen(false)}
               className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[200]"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl bg-white rounded-[48px] shadow-2xl z-[201] overflow-hidden"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl bg-white rounded-[40px] shadow-2xl z-[201] overflow-hidden border border-slate-100"
             >
-              <div className="bg-slate-950 p-10 text-white relative animate-fade">
+              <div className="bg-gradient-to-r from-indigo-900 to-slate-950 p-8 text-white relative">
                 <button 
-                  onClick={() => setEditingOrg(null)}
-                  className="absolute top-8 right-8 p-3 hover:bg-white/10 rounded-full transition-all"
+                  onClick={() => setIsAddInstModalOpen(false)}
+                  className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-all"
+                  type="button"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
-                <div className="flex items-center gap-5 mb-3">
-                   <div className="w-14 h-14 bg-white text-slate-950 rounded-[20px] flex items-center justify-center shadow-xl border-4 border-slate-900">
-                      <Key size={32} />
+                <div className="flex items-center gap-4">
+                   <div className="w-12 h-12 bg-white/10 rounded-[16px] flex items-center justify-center text-white border border-white/20">
+                      <Building2 size={24} />
                    </div>
                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1">Criptografia do Barramento</div>
-                      <h2 className="text-3xl font-black italic tracking-tighter uppercase leading-none">Integração {editingOrg.name}</h2>
+                      <div className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-300">ADMINISTRAÇÃO DE REDE</div>
+                      <h2 className="text-2xl font-black italic tracking-tighter uppercase leading-none mt-1">Registar Nova Instituição</h2>
                    </div>
                 </div>
               </div>
 
-              <div className="p-10 space-y-10">
-                <div className="space-y-6">
-                   <label className="block">
-                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                         <div className="w-1 h-3 bg-emerald-500 rounded-full" />
-                         Chave Secreta de Acesso Operacional (Token TLS-JWT)
-                      </span>
-                      <div className="relative mt-3">
-                        <Key size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <input 
-                          type="text"
-                          defaultValue={editingOrg.token}
-                          id="token-input"
-                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-13 pr-5 py-5 font-mono text-xs text-slate-900 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-500 transition-all font-bold"
-                        />
-                      </div>
-                   </label>
-
-                   <div className="bg-amber-50 p-6 rounded-[32px] border border-amber-100 flex items-start gap-4 italic shadow-sm">
-                      <Shield size={24} className="text-amber-600 shrink-0 mt-1" />
-                      <p className="text-[10px] text-amber-700 leading-relaxed font-bold uppercase tracking-tight">
-                        Protocolo de Segurança Crítica: Atualizar esta chave exige recalibração de certificado digital local do barramento de interoperabilidade.
-                      </p>
-                   </div>
+              <form onSubmit={handleAddAgency} className="p-8 space-y-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 input-label font-bold">Instituição Mãe / Organismo</label>
+                  <select 
+                    value={addAgencyInstitution}
+                    onChange={(e) => setAddAgencyInstitution(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold"
+                  >
+                    {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras", "INE"].map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                   <button 
-                    onClick={() => {
-                      const input = document.getElementById('token-input') as HTMLInputElement;
-                      handleSaveToken(editingOrg.id, input.value);
-                    }}
-                    className="flex-1 bg-emerald-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-150 hover:-translate-y-1 active:scale-95"
-                   >
-                     Aplicar Novos Parâmetros
-                   </button>
-                   <button 
-                    onClick={() => setEditingOrg(null)}
-                    className="px-10 bg-slate-100 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all hover:text-slate-900"
-                   >
-                     Cancelar
-                   </button>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Nome de Atendimento / Repartição</label>
+                  <input 
+                    type="text" 
+                    value={addAgencyName}
+                    onChange={(e) => setAddAgencyName(e.target.value)}
+                    placeholder="Ex: Repartição Regional do Lobito"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-semibold"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Província</label>
+                    <select 
+                      value={addAgencyProvince}
+                      onChange={(e) => {
+                        const newProv = e.target.value;
+                        setAddAgencyProvince(newProv);
+                        const muns = MUNICIPALITIES_BY_PROVINCE[newProv] || [];
+                        setAddAgencyMunicipio(muns.filter(m => m !== 'Todos')[0] || 'Todos');
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold"
+                    >
+                      {Object.keys(MUNICIPALITIES_BY_PROVINCE).filter(p => p !== 'Todas').map(prov => (
+                        <option key={prov} value={prov}>{prov}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Município</label>
+                    <select 
+                      value={addAgencyMunicipio}
+                      onChange={(e) => setAddAgencyMunicipio(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold"
+                    >
+                      {(MUNICIPALITIES_BY_PROVINCE[addAgencyProvince] || ['Todos']).filter(m => m !== 'Todos').map(mun => (
+                        <option key={mun} value={mun}>{mun}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">ID Institucional</label>
+                  <input 
+                    type="text" 
+                    value={addAgencyInstitutionalId}
+                    onChange={(e) => setAddAgencyInstitutionalId(e.target.value)}
+                    placeholder="Ex: AGT-LUA-001"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-mono font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Endereço Físico Completo</label>
+                  <input 
+                    type="text" 
+                    value={addAgencyAddress}
+                    onChange={(e) => setAddAgencyAddress(e.target.value)}
+                    placeholder="Ex: Avenida Principal do Lobito, Esquina 2"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-semibold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 font-bold">Contacto de Atendimento</label>
+                  <input 
+                    type="text" 
+                    value={addAgencyContact}
+                    onChange={(e) => setAddAgencyContact(e.target.value)}
+                    placeholder="Ex: +244 923 000 000"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-mono font-semibold"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-slate-100">
+                  <button 
+                    type="submit"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-95"
+                  >
+                    Gravar Registo
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setIsAddInstModalOpen(false)}
+                    className="px-6 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </>
+        )}
+
+        {selectedAgencyDetail && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedAgencyDetail(null)}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[200]"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-[32px] shadow-2xl z-[201] overflow-hidden border border-slate-100"
+            >
+              <div className="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 text-white relative">
+                <button 
+                  onClick={() => setSelectedAgencyDetail(null)}
+                  className="absolute top-5 right-5 p-2 hover:bg-white/10 rounded-full transition-all"
+                  type="button"
+                >
+                  <X size={18} />
+                </button>
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 bg-white/10 rounded-xl flex items-center justify-center text-white border border-white/20">
+                    <Building2 size={22} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-300">Detalhamento Oficial</span>
+                      <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                        selectedAgencyDetail.status === 'Ativa' ? 'bg-emerald-500/20 text-emerald-300' :
+                        selectedAgencyDetail.status === 'Manutenção' ? 'bg-amber-500/20 text-amber-300' :
+                        'bg-red-500/20 text-red-300'
+                      }`}>
+                        {selectedAgencyDetail.status}
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-black italic tracking-tight uppercase leading-none mt-1">{selectedAgencyDetail.name}</h2>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID do Registro</span>
+                    <span className="font-mono text-xs font-bold text-slate-800 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded">{selectedAgencyDetail.id}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID Institucional</span>
+                    <span className="font-mono text-xs font-black text-indigo-750 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded uppercase tracking-wider">
+                      {selectedAgencyDetail.institutionalId || `ID-${selectedAgencyDetail.institution}-${selectedAgencyDetail.id.substring(0, 5).toUpperCase()}`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instituição Geral</span>
+                    <span className="font-black text-[10px] text-indigo-650 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">{selectedAgencyDetail.institution}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Província</span>
+                    <span className="text-xs font-bold text-slate-700">{selectedAgencyDetail.province}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Município</span>
+                    <span className="text-xs font-medium text-slate-650">{selectedAgencyDetail.municipio}</span>
+                  </div>
+
+                  <div className="flex flex-col gap-1 border-b border-slate-100 pb-2.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Endereço Físico</span>
+                    <div className="flex items-start gap-1.5 text-xs text-slate-600 font-medium pl-1">
+                      <MapPin size={12} className="text-indigo-550 shrink-0 mt-0.5" />
+                      <span>{selectedAgencyDetail.address}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contacto Directo</span>
+                    <span className="text-xs font-mono font-bold text-slate-800">{selectedAgencyDetail.contact}</span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex justify-end">
+                  <button 
+                    type="button" 
+                    onClick={() => setSelectedAgencyDetail(null)}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                  >
+                    Fechar Detalhes
+                  </button>
                 </div>
               </div>
             </motion.div>

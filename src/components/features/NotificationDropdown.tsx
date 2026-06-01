@@ -37,7 +37,7 @@ export function NotificationDropdown({
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute right-0 mt-4 w-[280px] sm:w-[320px] md:w-[400px] bg-white border border-line rounded-[24px] md:rounded-[32px] shadow-2xl z-[101] overflow-hidden origin-top-right"
+            className="absolute right-0 top-full mt-3 w-[280px] sm:w-[320px] md:w-[400px] bg-white border border-line rounded-[24px] md:rounded-[32px] shadow-2xl z-[101] overflow-hidden origin-top-right"
           >
             <div className="p-4 md:p-6 border-b border-line bg-slate-50/50 flex justify-between items-center">
               <h4 className="text-sm md:text-lg font-black text-primary">Notificações</h4>

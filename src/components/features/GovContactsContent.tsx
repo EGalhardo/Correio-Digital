@@ -37,7 +37,12 @@ import {
   Layers,
   Smartphone,
   Ban,
-  Key
+  Key,
+  Plus,
+  UserPlus,
+  Trash2,
+  Edit,
+  MapPin
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -49,15 +54,6 @@ import {
   Tooltip 
 } from 'recharts';
 
-// Elegant monthly trend data to populate the modern minimalist charts
-const GENERAL_TREND_DATA = [
-  { month: 'Jan', mensagens: 14200, naoLidas: 410, enviadas: 12100, solicitacoes: 4150 },
-  { month: 'Fev', mensagens: 16800, naoLidas: 380, enviadas: 14800, solicitacoes: 5200 },
-  { month: 'Mar', mensagens: 19500, naoLidas: 390, enviadas: 17200, solicitacoes: 6300 },
-  { month: 'Abr', mensagens: 21000, naoLidas: 290, enviadas: 19100, solicitacoes: 7800 },
-  { month: 'Mai', mensagens: 24580, naoLidas: 320, enviadas: 21450, solicitacoes: 8920 },
-];
-
 interface AuditLog {
   id: string;
   action: string;
@@ -67,6 +63,7 @@ interface AuditLog {
 }
 
 interface GovContactsContentProps {
+  appMode?: string;
   bi?: string;
   setBi?: (val: string) => void;
   nif?: string;
@@ -96,6 +93,7 @@ interface GovContactsContentProps {
 }
 
 export function GovContactsContent({
+  appMode = 'user',
   bi = '009874562LA041',
   setBi,
   nif = '241098451',
@@ -124,1005 +122,1574 @@ export function GovContactsContent({
   auditLogs = []
 }: GovContactsContentProps) {
   
-  // Custom Tab switcher for Admin view: "analytics" vs "master-control"
-  const [activeTab, setActiveTab] = useState<'analytics' | 'master-control'>('master-control');
+  // Workers State for Institution Mode
+  interface Trabajador {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    department: string;
+    agentId: string;
+    status: 'Ativo' | 'Suspenso' | 'Férias' | 'Pendente';
+    lastAccess: string;
+    phone: string;
+  }
 
-  // Search and filters for Citizen / operator lists
-  const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'user' | 'institution'>('all');
-  const [selectedAdminUser, setSelectedAdminUser] = useState<string | null>(null);
-
-  // Search for the historical protocol fraud system
-  const [protocolSearchQuery, setProtocolSearchQuery] = useState('');
-
-  // Local storage / reactive permission states for users
-  const [citizenPermissions, setCitizenPermissions] = useState({
-    tramite: true,
-    emissao: true,
-    recepcao: true
-  });
-
-  const [institutionPermissions, setInstitutionPermissions] = useState({
-    tramite: true,
-    emissao: true,
-    recepcao: true
-  });
-
-  // Mock secondary users to populate a full control center
-  const mockCitizens = useMemo(() => {
+  const [workers, setWorkers] = useState<Trabajador[]>(() => {
+    const saved = localStorage.getItem('correio_digital_workers');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
     return [
       {
-        id: 'primary-citizen',
-        type: 'user',
-        name: profileName,
-        bi: bi,
-        nif: nif,
-        phone: phone,
-        passport: passport,
-        maritalStatus: userMaritalStatus,
-        birthDate: userBirthDate,
-        filiation: userFiliation,
-        verificationStatus: verificationStatus,
-        hasFacialAuth: hasFacialAuth,
-        hasTwoFactor: hasTwoFactor,
-        govPin: govPin,
-        permissions: citizenPermissions,
-        setPermissions: setCitizenPermissions
+        id: 'w-1',
+        name: 'Mário de Oliveira',
+        email: 'm.oliveira@cda.gov.ao',
+        role: 'Diretor de Sistemas de Informação',
+        department: 'Tecnologias de Informação (CDA)',
+        agentId: 'CDA-0044',
+        status: 'Ativo',
+        lastAccess: 'Hoje, 09:15',
+        phone: '+244 923 112 044'
       },
       {
-        id: 'citizen-2',
-        type: 'user',
-        name: 'Kiara de Sousa',
-        bi: '003214565LA099',
-        nif: '540921827',
-        phone: '+244 912 884 551',
-        passport: 'AO-P927451',
-        maritalStatus: 'Casada',
-        birthDate: '04/11/1993',
-        filiation: 'Carlos de Sousa & Joana de Sousa',
-        verificationStatus: 'Totalmente verificado',
-        hasFacialAuth: true,
-        hasTwoFactor: true,
-        govPin: '9001',
-        permissions: { tramite: true, emissao: true, recepcao: true }
+        id: 'w-2',
+        name: 'Amélia Augusto',
+        email: 'a.augusto@cda.gov.ao',
+        role: 'Técnica de Validação Facial e BI',
+        department: 'Homologação de Identidade',
+        agentId: 'CDA-0981',
+        status: 'Ativo',
+        lastAccess: 'Ontem, 16:40',
+        phone: '+244 912 804 981'
       },
       {
-        id: 'citizen-3',
-        type: 'user',
-        name: 'Manuel Bernardo',
-        bi: '004568123LA088',
-        nif: '109283745',
-        phone: '+244 931 772 101',
-        passport: 'AO-P401928',
-        maritalStatus: 'Divorciado',
-        birthDate: '29/08/1987',
-        filiation: 'Domingos Bernardo & Isabel Bernardo',
-        verificationStatus: 'Não verificado',
-        hasFacialAuth: false,
-        hasTwoFactor: false,
-        govPin: '3321',
-        permissions: { tramite: false, emissao: false, recepcao: true }
+        id: 'w-3',
+        name: 'Hamilton Santana',
+        email: 'h.santana@cda.gov.ao',
+        role: 'Gestor de Correspondência Digital',
+        department: 'Distribuição Postal Digital',
+        agentId: 'CDA-0152',
+        status: 'Ativo',
+        lastAccess: '25/05/2026',
+        phone: '+244 931 773 152'
       },
       {
-        id: 'institution-1',
-        type: 'institution',
-        name: 'Agente Tributário #AG-401 (AGT)',
-        bi: '001092834LA001',
-        nif: '990182745',
-        phone: '+244 922 400 110',
-        passport: 'N/A',
-        maritalStatus: 'N/A',
-        birthDate: 'N/A',
-        filiation: 'Ministério das Finanças',
-        verificationStatus: 'Totalmente verificado',
-        hasFacialAuth: true,
-        hasTwoFactor: true,
-        govPin: '8820',
-        permissions: institutionPermissions,
-        setPermissions: setInstitutionPermissions
-      },
-      {
-        id: 'institution-2',
-        type: 'institution',
-        name: 'Serviço de Migração e Estrangeiros (SME)',
-        bi: '002837461LA021',
-        nif: '990382012',
-        phone: '+244 911 300 900',
-        passport: 'N/A',
-        maritalStatus: 'N/A',
-        birthDate: 'N/A',
-        filiation: 'Ministério do Interior',
-        verificationStatus: 'Totalmente verificado',
-        hasFacialAuth: true,
-        hasTwoFactor: false,
-        govPin: '1100',
-        permissions: { tramite: true, emissao: true, recepcao: true }
+        id: 'w-4',
+        name: 'Sílvia de Sousa',
+        email: 's.sousa@cda.gov.ao',
+        role: 'Auditora de Segurança e Criptografia',
+        department: 'Segurança da Informação (CDA)',
+        agentId: 'CDA-0431',
+        status: 'Férias',
+        lastAccess: '18/05/2026',
+        phone: '+244 922 400 431'
       }
     ];
-  }, [
-    profileName, bi, nif, phone, passport, userMaritalStatus, userBirthDate, userFiliation, 
-    verificationStatus, hasFacialAuth, hasTwoFactor, govPin, citizenPermissions, institutionPermissions
-  ]);
+  });
 
-  // Historical unified database for updates (Anti-Fraud Certifications)
-  const [cadastralUpdates, setCadastralUpdates] = useState([
-    {
-      id: '1',
-      protocol: 'REG-UP-983145',
-      timestamp: '25/05/2026, 11:42:15',
-      operator: 'Operador #CDA-401',
-      citizenName: 'Edlasio Galhardo',
-      bi: '009874562LA041',
-      signature: 'SHA256-ECDSA-4ea91b0c9f182e02',
-      details: 'Alteração de Estado Civil para Solteiro & Actualização de Filiação'
-    },
-    {
-      id: '2',
-      protocol: 'REG-UP-102586',
-      timestamp: '24/05/2026, 16:15:30',
-      operator: 'Agente #SME-902',
-      citizenName: 'Kiara de Sousa',
-      bi: '003214565LA099',
-      signature: 'SHA256-ECDSA-1a48c9bf20ef1351',
-      details: 'Retificação de Data de Nascimento para 04/11/1993'
-    },
-    {
-      id: '3',
-      protocol: 'REG-UP-772183',
-      timestamp: '22/05/2026, 09:30:11',
-      operator: 'Operador #CDA-110',
-      citizenName: 'Manuel Bernardo',
-      bi: '004568123LA088',
-      signature: 'SHA256-ECDSA-fa351dcd12fca1b9',
-      details: 'Emissão e Validação de Passaporte AO-P927451'
+  React.useEffect(() => {
+    localStorage.setItem('correio_digital_workers', JSON.stringify(workers));
+  }, [workers]);
+
+  // Citizen State (adapted from Interoperabilidade page for Admin "Usuários" page)
+  interface Citizen {
+    id: string;
+    name: string;
+    category: string;
+    province: string;
+    municipio: string;
+    address: string;
+    contact: string;
+    status: 'Aprovado' | 'Pendente' | 'Não Aprovado';
+    biNumber?: string;
+    facePhoto?: string;
+    reason?: string;
+    verificationScore?: number;
+  }
+
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+  const [filterProvince, setFilterProvince] = useState<string>('Todas');
+  const [filterMunicipio, setFilterMunicipio] = useState<string>('Todos');
+  const [filterStatus, setFilterStatus] = useState<'Aprovado' | 'Pendente' | 'Não Aprovado'>('Aprovado');
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+
+  // IA review states
+  const [selectedReviewCitizen, setSelectedReviewCitizen] = useState<Citizen | null>(null);
+  const [aiEvaluationState, setAiEvaluationState] = useState<'idle' | 'running' | 'completed'>('idle');
+  const [aiMatchScore, setAiMatchScore] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [isRejecting, setIsRejecting] = useState<boolean>(false);
+
+  // New Step-by-Step validation states for the 3-step citizen verification
+  const [reviewStepTab, setReviewStepTab] = useState<1 | 2 | 3>(1);
+  const [validatedFields, setValidatedFields] = useState<Record<string, boolean>>({
+    name: true,
+    bi: true,
+    doc: true,
+    photo: true,
+    province: true,
+    municipio: true,
+    email: true,
+    phone: true,
+    emergency: true,
+    fingerprint: true,
+    facial: true
+  });
+  const [rejectionStep, setRejectionStep] = useState<'passo1' | 'passo2' | 'passo3' | 'geral'>('geral');
+
+  const [citizens, setCitizens] = useState<Citizen[]>(() => {
+    const saved = localStorage.getItem('gov_admin_citizens');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Garantir que todos estejam convertidos para os novos status válidos
+        return parsed.map((c: any) => {
+          let st = c.status;
+          if (st === 'Ativo') st = 'Aprovado';
+          if (st === 'Suspenso' || st === 'Inativo') st = 'Não Aprovado';
+          if (st !== 'Aprovado' && st !== 'Pendente' && st !== 'Não Aprovado') st = 'Pendente';
+          return {
+            ...c,
+            status: st,
+            biNumber: c.biNumber || c.bi || (c.id === 'u1' ? '009874562LA041' : `00${Math.floor(100000 + Math.random() * 900000)}LA041`),
+            facePhoto: c.facePhoto || (
+              c.id === 'u1' ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face' :
+              c.id === 'u2' ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face' :
+              c.id === 'u3' ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face' :
+              c.id === 'u4' ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face' :
+              c.id === 'u5' ? 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face' :
+              c.id === 'u6' ? 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop&crop=face' :
+              'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=250&h=250&fit=crop&crop=face'
+            )
+          };
+        });
+      } catch (e) {
+        // Fallback
+      }
     }
-  ]);
+    return [
+      { 
+        id: 'u1', 
+        name: 'Edlasio Galhardo', 
+        category: 'Trabalhador', 
+        province: 'Luanda', 
+        municipio: 'Maianga', 
+        address: 'Bairro Alvalade, Rua do Comércio', 
+        contact: '+244 923 000 111', 
+        status: 'Aprovado',
+        biNumber: '009874562LA041',
+        facePhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
+        verificationScore: 98.4
+      },
+      { 
+        id: 'u2', 
+        name: 'Kiara de Sousa', 
+        category: 'Estudante', 
+        province: 'Luanda', 
+        municipio: 'Kilamba Kiaxi', 
+        address: 'Centralidade do Kilamba, Bloco C', 
+        contact: '+244 912 884 551', 
+        status: 'Aprovado',
+        biNumber: '005432109LA098',
+        facePhoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face',
+        verificationScore: 97.2
+      },
+      { 
+        id: 'u3', 
+        name: 'Manuel Bernardo', 
+        category: 'Aposentado', 
+        province: 'Benguela', 
+        municipio: 'Lobito', 
+        address: 'Bairro Comercial, Rua 2', 
+        contact: '+244 931 772 101', 
+        status: 'Pendente',
+        biNumber: '008765432BE022',
+        facePhoto: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face'
+      },
+      { 
+        id: 'u4', 
+        name: 'Sara Ferreira', 
+        category: 'Empresária', 
+        province: 'Benguela', 
+        municipio: 'Benguela', 
+        address: 'Zona Hospitalar, Benguela Sede', 
+        contact: '+244 915 220 384', 
+        status: 'Aprovado',
+        biNumber: '001234567BE055',
+        facePhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face',
+        verificationScore: 99.1
+      },
+      { 
+        id: 'u5', 
+        name: 'António Lopes', 
+        category: 'Funcionário Público', 
+        province: 'Huíla', 
+        municipio: 'Lubango', 
+        address: 'Avenida Agostinho Neto, Centro', 
+        contact: '+244 923 112 044', 
+        status: 'Pendente',
+        biNumber: '002345678HU066',
+        facePhoto: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face'
+      },
+      { 
+        id: 'u6', 
+        name: 'Maria Antónia', 
+        category: 'Estudante', 
+        province: 'Huambo', 
+        municipio: 'Huambo', 
+        address: 'Centro do Huambo', 
+        contact: '+244 928 600 001', 
+        status: 'Não Aprovado',
+        biNumber: '004567890HA011',
+        facePhoto: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop&crop=face',
+        reason: 'Divergência biométrica: a foto registada na selfie não condiz com as características antropométricas da foto presente no Bilhete de Identidade.'
+      },
+      { 
+        id: 'u7', 
+        name: 'José Kalunga', 
+        category: 'Trabalhador', 
+        province: 'Cabinda', 
+        municipio: 'Cabinda', 
+        address: 'Rua do Porto de Cabinda', 
+        contact: '+244 923 100 007', 
+        status: 'Não Aprovado',
+        biNumber: '003456789CA077',
+        facePhoto: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=250&h=250&fit=crop&crop=face',
+        reason: 'Fotocópia embaçada: imagem do documento de identidade está ilegível para processamento óptico (OCR).'
+      },
+    ];
+  });
 
-  // Handle live toggle changes for active citizen permissions
-  const togglePermission = (userId: string, key: 'tramite' | 'emissao' | 'recepcao') => {
-    if (userId === 'primary-citizen') {
-      const nextPerms = { ...citizenPermissions, [key]: !citizenPermissions[key] };
-      setCitizenPermissions(nextPerms);
-      
-      const permLabel = key === 'tramite' ? 'Trâmite de Expediente' : key === 'emissao' ? 'Emissão de Documentos Virtuais' : 'Receção de Correspondências';
-      const stateLabel = nextPerms[key] ? 'ATIVADA' : 'REVOGADA';
-      addAuditLog?.(`[ADMIN] Permissão para ${permLabel} do cidadão ${profileName} foi ${stateLabel} com efeito imediato.`, 'warning');
-    } else if (userId === 'institution-1') {
-      const nextPerms = { ...institutionPermissions, [key]: !institutionPermissions[key] };
-      setInstitutionPermissions(nextPerms);
-      
-      const permLabel = key === 'tramite' ? 'Trâmite de Expediente' : key === 'emissao' ? 'Emissão de Documentos Virtuais' : 'Receção de Correspondências';
-      const stateLabel = nextPerms[key] ? 'ATIVADA' : 'REVOGADA';
-      addAuditLog?.(`[ADMIN] Permissão para ${permLabel} da entidade ${mockCitizens[3].name} foi ${stateLabel} com efeito imediato.`, 'warning');
+  React.useEffect(() => {
+    localStorage.setItem('gov_admin_citizens', JSON.stringify(citizens));
+  }, [citizens]);
+
+  const [addUserName, setAddUserName] = useState('');
+  const [addUserCategory, setAddUserCategory] = useState('Trabalhador');
+  const [addUserProvince, setAddUserProvince] = useState('Luanda');
+  const [addUserMunicipio, setAddUserMunicipio] = useState('Luanda');
+  const [addUserAddress, setAddUserAddress] = useState('');
+  const [addUserContact, setAddUserContact] = useState('');
+
+  const filteredCitizens = useMemo(() => {
+    return citizens.filter((citizen) => {
+      const matchCategory = selectedCategory === 'Todos' || citizen.category.toLowerCase() === selectedCategory.toLowerCase();
+      const matchProvince = filterProvince === 'Todas' || citizen.province === filterProvince;
+      const matchMunicipio = filterMunicipio === 'Todos' || citizen.municipio === filterMunicipio;
+      const matchStatus = citizen.status === filterStatus;
+      return matchCategory && matchProvince && matchMunicipio && matchStatus;
+    });
+  }, [citizens, selectedCategory, filterProvince, filterMunicipio, filterStatus]);
+
+  const handleAddUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addUserName || !addUserAddress || !addUserContact) {
+      alert('Por favor, preencha todos os campos obrigatórios (Nome, Residência e Telefone/Contacto).');
+      return;
+    }
+
+    const newUser: Citizen = {
+      id: `u-${Date.now()}`,
+      name: addUserName,
+      category: addUserCategory,
+      province: addUserProvince,
+      municipio: addUserMunicipio,
+      address: addUserAddress,
+      contact: addUserContact,
+      status: 'Pendente',
+      biNumber: `00${Math.floor(100000 + Math.random() * 900000)}LA041`,
+      facePhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face'
+    };
+
+    setCitizens(prev => [newUser, ...prev]);
+    setIsAddUserModalOpen(false);
+
+    setAddUserName('');
+    setAddUserAddress('');
+    setAddUserContact('');
+
+    addAuditLog?.(`Cadastro: Usuário "${newUser.name}" registrado com sucesso em ${newUser.province}.`, 'success');
+  };
+
+  const MUNICIPALITIES_BY_PROVINCE: { [key: string]: string[] } = {
+    'Todas': ['Todos'],
+    'Luanda': ['Todos', 'Viana', 'Belas', 'Cazenga', 'Cacuaco', 'Luanda', 'Talatona', 'Kilamba Kiaxi', 'Maianga', 'Rangel', 'Ingombota'],
+    'Benguela': ['Todos', 'Benguela', 'Lobito', 'Catumbela', 'Baía Farta'],
+    'Huíla': ['Todos', 'Lubango', 'Chibia', 'Humpata', 'Caconda'],
+    'Cabinda': ['Todos', 'Cabinda', 'Cacongo', 'Buco-Zau'],
+    'Bengo': ['Todos', 'Dande', 'Ambriz', 'Nambuangongo'],
+    'Huambo': ['Todos', 'Huambo', 'Caála', 'Bailundo']
+  };
+
+  // Addition Modal and Form States for workers
+  const [showAddWorkerModal, setShowAddWorkerModal] = useState(false);
+  const [isEditingWorker, setIsEditingWorker] = useState(false);
+  const [editingWorkerId, setEditingWorkerId] = useState<string | null>(null);
+
+  const [newWorkerName, setNewWorkerName] = useState('');
+  const [newWorkerEmail, setNewWorkerEmail] = useState('');
+  const [newWorkerRole, setNewWorkerRole] = useState('');
+  const [newWorkerDept, setNewWorkerDept] = useState('');
+  const [newWorkerAgentId, setNewWorkerAgentId] = useState('');
+  const [newWorkerPhone, setNewWorkerPhone] = useState('');
+  const [newWorkerStatus, setNewWorkerStatus] = useState<'Ativo' | 'Suspenso' | 'Férias' | 'Pendente'>('Ativo');
+  
+  // Search state for workers
+  const [workerSearch, setWorkerSearch] = useState('');
+  const [workerStatusFilter, setWorkerStatusFilter] = useState<string>('all');
+  
+  // Selected Worker state
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+
+  const resetForm = () => {
+    setNewWorkerName('');
+    setNewWorkerEmail('');
+    setNewWorkerRole('');
+    setNewWorkerDept('');
+    setNewWorkerAgentId('');
+    setNewWorkerPhone('');
+    setNewWorkerStatus('Ativo');
+    setIsEditingWorker(false);
+    setEditingWorkerId(null);
+  };
+
+  const handleCreateWorker = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newWorkerName || !newWorkerRole || !newWorkerAgentId) {
+      alert('Por favor, preencha os dados obrigatórios (Nome, Cargo e ID do Agente).');
+      return;
+    }
+
+    if (isEditingWorker && editingWorkerId) {
+      setWorkers(prev => prev.map(w => w.id === editingWorkerId ? {
+        ...w,
+        name: newWorkerName,
+        email: newWorkerEmail || `${newWorkerName.toLowerCase().replace(/\s+/g, '.')}@cda.gov.ao`,
+        role: newWorkerRole,
+        department: newWorkerDept || 'Suporte CDA',
+        agentId: newWorkerAgentId,
+        phone: newWorkerPhone || '+244 900 000 000',
+        status: newWorkerStatus
+      } : w));
+      addAuditLog?.(`[AGENTES] Registo do agente ${newWorkerName} (${newWorkerAgentId}) atualizado com sucesso.`, 'success');
     } else {
-      // Toggle for mock accounts just to show reactive behavior
-      addAuditLog?.(`[ADMIN] Permissão alterada com sucesso no registro em cache.`, 'info');
+      const newWorker: Trabajador = {
+        id: `w-${Date.now()}`,
+        name: newWorkerName,
+        email: newWorkerEmail || `${newWorkerName.toLowerCase().replace(/\s+/g, '.')}@cda.gov.ao`,
+        role: newWorkerRole,
+        department: newWorkerDept || 'Suporte CDA',
+        agentId: newWorkerAgentId,
+        status: newWorkerStatus,
+        lastAccess: 'Nunca acedeu',
+        phone: newWorkerPhone || '+244 900 000 000'
+      };
+      setWorkers(prev => [...prev, newWorker]);
+      addAuditLog?.(`[AGENTES] Novo agente ${newWorkerName} (${newWorkerAgentId}) cadastrado com sucesso.`, 'success');
+    }
+
+    setShowAddWorkerModal(false);
+    resetForm();
+  };
+
+  const handleEditWorkerClick = (w: Trabajador) => {
+    setIsEditingWorker(true);
+    setEditingWorkerId(w.id);
+    setNewWorkerName(w.name);
+    setNewWorkerEmail(w.email);
+    setNewWorkerRole(w.role);
+    setNewWorkerDept(w.department);
+    setNewWorkerAgentId(w.agentId);
+    setNewWorkerPhone(w.phone);
+    setNewWorkerStatus(w.status);
+    setShowAddWorkerModal(true);
+  };
+
+  const handleDeleteWorker = (id: string, name: string) => {
+    if (confirm(`Tem a certeza que deseja remover o agente ${name} do sistema?`)) {
+      setWorkers(prev => prev.filter(w => w.id !== id));
+      if (selectedWorkerId === id) setSelectedWorkerId(null);
+      addAuditLog?.(`[AGENTES] Agente ${name} foi removido do ecossistema institucional.`, 'warning');
     }
   };
 
-  // Changing global user security factors in live environment
-  const handleSecurityParamChange = (userId: string, factor: 'face' | '2fa' | 'verification', value: any) => {
-    if (userId === 'primary-citizen') {
-      if (factor === 'face' && setHasFacialAuth) {
-        setHasFacialAuth(value);
-        addAuditLog?.(`[ADMIN] Segurança Central: Autenticação Facial do cidadão ${profileName} alterada para ${value ? 'ATIVO' : 'INATIVO'}.`, 'warning');
-      }
-      if (factor === '2fa' && setHasTwoFactor) {
-        setHasTwoFactor(value);
-        addAuditLog?.(`[ADMIN] Segurança Central: Autenticação em Duas Etapas (2FA) do cidadão ${profileName} alterada para ${value ? 'ATIVO' : 'INATIVO'}.`, 'warning');
-      }
-      if (factor === 'verification' && setVerificationStatus) {
-        setVerificationStatus(value);
-        addAuditLog?.(`[ADMIN] Regulamentação Civil: Estado de Verificação de ${profileName} redefinido para ${value}.`, 'success');
-      }
-    } else {
-      addAuditLog?.(`[ADMIN] Alterado fator de segurança para o registro #${userId} (Simulado).`, 'info');
-    }
+  const handleToggleWorkerStatus = (id: string, name: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'Ativo' ? 'Suspenso' : 'Ativo';
+    setWorkers(prev => prev.map(w => w.id === id ? { ...w, status: nextStatus } : w));
+    addAuditLog?.(`[AGENTES] Estado do agente ${name} alterado para ${nextStatus}.`, 'info');
   };
 
-  // Filter listings based on requirements
-  const filteredUsers = useMemo(() => {
-    return mockCitizens.filter(u => {
-      const matchesSearch = u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) || u.bi.includes(userSearchQuery);
-      const matchesType = userTypeFilter === 'all' || u.type === userTypeFilter;
-      return matchesSearch && matchesType;
+  // Filtered workers list
+  const filteredWorkers = useMemo(() => {
+    return workers.filter(w => {
+      const matchesSearch = w.name.toLowerCase().includes(workerSearch.toLowerCase()) || 
+                            w.agentId.toLowerCase().includes(workerSearch.toLowerCase()) ||
+                            w.role.toLowerCase().includes(workerSearch.toLowerCase());
+      const matchesStatus = workerStatusFilter === 'all' || w.status === workerStatusFilter;
+      return matchesSearch && matchesStatus;
     });
-  }, [mockCitizens, userSearchQuery, userTypeFilter]);
+  }, [workers, workerSearch, workerStatusFilter]);
 
-  // Render sensitive records when selected
-  const selectedUserObject = useMemo(() => {
-    return mockCitizens.find(u => u.id === selectedAdminUser) || null;
-  }, [mockCitizens, selectedAdminUser]);
-
-  // Filter the cryptographic seal audit protocol list
-  const filteredProtocols = useMemo(() => {
-    return cadastralUpdates.filter(p => {
-      return (
-        p.protocol.toLowerCase().includes(protocolSearchQuery.toLowerCase()) ||
-        p.citizenName.toLowerCase().includes(protocolSearchQuery.toLowerCase()) ||
-        p.operator.toLowerCase().includes(protocolSearchQuery.toLowerCase()) ||
-        p.bi.toLowerCase().includes(protocolSearchQuery.toLowerCase())
-      );
-    });
-  }, [cadastralUpdates, protocolSearchQuery]);
-
-
-  return (
-    <div className="pb-24">
-      {/* Central Unified Admin Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white">
-              <Users size={16} />
+  if (appMode === 'institution') {
+    return (
+      <div className="pb-24 text-left animate-fadeIn">
+        {/* Banner header for Workers */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
+                <Users size={16} />
+              </div>
+              <span className="font-mono text-xs font-black uppercase text-indigo-650 tracking-[0.2em]">
+                Portal Institucional &bull; Recursos Humanos
+              </span>
             </div>
-            <span className="font-mono text-xs font-black uppercase text-indigo-600 tracking-[0.2em]">
-              Admin Central &bull; Gestão Dupla
-            </span>
+            <h1 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">
+              Gestão de Agentes
+            </h1>
+            <p className="text-slate-500 font-medium text-xs mt-2 max-w-xl">
+              Controle de agentes públicos, funcionários e técnicos autorizados da instituição. Administre permissões, estados de atividade e registe novos operadores do sistema.
+            </p>
           </div>
-          <h1 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">
-            Utilizadores &amp; Segurança
-          </h1>
-          <p className="text-slate-500 font-medium text-xs mt-2 max-w-xl">
-            Painel unificado de supervisão. Administre permissões, mitigue fraudes e gerencie os fatores de segurança para cidadãos e operadores institucionais de Angola.
-          </p>
+
+          <button
+            onClick={() => {
+              resetForm();
+              setShowAddWorkerModal(true);
+            }}
+            className="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-600/10 cursor-pointer border-0 transition-all self-start md:self-auto"
+          >
+            <UserPlus size={16} />
+            Adicionar Agente
+          </button>
         </div>
 
-        {/* Tab Selection Switch */}
-        <div className="bg-slate-100 p-1.5 rounded-2xl flex gap-1.5 self-start md:self-auto border border-slate-200">
-          <button
-            onClick={() => setActiveTab('master-control')}
-            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer border-0 ${
-              activeTab === 'master-control' 
-                ? 'bg-white text-indigo-650 shadow-xs font-black' 
-                : 'text-slate-600 hover:text-slate-800'
-            }`}
-          >
-            Centro de Controlo
-          </button>
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer border-0 ${
-              activeTab === 'analytics' 
-                ? 'bg-white text-indigo-650 shadow-xs font-black' 
-                : 'text-slate-600 hover:text-slate-800'
-            }`}
-          >
-            Painel Analítico
-          </button>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
+            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Total de Agentes</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-3xl font-black text-slate-900 italic font-mono">{workers.length}</span>
+              <span className="text-[10px] text-slate-400 font-bold">Inscritos</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
+            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Agentes Ativos</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-3xl font-black text-emerald-600 italic font-mono">{workers.filter(w => w.status === 'Ativo').length}</span>
+              <span className="text-[10px] text-emerald-600 font-bold">Em serviço</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
+            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Outros Estados</span>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-3xl font-black text-amber-600 italic font-mono">{workers.filter(w => w.status !== 'Ativo').length}</span>
+              <span className="text-[10px] text-amber-500 font-bold">Férias / Pendente / Suspenso</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Search, Filter and Main Board */}
+        <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-xs space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+              <div>
+                <h3 className="text-lg font-black tracking-tighter text-slate-900 uppercase italic">
+                  Quadro de Colaboradores Autorizados
+                </h3>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase font-mono">
+                  Base de dados de funcionários associados às credenciais do sistema
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-450" size={13} />
+                <input
+                  type="text"
+                  placeholder="Pesquisar por Nome, ID, Cargo..."
+                  value={workerSearch}
+                  onChange={(e) => setWorkerSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 w-full sm:w-[220px] bg-slate-55 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 outline-none placeholder:text-slate-400"
+                />
+              </div>
+
+              <select
+                value={workerStatusFilter}
+                onChange={(e) => setWorkerStatusFilter(e.target.value)}
+                className="px-2.5 py-1.5 bg-slate-55 border border-slate-200 rounded-xl text-[11px] font-black uppercase text-slate-600 cursor-pointer outline-none"
+              >
+                <option value="all">TODOS OS ESTADOS</option>
+                <option value="Ativo">ATIVO</option>
+                <option value="Suspenso">SUSPENSO</option>
+                <option value="Férias">EM FÉRIAS</option>
+                <option value="Pendente">PENDENTE</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-55/30">
+            <div className="overflow-auto max-h-[500px] custom-scrollbar">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 z-10 bg-primary">
+                  <tr className="bg-primary text-white text-[9px] font-black uppercase tracking-widest">
+                    <th className="py-3.5 px-5 rounded-l-2xl">Colaborador / Função</th>
+                    <th className="py-3.5 px-3">Depto / ID Agente</th>
+                    <th className="py-3.5 px-3">Contacto Directo</th>
+                    <th className="py-3.5 px-3">Último Acesso</th>
+                    <th className="py-3.5 px-3">Estado</th>
+                    <th className="py-3.5 px-5 text-right rounded-r-2xl">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100/90 text-xs text-slate-800">
+                  {filteredWorkers.map((w) => (
+                    <tr key={w.id} className="hover:bg-slate-100/40 transition-colors">
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-750 text-xs uppercase shadow-3xs">
+                            {(() => {
+                              const initials = w.name.split(' ').map(n => n[0]).slice(0, 2).join('');
+                              return (initials === 'MD' || initials === 'md') ? (
+                                <Users size={14} className="text-indigo-700" />
+                              ) : (
+                                initials
+                              );
+                            })()}
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-slate-900 leading-tight block uppercase">{w.name}</span>
+                            <span className="text-[10px] text-slate-455 font-semibold block">{w.email}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-3">
+                        <span className="font-bold text-slate-800 block text-[11px] leading-tight">{w.role}</span>
+                        <span className="font-mono text-[9px] font-black text-indigo-650 bg-indigo-50 border border-indigo-100/70 px-1.5 py-0.5 rounded uppercase tracking-wider mt-0.5 inline-block">
+                          {w.agentId}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-3 font-semibold text-slate-600 font-mono text-[10.5px]">
+                        {w.phone}
+                      </td>
+
+                      <td className="py-4 px-3 text-[10px] text-slate-455 font-bold font-mono">
+                        {w.lastAccess}
+                      </td>
+
+                      <td className="py-4 px-3">
+                        {w.status === 'Ativo' && (
+                          <span className="inline-flex items-center gap-1 text-emerald-600 text-[9px] font-black uppercase tracking-wider">
+                            <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" /> Ativo
+                          </span>
+                        )}
+                        {w.status === 'Suspenso' && (
+                          <span className="inline-flex items-center gap-1 text-red-655 text-[9px] font-black uppercase tracking-wider">
+                            Suspenso
+                          </span>
+                        )}
+                        {w.status === 'Férias' && (
+                          <span className="inline-flex items-center gap-1 text-blue-655 text-[9px] font-black uppercase tracking-wider">
+                            Em Férias
+                          </span>
+                        )}
+                        {w.status === 'Pendente' && (
+                          <span className="inline-flex items-center gap-1 text-amber-600 text-[9px] font-black uppercase tracking-wider">
+                            Pendente
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEditWorkerClick(w)}
+                            title="Editar Dados"
+                            className="p-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-205 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-3xs cursor-pointer transition-colors"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleToggleWorkerStatus(w.id, w.name, w.status)}
+                            title={w.status === 'Ativo' ? 'Suspender Operador' : 'Reativar Operador'}
+                            className={`p-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-3xs cursor-pointer transition-colors border-0 ${
+                              w.status === 'Ativo' 
+                                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100' 
+                                : 'bg-emerald-50 text-emerald-650 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {w.status === 'Ativo' ? 'Suspender' : 'Ativar'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteWorker(w.id, w.name)}
+                            title="Remover Agente"
+                            className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 border-0 rounded-lg cursor-pointer transition-all"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {filteredWorkers.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-slate-400">
+                        <Users size={28} className="mx-auto text-slate-300 mb-2" />
+                        <span className="text-[10.5px] font-black uppercase tracking-wider block">Nenhum agente localizado...</span>
+                        <p className="text-[9.5px] text-slate-400 font-bold uppercase mt-1">Experimente alterar os critérios de filtro ou pesquisa.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* MODAL / SLIDE-OVER PARA ADICIONAR/EDITAR AGENTE */}
+        <AnimatePresence>
+          {showAddWorkerModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowAddWorkerModal(false)}
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs font-sans"
+              />
+
+              {/* Modal Body */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                className="relative bg-white border border-slate-150 rounded-[32px] p-6 md:p-8 w-full max-w-lg shadow-2xl z-10 text-left space-y-6"
+              >
+                <div>
+                  <h3 className="text-xl md:text-2xl font-black text-slate-950 uppercase italic tracking-tight flex items-center gap-2.5">
+                    <UserPlus className="text-indigo-650" size={22} />
+                    {isEditingWorker ? 'Editar Ficha do Agente' : 'Registar Novo Agente'}
+                  </h3>
+                  <p className="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-wider font-mono">
+                    Introduza as credenciais operacionais autorizadas pela instituição
+                  </p>
+                </div>
+
+                <form onSubmit={handleCreateWorker} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome Completo do Agente *</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
+                      placeholder="Ex: Dr. Francisco Manuel"
+                      value={newWorkerName}
+                      onChange={(e) => setNewWorkerName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 font-bold">
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Cargo / Função *</label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
+                        placeholder="Ex: Inspector Chefe"
+                        value={newWorkerRole}
+                        onChange={(e) => setNewWorkerRole(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 font-bold">
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">ID do Agente / Código *</label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold font-mono text-indigo-650 outline-none"
+                        placeholder="Ex: CDA-0492"
+                        value={newWorkerAgentId}
+                        onChange={(e) => setNewWorkerAgentId(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 font-bold">
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Departamento</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
+                      placeholder="Ex: Departamento de Validação Digital - CDA"
+                      value={newWorkerDept}
+                      onChange={(e) => setNewWorkerDept(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 font-bold">
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Email Corporativo</label>
+                      <input
+                        type="email"
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
+                        placeholder="f.manuel@cda.gov.ao"
+                        value={newWorkerEmail}
+                        onChange={(e) => setNewWorkerEmail(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Contacto Telefónico</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold font-mono text-slate-800 outline-none"
+                        placeholder="+244 923 000 000"
+                        value={newWorkerPhone}
+                        onChange={(e) => setNewWorkerPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 pb-2">
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Estado Inicial do Agente</label>
+                    <div className="flex gap-2">
+                      {['Ativo', 'Suspenso', 'Férias', 'Pendente'].map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setNewWorkerStatus(st as any)}
+                          className={`flex-grow py-2 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer border transition-all ${
+                            newWorkerStatus === st 
+                              ? 'bg-indigo-600 text-white border-indigo-600 font-bold' 
+                              : 'bg-slate-50 text-slate-550 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {st === 'Férias' ? 'Férias' : st}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submit / Cancel row */}
+                  <div className="pt-4 border-t border-slate-150 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddWorkerModal(false)}
+                      className="px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-650 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all cursor-pointer border-0 shadow-lg shadow-indigo-600/15 font-bold"
+                    >
+                      {isEditingWorker ? 'Guardar' : 'Submeter'}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pb-32 md:pt-2">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 text-left animate-fadeIn">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-indigo-600 rounded-[20px] flex items-center justify-center text-white shadow-2xl shadow-indigo-200 border-2 border-indigo-500">
+            <Users size={28} />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tighter italic uppercase leading-none">Usuário</h1>
+            <div className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
+               <div className="w-1 h-3 bg-indigo-500 rounded-full" />
+               Cadastro Geral e Gestão de Usuários do Sistema
+            </div>
+          </div>
+        </div>
+
+        {/* Global Stats indicators */}
+        <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-[20px] border border-slate-100 self-start md:self-auto">
+          <div className="text-left px-3">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Usuários Aprovados</div>
+            <div className="text-lg font-black text-slate-800">
+              {citizens.filter(c => c.status === 'Aprovado').length}/{citizens.length} <span className="text-emerald-500 text-xs font-bold">OK</span>
+            </div>
+          </div>
+          <div className="w-px h-8 bg-slate-200" />
+          <div className="text-left px-3">
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Tráfego de Conexão</div>
+            <div className="text-lg font-black text-emerald-600">99.9% <span className="text-[9px] font-semibold text-slate-400 font-mono">DISP</span></div>
+          </div>
         </div>
       </div>
 
-      {/* CONDITIONALLY RENDER ANALYTICS TAB */}
-      {activeTab === 'analytics' && (
-        <div className="space-y-8 animate-fadeIn">
-          {/* Modern Bento Grid - 4 Metric Graph Cards */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            {/* Metric 1 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-[360px]"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
-                    <span className="font-mono text-[10px] font-black uppercase text-indigo-600 tracking-wider">
-                      Tráfego Total
-                    </span>
-                  </div>
-                  <h3 className="font-sans text-xs font-bold text-slate-450 uppercase tracking-widest">
-                    Mensagens Gerais
-                  </h3>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl md:text-3xl font-black italic tracking-tighter text-slate-950">
-                    24,580
-                  </div>
-                  <div className="text-[10px] text-emerald-600 font-bold flex items-center justify-end gap-0.5">
-                    <ArrowUpRight size={12} /> +17.2% este mês
-                  </div>
-                </div>
-              </div>
+      <div className="space-y-8 animate-fadeIn">
 
-              <div className="flex-1 w-full min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={GENERAL_TREND_DATA} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorMensagens" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px', fontFamily: 'monospace' }} />
-                    <Area type="monotone" name="Mensagens" dataKey="mensagens" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#colorMensagens)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Metric 2 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-[360px]"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
-                    <span className="font-mono text-[10px] font-black uppercase text-red-600 tracking-wider">
-                      Controle Crítico
-                    </span>
-                  </div>
-                  <h3 className="font-sans text-xs font-bold text-slate-450 uppercase tracking-widest">
-                    Mensagens Não Lidas
-                  </h3>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl md:text-3xl font-black italic tracking-tighter text-red-600">
-                    320
-                  </div>
-                  <div className="text-[10px] text-emerald-600 font-bold flex items-center justify-end gap-0.5">
-                    Redução de -22%
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 w-full min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={GENERAL_TREND_DATA} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorNaoLidas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#dc2626" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#dc2626" stopOpacity={0.0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px', fontFamily: 'monospace' }} />
-                    <Area type="monotone" name="Não Lidas" dataKey="naoLidas" stroke="#dc2626" strokeWidth={2.5} fillOpacity={1} fill="url(#colorNaoLidas)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Metric 3 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-[360px]"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                    <span className="font-mono text-[10px] font-black uppercase text-amber-500 tracking-wider">
-                      Envios de Sistema
-                    </span>
-                  </div>
-                  <h3 className="font-sans text-xs font-bold text-slate-450 uppercase tracking-widest">
-                    Mensagens Enviadas
-                  </h3>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl md:text-3xl font-black italic tracking-tighter text-slate-950">
-                    21,450
-                  </div>
-                  <div className="text-[10px] text-emerald-600 font-bold flex items-center justify-end gap-0.5">
-                    <ArrowUpRight size={12} /> +15.5% desvio
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 w-full min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={GENERAL_TREND_DATA} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorEnviadas" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px', fontFamily: 'monospace' }} />
-                    <Area type="monotone" name="Enviadas" dataKey="enviadas" stroke="#f59e0b" strokeWidth={2.5} fillOpacity={1} fill="url(#colorEnviadas)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Metric 4 */}
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-[360px]"
-            >
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="font-mono text-[10px] font-black uppercase text-emerald-600 tracking-wider">
-                      Serviços Gov-CDA
-                    </span>
-                  </div>
-                  <h3 className="font-sans text-xs font-bold text-slate-450 uppercase tracking-widest">
-                    Solicitações de Doc. Digital
-                  </h3>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl md:text-3xl font-black italic tracking-tighter text-emerald-600">
-                    8,920
-                  </div>
-                  <div className="text-[10px] text-emerald-600 font-bold flex items-center justify-end gap-0.5">
-                    <ArrowUpRight size={12} /> Alta demanda (+25%)
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex-1 w-full min-h-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={GENERAL_TREND_DATA} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorSolicitacoes" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" tickLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderRadius: '12px', border: 'none', color: '#fff', fontSize: '11px', fontFamily: 'monospace' }} />
-                    <Area type="monotone" name="Solicitações" dataKey="solicitacoes" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSolicitacoes)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-
-            {/* Bottom Card Summary */}
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="xl:col-span-2 bg-white border border-slate-100/90 rounded-[32px] p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="font-mono text-[9px] font-black uppercase tracking-widest text-indigo-600">
-                      Integridade do Barramento
-                    </span>
-                  </div>
-                  <h4 className="text-xl md:text-2xl font-black italic tracking-tighter uppercase mb-2 leading-none text-slate-950">
-                    Resumo Usuários
-                  </h4>
-                  <p className="text-[11px] text-slate-400 font-medium leading-relaxed max-w-sm">
-                    Esta área consolida o controle estatístico de adesão, autenticação e atividades operacionais dos usuários gerais no ecossistema CDA.
-                  </p>
-                </div>
-                
-                <div className="space-y-3 font-sans text-xs text-slate-500 self-center">
-                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                    <span className="font-medium text-slate-500">Usuários Ativos na Plataforma:</span>
-                    <span className="font-bold text-indigo-600">18,420</span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                    <span className="font-medium text-slate-500">Novos Usuários (Este Mês):</span>
-                    <span className="font-mono text-emerald-600 font-bold">+1,240 (+12.5%)</span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                    <span className="font-medium text-slate-500">Sessões Ativas Simultâneas:</span>
-                    <span className="text-emerald-600 font-bold">342 Online</span>
-                  </div>
-                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                    <span className="font-medium text-slate-500">Taxa de Autenticação com Sucesso:</span>
-                    <span className="text-slate-800 font-bold">99.2%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-[8px] font-mono tracking-wider text-slate-400 uppercase">
-                <span>Servidor Gateway:</span>
-                <span className="font-bold text-slate-600">Luanda Gate-L04</span>
-              </div>
-            </motion.div>
+        {/* 1. Contentor "Categorias de Usuários" */}
+        <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm overflow-hidden relative group text-left">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+               <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+               <h3 className="text-slate-950 font-black text-xs md:text-md italic tracking-tighter uppercase">Categorias de Usuários</h3>
+            </div>
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded border border-slate-100">Controle Administrativo</div>
           </div>
-        </div>
-      )}
-
-
-      {/* CENTRAL COMPREHENSIVE CONTROL CENTER */}
-      {activeTab === 'master-control' && (
-        <div className="space-y-10 animate-fadeIn text-left">
           
-          {/* SECTION 1: UNIFIED USER AND OPERATOR CONTROL BOARD */}
-          <div className="bg-white border border-slate-150 rounded-[32px] p-6 md:p-8 shadow-xs space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
-                <div>
-                  <h3 className="text-lg font-black tracking-tighter text-slate-900 uppercase italic">
-                    Controlo Central de Cidadãos &amp; Operadores
-                  </h3>
-                  <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase font-mono">
-                    Área Regulamentar do Administrador do ecossistema CDA
+          <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar pb-3">
+            {["Todos", "Trabalhador", "Estudante", "Aposentado", "Empresário", "Funcionário Público", "Militar", "Técnico de Saúde", "Agente Policial", "Outros"].map((name) => {
+              const isActive = selectedCategory.toLowerCase() === name.toLowerCase();
+              const countForCat = name === 'Todos' ? citizens.length : citizens.filter(c => c.category.toLowerCase() === name.toLowerCase()).length;
+              return (
+                <button 
+                  key={name}
+                  onClick={() => {
+                    setSelectedCategory(name);
+                  }}
+                  className={`px-5 py-3 rounded-2xl text-[11px] md:text-xs font-black uppercase transition-all cursor-pointer shrink-0 shadow-sm text-left flex items-center gap-2.5 border ${
+                    isActive 
+                      ? 'bg-[#0e2b64] border-[#0e2b64] text-white shadow-lg font-bold' 
+                      : 'bg-slate-50 border-slate-100 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                  }`}
+                >
+                  <Users size={13} className={isActive ? 'text-white/80' : 'text-slate-400'} />
+                  <span>{name}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                    isActive ? 'bg-[#0a204b] text-white' : 'bg-slate-200 text-slate-500'
+                  }`}>
+                    {countForCat}
                   </span>
-                </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 2 & 3. Real-Time Dynamic Listing and Location Filters Row */}
+        <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6 text-left">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 pb-6 border-b border-slate-100">
+            <div>
+              <h4 className="font-black text-slate-900 text-lg md:text-xl italic uppercase tracking-tight flex items-center gap-2">
+                <Users size={20} className="text-indigo-600" />
+                Quadro de Cadastros Nacionais: {selectedCategory}
+              </h4>
+              <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mt-1">
+                Visualização, controle regulamentar e filtragem territorial dos cidadãos
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Select Provincia */}
+              <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <MapPin size={14} className="text-slate-400" />
+                <select
+                  value={filterProvince}
+                  onChange={(e) => {
+                    setFilterProvince(e.target.value);
+                    setFilterMunicipio('Todos'); // Reset municipality when province shifts
+                  }}
+                  className="bg-transparent border-0 outline-none text-xs text-slate-700 font-bold pr-6 cursor-pointer"
+                >
+                  <option value="Todas">Província: Todas</option>
+                  {Object.keys(MUNICIPALITIES_BY_PROVINCE).filter(p => p !== 'Todas').map(prov => (
+                    <option key={prov} value={prov}>{prov}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Filtering Controls */}
-              <div className="flex flex-col sm:flex-row gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-450" size={13} />
-                  <input
-                    type="text"
-                    placeholder="Pesquisar por Nome ou BI..."
-                    value={userSearchQuery}
-                    onChange={(e) => setUserSearchQuery(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 w-full sm:w-[200px] bg-slate-55 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 outline-none placeholder:text-slate-400"
-                  />
-                </div>
-
+              {/* Select Municipio */}
+              <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <MapPin size={14} className="text-slate-400" />
                 <select
-                  value={userTypeFilter}
-                  onChange={(e) => setUserTypeFilter(e.target.value as any)}
-                  className="px-2.5 py-1.5 bg-slate-55 border border-slate-200 rounded-xl text-[11px] font-black uppercase text-slate-600 cursor-pointer outline-none"
+                  value={filterMunicipio}
+                  onChange={(e) => setFilterMunicipio(e.target.value)}
+                  className="bg-transparent border-0 outline-none text-xs text-slate-700 font-bold pr-6 cursor-pointer"
                 >
-                  <option value="all">TODOS OS INDIVÍDUOS</option>
-                  <option value="user">CIDADÃO (USUÁRIO)</option>
-                  <option value="institution">OPERADOR (INSTITUIÇÃO)</option>
+                  <option value="Todos">Município: Todos</option>
+                  {(MUNICIPALITIES_BY_PROVINCE[filterProvince] || ['Todos']).filter(m => m !== 'Todos').map(mun => (
+                    <option key={mun} value={mun}>{mun}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* DROPDOWN DE ESTADO DE FLUXO (Substituindo o antigo Botão Adicionar) */}
+              <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-100 font-sans">
+                <Filter size={13} className="text-indigo-600 font-bold" />
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mr-0.5">Triagem IA:</span>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className={`bg-transparent border-0 outline-none text-xs font-black uppercase cursor-pointer pr-4 transition-colors ${
+                    filterStatus === 'Aprovado' ? 'text-emerald-600' :
+                    filterStatus === 'Pendente' ? 'text-orange-500' :
+                    'text-red-500'
+                  }`}
+                >
+                  <option value="Pendente" className="text-orange-500 font-semibold font-sans">Pendentes</option>
+                  <option value="Aprovado" className="text-emerald-600 font-semibold font-sans">Aprovados</option>
+                  <option value="Não Aprovado" className="text-red-650 font-semibold font-sans">Não Aprovados</option>
                 </select>
               </div>
             </div>
+          </div>
 
-            {/* Dual Grid: Table & Settings detailed side panel */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
-              
-              {/* User Table List */}
-              <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-100/80 border-b border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-550">
-                        <th className="py-3 px-4">Utilizador / Organismo</th>
-                        <th className="py-3 px-3">Número BI</th>
-                        <th className="py-3 px-3">Estado Regulamentar</th>
-                        <th className="py-3 px-3">Segurança</th>
-                        <th className="py-3 px-4 text-right">Acções</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs text-slate-800">
-                      {filteredUsers.map((user) => {
-                        const isMain = user.id === 'primary-citizen';
-                        const isPrimaryInst = user.id === 'institution-1';
-                        
-                        return (
-                          <tr 
-                            key={user.id} 
-                            onClick={() => setSelectedAdminUser(user.id)}
-                            className={`hover:bg-indigo-50/40 transition-colors cursor-pointer ${
-                              selectedAdminUser === user.id ? 'bg-indigo-50/60 font-medium' : ''
-                            }`}
+          {/* Dynamic User List Rendering */}
+          {filteredCitizens.length === 0 ? (
+            <div className="py-16 text-center animate-fadeIn">
+              <div className="max-w-md mx-auto space-y-3">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto border ${
+                  filterStatus === 'Aprovado' ? 'bg-emerald-50 text-emerald-400 border-emerald-100' :
+                  filterStatus === 'Pendente' ? 'bg-orange-50 text-orange-400 border-orange-100' :
+                  'bg-red-50 text-red-400 border-red-100'
+                }`}>
+                  <Users size={26} />
+                </div>
+                <h5 className="font-extrabold text-slate-950 text-sm uppercase">Nenhum Usuário Corresponde</h5>
+                <p className="text-xs text-slate-400 leading-normal max-w-sm mx-auto">
+                  De momento, não existem dados para exibir na categoria <strong className="text-slate-800">{selectedCategory}</strong> com o estado de validação <strong className={`font-black ${
+                    filterStatus === 'Aprovado' ? 'text-emerald-600' :
+                    filterStatus === 'Pendente' ? 'text-orange-500' :
+                    'text-red-600'
+                  }`}>{filterStatus.toUpperCase()}S</strong> nas províncias/municípios selecionados.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-auto rounded-[24px] border border-slate-100 bg-slate-50/20 custom-scrollbar max-h-[500px]">
+              <table className="w-full text-left border-collapse min-w-[950px]">
+                <thead className="sticky top-0 z-10 bg-[#0e2b64]">
+                  <tr className="border-b border-primary/20 bg-[#0e2b64] text-[10px] font-black uppercase tracking-wider text-white">
+                    <th className="py-4 px-5 font-black">Nome do Usuário</th>
+                    <th className="py-4 px-5 font-black">Documentação Extraída do B.I.</th>
+                    <th className="py-4 px-5 font-black">Mídias do Registo</th>
+                    <th className="py-4 px-5 font-black">Contacto</th>
+                    <th className="py-4 px-5 font-black">Localidade</th>
+                    <th className="py-4 px-5 font-black">Estado e Verificação</th>
+                    <th className="py-4 px-5 text-center font-black">Decisão</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredCitizens.map((citizen) => (
+                    <tr 
+                      key={citizen.id} 
+                      onClick={() => {
+                        setSelectedReviewCitizen(citizen);
+                        if (citizen.status === 'Pendente') {
+                          setAiEvaluationState('idle');
+                          setAiMatchScore(null);
+                          setRejectionReason('');
+                          setIsRejecting(false);
+                        } else {
+                          setAiEvaluationState('completed');
+                          setAiMatchScore(citizen.verificationScore || 95.0);
+                          setRejectionReason(citizen.reason || '');
+                          setIsRejecting(false);
+                        }
+                      }}
+                      className="text-xs text-slate-800 hover:bg-slate-50 hover:text-slate-900 transition-all duration-150 cursor-pointer group"
+                    >
+                      <td className="py-4 px-5">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-[9px] text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full uppercase tracking-wider group-hover:bg-indigo-100/50">
+                              {citizen.category}
+                            </span>
+                            <span className="text-[9px] font-mono font-bold text-slate-400">ID: {citizen.id.toUpperCase()}</span>
+                          </div>
+                          <div className="font-extrabold text-slate-900 group-hover:text-indigo-600 text-sm uppercase italic tracking-tight transition-colors">{citizen.name}</div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-5">
+                        <div className="space-y-0.5">
+                          <div className="text-[11px] font-mono font-black text-slate-800 tracking-tight flex items-center gap-1">
+                            <IdCard size={12} className="text-slate-450" />
+                            {citizen.biNumber}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-bold block uppercase leading-none truncate max-w-[180px]">{citizen.name}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          {/* Fotocópia BI Indicador */}
+                          <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-lg p-1.5 py-1 text-[10px] font-bold text-slate-600 shadow-3xs" title="Fotocópia do B.I. integrada">
+                            <FileText size={12} className="text-indigo-650" />
+                            <span className="font-mono text-[9px]">BI.pdf</span>
+                          </div>
+
+                          {/* Captura de Face Ativa */}
+                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-lg p-1 px-1.5 text-[10px] font-bold text-indigo-650 shadow-3xs" title="Auto-captura biométrica certificada">
+                            <div className="w-5 h-5 rounded-full overflow-hidden border border-indigo-200 flex-shrink-0">
+                              <img src={citizen.facePhoto} alt="Rosto" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            </div>
+                            <span className="font-mono text-[9px]">Face.raw</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="py-4 px-5 font-bold text-slate-600 font-mono text-[11px]">{citizen.contact}</td>
+
+                      <td className="py-4 px-5">
+                        <span className="font-extrabold text-slate-700 block text-[11px] leading-tight">{citizen.province}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">{citizen.municipio}</span>
+                      </td>
+
+                      <td className="py-4 px-5">
+                        {citizen.status === 'Aprovado' && (
+                          <div className="space-y-0.5">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-black uppercase tracking-wider animate-fade-in">
+                              <ShieldCheck size={11} /> Aprovado por IA
+                            </span>
+                            {citizen.verificationScore && (
+                              <span className="text-[9px] font-mono text-emerald-600/80 block font-bold uppercase tracking-wider">Match: {citizen.verificationScore}%</span>
+                            )}
+                          </div>
+                        )}
+                        {citizen.status === 'Pendente' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-650 border border-orange-100 text-[9px] font-black uppercase tracking-wider animate-pulse">
+                            <Scan size={11} /> Pendente IA
+                          </span>
+                        )}
+                        {citizen.status === 'Não Aprovado' && (
+                          <div className="space-y-0.5 max-w-[200px]">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-650 border border-red-150 text-[9px] font-black uppercase tracking-wider animate-fade-in">
+                              <ShieldAlert size={11} /> Rejeitado
+                            </span>
+                            {citizen.reason && (
+                              <span className="text-[8.5px] leading-normal text-red-500 font-bold block truncate max-w-[160px]" title={citizen.reason}>
+                                Motivo: {citizen.reason}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
+                        {citizen.status === 'Pendente' ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedReviewCitizen(citizen);
+                              setAiEvaluationState('idle');
+                              setAiMatchScore(null);
+                              setRejectionReason('');
+                              setIsRejecting(false);
+                              setReviewStepTab(1);
+                              setValidatedFields({
+                                name: true,
+                                bi: true,
+                                doc: true,
+                                photo: true,
+                                province: true,
+                                municipio: true,
+                                email: true,
+                                phone: true,
+                                emergency: true,
+                                fingerprint: true,
+                                facial: true
+                              });
+                              setRejectionStep('geral');
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-750 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl cursor-pointer border-0 transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 mx-auto"
                           >
-                            <td className="py-3.5 px-4">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                                  user.type === 'institution' 
-                                    ? 'bg-amber-50 text-amber-600 border-amber-100' 
-                                    : 'bg-indigo-50 text-indigo-650 border-indigo-100'
-                                }`}>
-                                  {user.type === 'institution' ? <Shield size={14} className="stroke-[2.5]" /> : <IdCard size={14} />}
-                                </div>
-                                <div>
-                                  <div className="font-extrabold text-slate-900 leading-tight flex items-center gap-1.5 uppercase">
-                                    {user.name} 
-                                    {isMain && <span className="text-[8px] bg-indigo-100 text-indigo-750 px-1 py-0.5 rounded font-black tracking-widest font-mono">TU</span>}
-                                  </div>
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                                    {user.type === 'institution' ? 'Agente Público' : 'Cidadão Angola'}
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
+                            <Scan size={13} /> Analisar Credenciais
+                          </button>
+                        ) : (
+                          <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedReviewCitizen(citizen);
+                                setAiEvaluationState('completed');
+                                setAiMatchScore(citizen.verificationScore || 95.0);
+                                setRejectionReason(citizen.reason || '');
+                                setIsRejecting(false);
+                                setReviewStepTab(1);
+                                setValidatedFields({
+                                  name: true,
+                                  bi: true,
+                                  doc: true,
+                                  photo: true,
+                                  province: true,
+                                  municipio: true,
+                                  email: true,
+                                  phone: true,
+                                  emergency: true,
+                                  fingerprint: true,
+                                  facial: true
+                                });
+                                setRejectionStep('geral');
+                              }}
+                              className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-black text-[10px] uppercase tracking-widest px-3.5 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all flex items-center justify-center gap-1"
+                            >
+                              <Eye size={13} /> Revisar
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm(`Remover usuário "${citizen.name}" permanentemente do cadastro?`)) {
+                                  setCitizens(prev => prev.filter(c => c.id !== citizen.id));
+                                  addAuditLog?.(`Remoção: Usuário "${citizen.name}" removido permanentemente.`, 'critical');
+                                }
+                              }}
+                              className="bg-red-50 hover:bg-red-100 text-red-650 border-0 p-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center"
+                              title="Eliminar permanentemente"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
 
-                            <td className="py-3.5 px-3 font-mono font-bold text-[11px] text-slate-650 shrink-0">
-                              {user.bi}
-                            </td>
+      </div>
 
-                            <td className="py-3.5 px-3">
-                              {user.verificationStatus === 'Totalmente verificado' ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-black uppercase tracking-wider">
-                                  <CheckCircle2 size={10} /> Verificado
-                                </span>
-                              ) : user.verificationStatus === 'Parcialmente verificado' ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-100 text-[9px] font-black uppercase tracking-wider">
-                                  <TrendingUp size={10} /> Parcial
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-650 border border-red-150 text-[9px] font-black uppercase tracking-wider">
-                                  <Ban size={10} /> Não Verif.
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Column showing active security triggers indicators in miniature tags */}
-                            <td className="py-3.5 px-3">
-                              <div className="flex items-center gap-1.5">
-                                {/* Facial Scan check */}
-                                <span title={user.hasFacialAuth ? "Reconhecimento Facial: ATIVO" : "Reconhecimento Facial: INATIVO"} className={`w-5 h-5 rounded flex items-center justify-center border ${
-                                  user.hasFacialAuth 
-                                    ? 'bg-teal-50 text-teal-600 border-teal-150' 
-                                    : 'bg-slate-100 text-slate-300 border-slate-200'
-                                }`}>
-                                  <Scan size={10} className="stroke-[2.5]" />
-                                </span>
-
-                                {/* 2FA Check */}
-                                <span title={user.hasTwoFactor ? "Autenticação em Duas Etapas: ATIVA" : "Autenticação em Duas Etapas: INATIVA"} className={`w-5 h-5 rounded flex items-center justify-center border ${
-                                  user.hasTwoFactor 
-                                    ? 'bg-purple-50 text-purple-650 border-purple-150' 
-                                    : 'bg-slate-100 text-slate-300 border-slate-200'
-                                }`}>
-                                  <Smartphone size={10} className="stroke-[2.5]" />
-                                </span>
-
-                                {/* PIN Check */}
-                                <span title={user.govPin ? `Código PIN Autenticado: ${user.govPin}` : "PIN: INATIVO"} className={`w-5 h-5 rounded flex items-center justify-center border ${
-                                  user.govPin 
-                                    ? 'bg-blue-50 text-blue-600 border-blue-150' 
-                                    : 'bg-slate-100 text-slate-300 border-slate-200'
-                                }`}>
-                                  <Key size={10} className="stroke-[2.5]" />
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="py-3.5 px-4 text-right">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedAdminUser(user.id);
-                                }}
-                                className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-250 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-3xs cursor-pointer transition-colors"
-                              >
-                                Gerir
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-
-                      {filteredUsers.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="py-8 text-center text-slate-400">
-                            <span className="text-[10px] font-bold uppercase tracking-wider block">Nenhum resultado para a pesquisa...</span>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+      {/* MODAL DE ANÁLISE COMPARATIVA E VERIFICAÇÃO DE BIOMETRIA IA */}
+      <AnimatePresence>
+        {selectedReviewCitizen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedReviewCitizen(null)}
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[200]"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-[40px] shadow-3xl z-[201] overflow-hidden border border-slate-150 text-left font-sans flex flex-col max-h-[92vh]"
+            >
+              {/* Header do Modal */}
+              <div className="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 text-white relative flex-shrink-0">
+                <button 
+                  onClick={() => setSelectedReviewCitizen(null)}
+                  className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-all cursor-pointer border-0 text-white bg-transparent"
+                  type="button"
+                >
+                  <X size={20} />
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/10 rounded-[18px] flex items-center justify-center text-white border border-white/20">
+                     <ShieldCheck size={24} className="text-indigo-300" />
+                  </div>
+                  <div>
+                     <div className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-300">Auditoria Governamental e Validação Civil</div>
+                     <h2 className="text-xl md:text-2xl font-black italic tracking-tighter uppercase leading-none mt-1">
+                       Portal de Homologação de Identidade
+                     </h2>
+                  </div>
                 </div>
               </div>
 
+              {/* Corpo de Análise em Grid de Duas Partes */}
+              <div className="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-grow">
+                
+                {/* Alerta de status ou instruções */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex gap-3 text-left">
+                  <Activity size={18} className="text-indigo-650 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black text-slate-800 uppercase tracking-tight">Regras de Auditoria para Homologação de Cadastro</p>
+                    <p className="text-[10px] text-slate-450 font-medium leading-relaxed uppercase">
+                      Verifique se a fotocópia do Bilhete de Identidade oficial, o nome inserido e a fotografia antropométrica facial capturada no momento da selfie correspondente pertencem ao mesmo indivíduo. Utilize a inteligência artificial para o batimento algorítmico pontual.
+                    </p>
+                  </div>
+                </div>
 
-              {/* Detailed management sidebar card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-6">
-                {selectedUserObject ? (
-                  <div className="space-y-6">
-                    {/* Header profile description */}
-                    <div className="flex items-start gap-3 border-b border-slate-200 pb-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white border ${
-                        selectedUserObject.type === 'institution' 
-                          ? 'bg-amber-600 border-amber-500' 
-                          : 'bg-indigo-600 border-indigo-500'
-                      }`}>
-                        {selectedUserObject.type === 'institution' ? <Shield size={18} /> : <UserCheck size={18} />}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  {/* Painel Esquerdo: Fotocópia do BI Digitalizado (Renderizado de forma incrivelmente autêntica via CSS) */}
+                  <div className="space-y-3">
+                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Painel Esquerdo &bull; Fotocópia do BI</span>
+                    
+                    <div className="bg-gradient-to-br from-indigo-50/70 to-slate-105 border border-slate-200 rounded-3xl p-5 relative overflow-hidden h-[240px] flex flex-col justify-between shadow-2xs">
+                      {/* Micro-marcas d'água */}
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none w-56 h-56 rounded-full border-4 border-indigo-900 flex items-center justify-center font-bold text-center text-xs">
+                        REPÚBLICA DE ANGOLA
                       </div>
-                      <div>
-                        <h4 className="font-extrabold text-slate-900 uppercase text-xs leading-tight">
-                          {selectedUserObject.name}
-                        </h4>
-                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">
-                          ID: {selectedUserObject.id} &bull; Registo Ativo
+                      <div className="absolute top-2 right-2 w-16 h-16 bg-gradient-to-br from-yellow-300/10 to-indigo-500/10 rounded-full blur-xl pointer-events-none" />
+
+                      {/* Top Header do Documento */}
+                      <div className="flex items-start justify-between border-b pb-2 border-slate-200">
+                        <div className="flex gap-2.5 items-center">
+                          {/* Bandeira Mocked de Angola */}
+                          <div className="w-6 h-4 bg-red-650 flex flex-col relative rounded-xs overflow-hidden border border-slate-200 flex-shrink-0">
+                            <div className="h-1/2 bg-red-600" />
+                            <div className="h-1/2 bg-black" />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[4px] text-yellow-500 font-extrabold">&bull;</div>
+                          </div>
+                          <div>
+                            <span className="text-[7.5px] font-black text-indigo-950 uppercase tracking-wider block">República de Angola</span>
+                            <span className="text-[6.5px] font-bold text-slate-400 uppercase block">Ministério da Justiça e Direitos Humanos</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[7.5px] font-black text-rose-600 bg-rose-50 border border-rose-100 p-0.5 px-1.5 rounded uppercase font-mono">B.I. Oficial</span>
+                        </div>
+                      </div>
+
+                      {/* Dados Centrais do BI */}
+                      <div className="grid grid-cols-3 gap-3 my-auto items-center">
+                        {/* Foto do BI - com filtro impresso cinza */}
+                        <div className="col-span-1 h-20 bg-slate-200 rounded-xl overflow-hidden border-2 border-slate-300 relative shadow-3xs flex-shrink-0">
+                          <img 
+                            src={selectedReviewCitizen.facePhoto} 
+                            alt="Rosto BI" 
+                            className="w-full h-full object-cover filter grayscale contrast-125 brightness-95" 
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 bg-indigo-950/10 mix-blend-color" />
+                        </div>
+
+                        {/* Dados textuais do civil */}
+                        <div className="col-span-2 space-y-1 text-left text-[9px]">
+                          <div>
+                            <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Nome Completo:</span>
+                            <span className="font-extrabold text-slate-900 uppercase block text-[10px] tracking-tight">{selectedReviewCitizen.name}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Nº B.I.:</span>
+                              <span className="font-black text-slate-900 font-mono text-[9px] block">{selectedReviewCitizen.biNumber}</span>
+                            </div>
+                            <div>
+                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none font-sans">Nacionalidade:</span>
+                              <span className="font-extrabold text-slate-800 uppercase block">Angolana</span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Província:</span>
+                              <span className="font-extrabold text-slate-700 block text-[8px] uppercase">{selectedReviewCitizen.province}</span>
+                            </div>
+                            <div>
+                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Natural de:</span>
+                              <span className="font-extrabold text-slate-700 block text-[8px] uppercase">{selectedReviewCitizen.municipio}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer do BI */}
+                      <div className="border-t pt-1.5 border-slate-250 flex items-center justify-between text-[6.5px] font-mono text-slate-400 leading-none">
+                        <span>EMISSÃO: 12/04/2024</span>
+                        <span>VALIDADE: 12/04/2029</span>
+                        <span className="font-bold text-slate-700">ASSINATURA DIGITAL SME</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-50 border border-slate-150 rounded-2xl p-3 text-[10px] font-medium text-slate-500 uppercase tracking-tight flex items-center gap-2">
+                      <IdCard size={14} className="text-slate-400" />
+                      <span>Nome Declarado e BI Batem 100% com o Banco do Registo Civil Angolano.</span>
+                    </div>
+                  </div>
+
+                  {/* Painel Direito: Captura de Face Ativa no Auto-Cadastro (HD e AnáliseIA) */}
+                  <div className="space-y-3">
+                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Painel Direito &bull; Captura Biométrica (Face)</span>
+                    
+                    <div className="bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-950/30 rounded-3xl p-5 h-[240px] relative overflow-hidden flex flex-col justify-between shadow-2xl text-white">
+                      
+                      {/* Efeitos de Reticulado / Scanning de Câmera */}
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0,transparent_100%)]" />
+                      
+                      {/* Cantos holográficos da câmera de biometria */}
+                      <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-indigo-400 rounded-tl-sm" />
+                      <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-indigo-400 rounded-tr-sm" />
+                      <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-indigo-400 rounded-bl-sm" />
+                      <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-indigo-400 rounded-br-sm" />
+
+                      {/* Scanner Line animation */}
+                      {aiEvaluationState === 'running' && (
+                        <motion.div 
+                          initial={{ y: 0 }}
+                          animate={{ y: [0, 180, 0] }}
+                          transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+                          className="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-md shadow-cyan-400/50 z-25 pointer-events-none"
+                        />
+                      )}
+
+                      <div className="flex items-center justify-between z-15 relative">
+                        <span className="text-[8px] font-mono font-black text-indigo-300 uppercase tracking-widest bg-indigo-500/10 p-1 px-2.5 rounded-full border border-indigo-500/20">
+                          Auto-Foto Biometria Ativa
+                        </span>
+                        <span className="text-[7.5px] font-mono text-slate-400 font-bold uppercase tracking-wider">FPS: 30 &bull; 1080P</span>
+                      </div>
+
+                      {/* Rosto do Cidadão no Centro com linhas de rastreamento se IA estiver ativa */}
+                      <div className="relative w-24 h-24 mx-auto my-auto rounded-full border-2 border-indigo-400/60 overflow-hidden shadow-xl shadow-black/30 z-10">
+                        <img 
+                          src={selectedReviewCitizen.facePhoto} 
+                          alt="Face HD" 
+                          className="w-full h-full object-cover" 
+                          referrerPolicy="no-referrer"
+                        />
+                        {aiEvaluationState === 'running' && (
+                          <div className="absolute inset-0 bg-cyan-500/10 animate-pulse" />
+                        )}
+                        {/* Pontos de foco facial fictícios */}
+                        <div className="absolute top-1/3 left-1/3 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping pointer-events-none" />
+                        <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping pointer-events-none" />
+                        <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping pointer-events-none" />
+                      </div>
+
+                      <div className="text-center z-15 relative mt-1">
+                        <span className="text-[9px] font-mono text-indigo-200 uppercase tracking-widest">
+                          {aiEvaluationState === 'idle' ? 'Câmera Biométrica Pronta' :
+                           aiEvaluationState === 'running' ? 'Executando Análise de Profundidade...' :
+                           'Verificação Biométrica Concluída'}
                         </span>
                       </div>
                     </div>
 
-                    {/* SENSITIVE DATA BOX */}
-                    <div className="bg-white border border-slate-150 p-3.5 rounded-xl space-y-2.5 text-[11px]">
-                      <div className="font-black text-[9px] text-slate-400 tracking-wider uppercase border-b border-slate-100 pb-1 flex items-center justify-between">
-                        <span>Ficha Civil Protegida</span>
-                        <Lock size={10} />
+                    <div className="bg-indigo-950 text-white rounded-2xl p-3 text-[10px] font-medium uppercase tracking-tight flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Fingerprint size={14} className="text-indigo-300" />
+                        <span>Autenticação Facial Registada no CDA</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 font-sans">
-                        <div>
-                          <span className="block text-[8px] text-slate-400 font-bold uppercase">Número de BI</span>
-                          <span className="font-bold text-slate-800 font-mono">{selectedUserObject.bi}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[8px] text-slate-400 font-bold uppercase">Estado Civil</span>
-                          <span className="font-bold text-slate-800 uppercase">{selectedUserObject.maritalStatus}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[8px] text-slate-400 font-bold uppercase">Nascimento</span>
-                          <span className="font-bold text-slate-800 font-mono">{selectedUserObject.birthDate}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[8px] text-slate-400 font-bold uppercase">Contribuinte (NIF)</span>
-                          <span className="font-bold text-slate-800 font-mono">{selectedUserObject.nif}</span>
-                        </div>
-                        <div className="col-span-2">
-                          <span className="block text-[8px] text-slate-400 font-bold uppercase">Filiação (Progenitores)</span>
-                          <span className="font-bold text-slate-800 uppercase leading-normal">{selectedUserObject.filiation}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[8px] text-slate-400 font-bold uppercase">Telefone</span>
-                          <span className="font-bold text-slate-800 font-mono">{selectedUserObject.phone}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[8px] text-slate-400 font-bold uppercase">Nº Passaporte</span>
-                          <span className="font-bold text-slate-800 font-mono uppercase">{selectedUserObject.passport}</span>
-                        </div>
-                      </div>
+                      <span className="text-indigo-300 font-bold">ATIVA</span>
                     </div>
-
-                    {/* INTERACTIVE CONTROLS FOR SYSTEM PERMISSIONS (Requirement 3) */}
-                    <div className="space-y-3.5 border-t border-b border-slate-200/80 py-4">
-                      <div>
-                        <h5 className="text-[10px] font-black text-slate-800 tracking-widest uppercase font-mono mb-1 flex items-center gap-1.5">
-                          <Sliders size={12} className="text-indigo-600" /> Permissões do Sistema
-                        </h5>
-                        <p className="text-[9px] text-slate-400 font-medium leading-tight">Revogue ou autorize trâmites de correio e documentos com efeito imediato.</p>
-                      </div>
-
-                      <div className="space-y-2.5 bg-white border border-slate-150 p-3 rounded-xl">
-                        {/* Option 1 */}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="text-left text-[11px]">
-                            <span className="font-bold text-slate-850 block leading-none">Trâmite de Expedientes</span>
-                            <span className="text-[8px] mt-0.5 text-slate-400 font-medium block">Poder de protocolar processos online</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => togglePermission(selectedUserObject.id, 'tramite')}
-                            className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-wider cursor-pointer border-0 transition-all ${
-                              selectedUserObject.permissions.tramite 
-                                ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' 
-                                : 'bg-red-50 text-red-650 hover:bg-red-100'
-                            }`}
-                          >
-                            {selectedUserObject.permissions.tramite ? 'Autorizado' : 'Suspenso'}
-                          </button>
-                        </div>
-
-                        {/* Option 2 */}
-                        <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-2.5">
-                          <div className="text-left text-[11px]">
-                            <span className="font-bold text-slate-850 block leading-none">Emissão de Docs Virtuais</span>
-                            <span className="text-[8px] mt-0.5 text-slate-400 font-medium block">Poder de requisitar bilhetes e certidões</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => togglePermission(selectedUserObject.id, 'emissao')}
-                            className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-wider cursor-pointer border-0 transition-all ${
-                              selectedUserObject.permissions.emissao 
-                                ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' 
-                                : 'bg-red-50 text-red-650 hover:bg-red-100'
-                            }`}
-                          >
-                            {selectedUserObject.permissions.emissao ? 'Autorizado' : 'Suspenso'}
-                          </button>
-                        </div>
-
-                        {/* Option 3 */}
-                        <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-2.5">
-                          <div className="text-left text-[11px]">
-                            <span className="font-bold text-slate-850 block leading-none">Receção de Correspondências</span>
-                            <span className="text-[8px] mt-0.5 text-slate-400 font-medium block">Segurança de recepção de cartas fiscais</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => togglePermission(selectedUserObject.id, 'recepcao')}
-                            className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-wider cursor-pointer border-0 transition-all ${
-                              selectedUserObject.permissions.recepcao 
-                                ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' 
-                                : 'bg-red-50 text-red-650 hover:bg-red-100'
-                            }`}
-                          >
-                            {selectedUserObject.permissions.recepcao ? 'Autorizado' : 'Suspenso'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-
-                    {/* SECURITY CONTROLS PANEL */}
-                    <div className="space-y-4">
-                      <div>
-                        <h5 className="text-[10px] font-black text-slate-800 tracking-widest uppercase font-mono mb-1 flex items-center gap-1.5">
-                          <ShieldAlert size={12} className="text-rose-500" /> Parâmetros de Segurança Activos
-                        </h5>
-                        <p className="text-[9px] text-slate-400 font-medium leading-tight">Configurações de login duplo, biometria facial e regras civis.</p>
-                      </div>
-
-                      <div className="space-y-3 bg-white border border-slate-150 p-3 rounded-xl">
-                        {/* Autenticação Facial Switch */}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="text-left">
-                            <span className="font-bold text-[11px] text-slate-850 block leading-none">Reconhecimento Facial (Scan)</span>
-                            <span className="text-[8px] text-slate-400 font-medium block mt-0.5">Permitir login por selfie fiduciária</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleSecurityParamChange(selectedUserObject.id, 'face', !selectedUserObject.hasFacialAuth)}
-                            className={`w-10 h-6.5 rounded-full p-0.5 transition-colors cursor-pointer border-0 relative ${
-                              selectedUserObject.hasFacialAuth ? 'bg-indigo-600' : 'bg-slate-200'
-                            }`}
-                          >
-                            <span className={`block w-5- h-5.5 w-[22px] h-[22px] bg-white rounded-full transition-transform shadow-xs ${
-                              selectedUserObject.hasFacialAuth ? 'translate-x-[14px]' : 'translate-x-0'
-                            }`} />
-                          </button>
-                        </div>
-
-                        {/* 2FA Switch */}
-                        <div className="flex items-center justify-between gap-4 border-t border-slate-100 pt-3">
-                          <div className="text-left">
-                            <span className="font-bold text-[11px] text-slate-850 block leading-none">Autenticação Dupla (SMS/OTP)</span>
-                            <span className="text-[8px] text-slate-400 font-medium block mt-0.5">Segurança acrescida via telemóvel</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleSecurityParamChange(selectedUserObject.id, '2fa', !selectedUserObject.hasTwoFactor)}
-                            className={`w-10 h-6.5 rounded-full p-0.5 transition-colors cursor-pointer border-0 relative ${
-                              selectedUserObject.hasTwoFactor ? 'bg-indigo-600' : 'bg-slate-200'
-                            }`}
-                          >
-                            <span className={`block w-[22px] h-[22px] bg-white rounded-full transition-transform shadow-xs ${
-                              selectedUserObject.hasTwoFactor ? 'translate-x-[14px]' : 'translate-x-0'
-                            }`} />
-                          </button>
-                        </div>
-
-                        {/* State dropdown selector (Verificado vs Não Verificado) */}
-                        <div className="border-t border-slate-100 pt-3 space-y-1.5">
-                          <label className="block text-[8px] text-slate-400 font-black uppercase tracking-wider text-left">ESTADO DE VERIFICAÇÃO RECONHECIDO</label>
-                          <select
-                            value={selectedUserObject.verificationStatus}
-                            onChange={(e) => handleSecurityParamChange(selectedUserObject.id, 'verification', e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-250 cursor-pointer rounded-lg px-2 py-1.5 text-[10px] font-black uppercase text-slate-700 outline-none"
-                          >
-                            <option value="Totalmente verificado">Totalmente Verificado</option>
-                            <option value="Parcialmente verificado">Parcialmente Verificado</option>
-                            <option value="Não verificado">Não verificado (Suspenso)</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-
                   </div>
-                ) : (
-                  <div className="py-20 text-center text-slate-400">
-                    <Sliders size={24} className="mx-auto text-slate-300 mb-2" />
-                    <span className="text-[10px] font-black tracking-widest uppercase block">Selecione um Utilizador</span>
-                    <p className="text-[10px] text-slate-400 font-medium uppercase mt-1 leading-normal">
-                      Ao selecionar, poderá gerir os parâmetros de segurança e as permissões reguladas da conta.
-                    </p>
-                  </div>
+
+                </div>
+
+                {/* Bloco de Batimento Inteligente por IA */}
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-6 text-center space-y-4 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full pointer-events-none" />
+                  
+                  {aiEvaluationState === 'idle' && (
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="text-sm font-black text-indigo-950 uppercase tracking-tight">Efectuar Batimento de Biometria e Identidade Civil por IA</h4>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wide font-medium mt-1">
+                          Cruza as feições faciais do B.I. digitalizado com a selfie fornecida pelo auto-cadastro, analisando geometria facial, distância inter-pupilar e dados nominais via OCR.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAiEvaluationState('running');
+                          // Simular tempo de carregamento de IA
+                          setTimeout(() => {
+                            setAiEvaluationState('completed');
+                            // Gerar um match alto aleatório baseado no nome (geralmente alto para os pendentes normais)
+                            const score = selectedReviewCitizen.id === 'u3' ? 98.2 : 97.5;
+                            setAiMatchScore(score);
+                            addAuditLog?.(`Inteligência Artificial: Prova de identidade de "${selectedReviewCitizen.name}" executada com ${score}% de fidedignidade facial.`, 'success');
+                          }, 2500);
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest px-8 py-3.5 rounded-2xl cursor-pointer border-0 shadow-lg shadow-indigo-600/15 font-bold transition-all hover:scale-103"
+                      >
+                        <Scan size={14} className="inline mr-2 animate-spin-slow" /> Executar Batimento por IA
+                      </button>
+                    </div>
+                  )}
+
+                  {aiEvaluationState === 'running' && (
+                    <div className="space-y-4 py-3">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <RefreshCw className="text-indigo-600 animate-spin" size={24} />
+                        <span className="font-mono text-xs font-black text-indigo-900 uppercase tracking-widest">Processando Inteligência Artificial...</span>
+                      </div>
+                      
+                      {/* Simulação de barra de progresso gov */}
+                      <div className="w-full max-w-md mx-auto bg-slate-200 h-1.5 rounded-full overflow-hidden block">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 2.3 }}
+                          className="bg-indigo-600 h-full rounded-full"
+                        />
+                      </div>
+                      <span className="text-[9px] text-slate-450 font-bold uppercase tracking-widest block font-mono">Executando mapeamento ocular, OCR e distância inter-nasal</span>
+                    </div>
+                  )}
+
+                  {aiEvaluationState === 'completed' && aiMatchScore && (
+                    <div className="space-y-3 animate-zoomIn">
+                      <div className="flex items-center justify-center gap-2 text-emerald-600">
+                        <CheckCircle2 size={24} />
+                        <span className="text-sm font-black uppercase tracking-tight font-mono">Batimento de IA Concluído</span>
+                      </div>
+                      
+                      {/* Placar de Correspondência */}
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="bg-emerald-50 border border-emerald-100 p-3.5 px-8 rounded-2xl block text-center">
+                          <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-widest block leading-none mb-1">SCORE DE CORRESPONDÊNCIA FACIAL</span>
+                          <span className="text-3xl font-black text-emerald-700 font-mono italic leading-none">{aiMatchScore}%</span>
+                        </div>
+                      </div>
+
+                      <div className="max-w-xl mx-auto space-y-1">
+                        <p className="text-[10px] text-slate-800 font-black uppercase tracking-tight">Resultado da IA: Correspondência Altamente Confiável</p>
+                        <p className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wide leading-relaxed">
+                          A imagem antropométrica facial é coincidente com a fotocópia do BI. Os dados extraídos via OCR conferem integralmente com os registos civis da base de dados CDA em Luanda.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input de justificativa se estiver rejeitando */}
+                {isRejecting && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-2 border border-red-150 bg-red-50/30 p-5 rounded-2xl text-left"
+                  >
+                    <label className="block text-[9px] font-black text-red-600 uppercase tracking-widest">Motivo de Rejeição do Cadastro *</label>
+                    <textarea
+                      required
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Ex: Divergência biométrica evidente ou nitidez deficiente no Bilhete de Identidade."
+                      className="w-full bg-white border border-red-200 rounded-xl px-4 py-3 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-red-400 transition-all font-semibold"
+                      rows={3}
+                    />
+                  </motion.div>
                 )}
+
               </div>
 
-            </div>
-          </div>
-
-
-          {/* SECTION 2: ANTI-FRAUD CADASTRIAL AUDIT LOG SEARCH AND SELO VERIFICATION (Requirement 2) */}
-          <div className="bg-white border border-slate-150 rounded-[32px] p-6 md:p-8 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-              <div className="flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-rose-500 rounded-full" />
+              {/* Ações de Decisão Administrativa (Footer do Modal) */}
+              <div className="p-6 bg-slate-50 border-t border-slate-150 flex flex-col sm:flex-row items-center justify-between gap-4 flex-shrink-0">
                 <div>
-                  <h3 className="text-lg font-black tracking-tighter text-slate-900 uppercase italic">
-                    Auditoria de Alterações Cadastrais e Mitigação de Fraudes
-                  </h3>
-                  <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase font-mono">
-                    Registos selados eletronicamente &bull; Histórico Geral e Imutável de Eventos do Sistema
-                  </span>
+                  <span className="text-[9px] font-mono text-slate-400 block font-bold uppercase">Agente Operacional Responsável:</span>
+                  <span className="text-[10px] font-extrabold text-slate-800 uppercase block">Inspector de Identificação Civil do Estado</span>
+                </div>
+                
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedReviewCitizen(null);
+                    }}
+                    className="px-5 py-3 bg-white border border-slate-205 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all cursor-pointer font-bold w-full sm:w-auto text-center"
+                  >
+                    Cancelar / Sair
+                  </button>
+
+                  {/* Se for Pendente e avaliado (ou não avaliado, permitimos a aprovação também) */}
+                  {selectedReviewCitizen.status === 'Pendente' && (
+                    <>
+                      {!isRejecting ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRejecting(true);
+                            setRejectionReason('Divergência de dados: Os dados dactiloscópicos ou imagem facial não estão de acordo com as regras.');
+                          }}
+                          className="px-5 py-3 bg-red-50 hover:bg-red-100 text-red-650 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0"
+                        >
+                          Sinalizar Pendência / Rejeitar
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!rejectionReason.trim()) {
+                              alert('Insira uma justificativa para a rejeição fiscal.');
+                              return;
+                            }
+                            setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
+                              ...c, 
+                              status: 'Não Aprovado', 
+                              reason: rejectionReason 
+                            } : c));
+                            addAuditLog?.(`Auditoria: Registo de "${selectedReviewCitizen.name}" REJEITADO do sistema CDA. Motivo: ${rejectionReason}`, 'critical');
+                            setSelectedReviewCitizen(null);
+                          }}
+                          className="px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0"
+                        >
+                          Confirmar Rejeição
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Se o agente aprova, muda para Aprovado e adiciona match score
+                          const score = aiMatchScore || 98.4;
+                          setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
+                            ...c, 
+                            status: 'Aprovado', 
+                            verificationScore: score
+                          } : c));
+                          addAuditLog?.(`Auditoria: Cadastro do cidadão "${selectedReviewCitizen.name}" homologado e ativado biometricamente pelo agente Admin.`, 'success');
+                          setSelectedReviewCitizen(null);
+                        }}
+                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold block shadow-lg shadow-emerald-600/10 w-full sm:w-auto text-center border-0"
+                      >
+                        Aprovar Cadastro
+                      </button>
+                    </>
+                  )}
+
+                  {/* Se já estiver Aprovado ou Já Não Aprovado, podemos dar opção de Revogar ou Re-avaliar */}
+                  {selectedReviewCitizen.status !== 'Pendente' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Reverter para Pendente para reavaliação se necessário
+                        setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
+                          ...c, 
+                          status: 'Pendente', 
+                          reason: undefined,
+                          verificationScore: undefined 
+                        } : c));
+                        addAuditLog?.(`Auditoria: Cadastro de "${selectedReviewCitizen.name}" reaberto para nova revisão e testes dactiloscópicos.`, 'info');
+                        setSelectedReviewCitizen(null);
+                      }}
+                      className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0"
+                    >
+                      Reabrir para Revisão
+                    </button>
+                  )}
+
                 </div>
               </div>
 
-              {/* Protocol search query filter */}
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
-                <input
-                  type="text"
-                  placeholder="Pesquisar por Protocolo, Operador ou BI..."
-                  value={protocolSearchQuery}
-                  onChange={(e) => setProtocolSearchQuery(e.target.value)}
-                  className="pl-8 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400 w-full sm:w-[280px]"
-                />
-              </div>
-            </div>
-
-            {/* Logs List with cryptography badges */}
-            <div className="space-y-4">
-              {filteredProtocols.map((log) => (
-                <div key={log.id} className="p-5 bg-slate-50 border border-slate-150 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-300 transition-colors">
-                  <div className="space-y-2 text-left">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <span className="text-[10px] bg-indigo-50 border border-indigo-150 text-indigo-750 font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded">
-                        {log.protocol}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold font-mono">
-                        {log.timestamp}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[9px] text-emerald-650 bg-emerald-50/80 border border-emerald-100 px-2 py-0.5 rounded-full font-black uppercase tracking-wider">
-                        <ShieldCheck size={10} className="text-emerald-500" /> Selado e Imutável
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-850 font-extrabold uppercase tracking-tight">
-                      {log.details}
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[9px] text-slate-450 uppercase tracking-wider font-sans font-bold">
-                      <span>Operador: <strong className="font-extrabold text-slate-650 font-mono">{log.operator}</strong></span>
-                      <span>&bull;</span>
-                      <span>Cidadão Alvo: <strong className="font-extrabold text-slate-650 uppercase">{log.citizenName} (BI: {log.bi})</strong></span>
-                    </div>
-                  </div>
-
-                  {/* Cryptographic Seal Hash Signature certificate display */}
-                  <div className="bg-white border border-slate-200/80 p-3 rounded-xl flex items-center gap-3 self-start md:self-auto shrink-0">
-                    <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
-                      <Lock size={14} className="stroke-[2.5]" />
-                    </div>
-                    <div>
-                      <span className="block text-[8px] text-slate-400 font-mono font-black uppercase tracking-wider">Assinatura do Selo</span>
-                      <span className="font-mono text-[9px] font-black text-slate-700 tracking-wider">
-                        {log.signature}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {filteredProtocols.length === 0 && (
-                <div className="p-8 border border-dashed border-slate-250 rounded-2xl text-center text-slate-450">
-                  <AlertTriangle className="mx-auto text-slate-300 mb-2" size={24} />
-                  <span className="text-[10px] font-black tracking-widest uppercase block">Nenhum protocolo ou selo localizado</span>
-                  <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase leading-normal">Verifique a grafia do código de auditoria digital inserido.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
-      )}
-
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* CENTRAL BRANDING STATUS FOOTER */}
-      <div className="mt-12 bg-slate-55 border border-slate-150 p-6 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-4 text-left">
+      <div className="mt-12 bg-slate-55 border border-slate-150 p-6 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-4 text-left font-sans">
         <div className="flex items-center gap-3">
           <Layers className="text-indigo-650 shrink-0" size={20} />
           <div>
             <h5 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">
               Conexão Unificada de Administração Geral (CDA)
             </h5>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 leading-normal">
               Protocolo de segurança robusto de ponta-a-ponta e distribuição certificada de credenciais governamentais.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 animate-fadeIn">
           <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
           <span className="font-mono text-[9px] font-black text-indigo-750 uppercase tracking-widest">
             Barramento Activo: Central-Admin-Gateway
