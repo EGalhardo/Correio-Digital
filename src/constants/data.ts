@@ -388,6 +388,156 @@ export const INBOX: Message[] = [
       actions: ["Ver Protocolo", "Aceitar Termos"],
     }
   },
+  {
+    id: 501,
+    org: "MINJUS",
+    unread: 1,
+    status: "Urgente",
+    preview: "Agendamento para renovação do Bilhete de Identidade confirmado.",
+    date: "10:00",
+    details: {
+      subject: "Agendamento Confirmado",
+      body: "O seu agendamento para a renovação e recolha dos dados biométricos do Bilhete de Identidade foi registado com sucesso no nosso sistema municipal.\nApresente-se no posto selecionado com 10 minutos de antecedência.\nLembre-se de trazer o documento anterior ou, em caso de perda, a respetiva certidão narrativa completa.\nO atendimento será prioritário e processado em menos de 15 minutos adicionais no local.",
+      deadline: "Amanhã",
+      state: "Agendado",
+      actions: ["Ver Posto", "Alterar Hora", "Descarregar Senha"]
+    }
+  },
+  {
+    id: 502,
+    org: "AGT",
+    unread: 1,
+    status: "Informativo",
+    preview: "Comprovativo de reembolso de IRT disponível para consulta.",
+    date: "09:30",
+    details: {
+      subject: "Reembolso IRT",
+      body: "Informamos que a sua declaração anual de rendimentos foi processada e validada pelo departamento fiscal.\nO cálculo final do Imposto sobre o Rendimento de Trabalho (IRT) resultou num saldo favorável a reembolsar.\nO montante será creditado de forma direta na conta bancária associada ao seu Número de Identificação Fiscal (NIF) nos próximos dias.\nCertifique-se de que as suas coordenadas bancárias estão devidamente atualizadas no perfil para evitar devoluções de trânsito.",
+      deadline: "Sem prazo",
+      state: "Processado",
+      actions: ["Ver Declaração", "Validar IBAN"]
+    }
+  },
+  {
+    id: 503,
+    org: "INSS",
+    unread: 1,
+    status: "Informativo",
+    preview: "Extrato de contribuições à Segurança Social atualizado.",
+    date: "Ontem",
+    details: {
+      subject: "Extrato de Segurança Social",
+      body: "O seu extrato consolidado de contribuições para a Segurança Social nacional foi atualizado com as últimas retenções efetuadas pela entidade patronal.\nEste documento detalha o histórico completo e é fundamental para fins de reforma e subsídios adicionais.\nCaso note qualquer divergência ou falta de pagamentos correspondentes a meses passados, contacte de imediato o departamento de recursos humanos da sua instituição.",
+      deadline: "Sem prazo",
+      state: "Atualizado",
+      actions: ["Consultar Extrato", "Emitir Declaração"]
+    }
+  },
+  {
+    id: 504,
+    org: "PNA",
+    unread: 1,
+    status: "Urgente",
+    preview: "Notificação eletrónica de infração de trânsito em Luanda (Estrada de Catete).",
+    date: "Ontem",
+    details: {
+      subject: "Notificação de Infração",
+      body: "A Polícia Nacional de Angola registou uma contraordenação rodoviária através do sistema de vídeomonitorização urbana na Estrada de Catete, Luanda.\nA infração detetada corresponde a excesso de velocidade regulamentar para o troço de via em causa.\nO pagamento voluntário da multa confere a redução de taxas acessórias e evita o encaminhamento do processo para o departamento de viação e trânsito municipal.\nPara proceder à regularização, consulte a referência de pagamento associada.",
+      deadline: "10 dias",
+      state: "Pendente de pagamento",
+      actions: ["Ver Imagem", "Pagar Multa", "Apresentar Defesa"]
+    }
+  },
+  {
+    id: 505,
+    org: "SME",
+    unread: 1,
+    status: "Urgente",
+    preview: "Certidão de residência digital emitida e validada com sucesso.",
+    date: "2 dias atrás",
+    details: {
+      subject: "Certidão de Residência",
+      body: "A sua certidão oficial de residência digital foi emitida pela administração do distrito urbano competente através do portal.\nO ficheiro digital inclui a respetiva assinatura eletrónica certificada e o selo eletrónico do Estado de Angola, conferindo plena validade jurídica nacional.\nNão é necessária a impressão física do arquivo para apresentação junto de agências bancárias ou centros de ensino.",
+      deadline: "Sem prazo",
+      state: "Emitida",
+      actions: ["Abrir Certidão", "Partilhar QR Code"]
+    }
+  },
+  {
+    id: 506,
+    org: "MINSA",
+    unread: 1,
+    status: "Informativo",
+    preview: "Boletim de marcação de consulta no Hospital Geral de Luanda pronto.",
+    date: "3 dias atrás",
+    details: {
+      subject: "Consulta Médica",
+      body: "Confirmamos o agendamento da sua consulta médica de especialidade regulada no Hospital Geral de Luanda.\nDirecione-se à ala de triagem na entrada principal carregando o seu cartão nacional de utente do Serviço Nacional de Saúde em formato digital no aplicativo.\nCaso deseje desmarcar com aviso de antecedência, use os botões eletrónicos dispostos.",
+      deadline: "3 dias",
+      state: "Confirmado",
+      actions: ["Ver Calendário", "Desmarcar Consulta"]
+    }
+  },
+  {
+    id: 507,
+    org: "CNE",
+    unread: 1,
+    status: "Informativo",
+    preview: "Informativo sobre atualização automatizada do registo eleitoral sénior.",
+    date: "4 dias atrás",
+    details: {
+      subject: "Registo Eleitoral",
+      body: "A Comissão Nacional Eleitoral informa que a atualização do seu registo de cidadão eleitor foi executada de forma autónoma através da base integrada do Bilhete de Identidade.\nA sua mesa preferencial de voto provisório permanece geograficamente vinculada à sua última residência oficial declarada.\nPoderá atualizar a qualquer momento a sua preferência de localização no menu respetivo do painel.",
+      deadline: "Sem prazo",
+      state: "Concluído",
+      actions: ["Ver Local de Voto", "Atualizar Distrito"]
+    }
+  },
+  {
+    id: 508,
+    org: "AGT",
+    unread: 1,
+    status: "Urgente",
+    preview: "Aviso de liquidação extraordinária de imposto sobre veículos (IVM).",
+    date: "5 dias atrás",
+    details: {
+      subject: "Liquidação IVM",
+      body: "A Administração Geral Tributária (AGT) comunica que o ciclo anual de liquidação do Imposto sobre Veículos Motores (IVM) referente à sua viatura cadastrada encontra-se em curso.\nEfetue o pagamento voluntário correspondente antes do dia útil de vencimento geral para evitar juros tributários acrescidos.\nUtilize os canais habilitados de Caixa Automática (Multicaixa) ou Multicaixa Express no telemóvel.",
+      deadline: "5 dias",
+      state: "Pendente",
+      actions: ["Simular Valor", "Efetuar Liquidação"]
+    }
+  },
+  {
+    id: 509,
+    org: "ENDE",
+    unread: 1,
+    status: "Informativo",
+    preview: "Confirmação de leitura real do contador doméstico de energia.",
+    date: "6 dias atrás",
+    details: {
+      subject: "Leitura de Energia",
+      body: "A nossa equipa técnica procedeu à colheita e validação real de leitura no contador elétrico instalado na sua propriedade.\nO volume faturado reflete o desvim exato em relação às estimativas prévias efetuadas nos meses intermédios.\nO saldo da faturação mensal foi atualizado em harmonia com o registo colhido de forma transparente.",
+      deadline: "Sem prazo",
+      state: "Leitura Efetuada",
+      actions: ["Ver Consumos", "Solicitar Vistoria"]
+    }
+  },
+  {
+    id: 510,
+    org: "EPAL",
+    unread: 1,
+    status: "Urgente",
+    preview: "Manutenção na adutora principal de abastecimento próxima ao seu domicílio.",
+    date: "1 semana atrás",
+    details: {
+      subject: "Abastecimento de Água",
+      body: "A EPAL informa que haverá uma intervenção técnica programada visando à reparação da conduta adutora nas imediações do seu bairro.\nO fornecimento de água será temporariamente suspenso para garantir condições céleres de manutenção preventiva geral no local.\nAconselha-se a reserva do volume necessário para o período estimado da suspensão.",
+      deadline: "Terminado",
+      state: "Concluída",
+      actions: ["Ver Detalhes", "Contactar Suporte"]
+    }
+  }
 ];
 
 export const INSTITUTIONAL_INBOX: Message[] = [

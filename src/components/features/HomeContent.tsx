@@ -83,9 +83,6 @@ export function HomeContent({
       {/* Quick Summary / Security Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
         <div className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-4 md:p-6 flex items-center gap-4 md:gap-6 shadow-sm overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <ShieldCheck size={80} />
-          </div>
           <div className={`w-12 h-12 md:w-16 md:h-16 ${isInst ? 'bg-white border-slate-100' : 'bg-emerald-50 border-emerald-100'} rounded-2xl flex items-center justify-center shadow-sm shrink-0 border`}>
             {isInst ? (
               <img 
@@ -115,9 +112,6 @@ export function HomeContent({
           onClick={() => setTab('correspondencias')}
           className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-4 md:p-6 flex items-center gap-4 md:gap-6 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all cursor-pointer group relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Mail size={80} />
-          </div>
           <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/5 text-primary rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-110 transition-transform border border-primary/10">
             <Mail size={24} className="md:w-8 md:h-8" />
           </div>

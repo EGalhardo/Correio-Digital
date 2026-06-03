@@ -273,4 +273,18 @@ export const PRIORITY_CONFIGS: Record<'Normal' | 'Importante' | 'Urgente' | 'CrÃ
   }
 };
 
+export interface Correspondence {
+  id: string;
+  sender: string;
+  recipient: string;
+  subject: string;
+  originProvince: string;
+  destinationProvince: string;
+  institution: 'AGT' | 'SME' | 'Tribunal Supremo' | 'Registo Civil' | 'ENDE' | 'MINJUS' | string;
+  status: 'Lida' | 'NÃ£o Lida' | 'Enviada' | 'Processando' | 'Bloqueada' | string;
+  date: string;
+  body: string;
+}
+
+
 

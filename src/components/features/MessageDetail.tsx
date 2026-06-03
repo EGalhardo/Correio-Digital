@@ -254,6 +254,32 @@ export function MessageDetail({
   handleReply,
   onUpdateMessage,
 }: MessageDetailProps) {
+  const messageDate = selectedMessage.date && selectedMessage.date.includes('/')
+    ? selectedMessage.date
+    : (selectedMessage.protocol?.officialIssueDate || '02/06/2026');
+
+  const messageTime = selectedMessage.date && selectedMessage.date.includes(':')
+    ? selectedMessage.date
+    : (selectedMessage.protocol?.officialTime || '10:45');
+
+  const getMessageLocality = (msg: Message) => {
+    const orgName = msg.org.toUpperCase();
+    if (orgName.includes('AGT') || orgName.includes('SME') || orgName.includes('GOVERNO') || orgName.includes('MINJUS') || orgName.includes('MINISTÉRIO')) {
+      return 'Luanda (Sede Geral)';
+    } else if (orgName.includes('ENDE') || orgName.includes('EPAL')) {
+      if (msg.id % 3 === 0) return 'Benguela';
+      if (msg.id % 3 === 1) return 'Huíla (Lubango)';
+      return 'Luanda (Talatona)';
+    } else if (orgName.includes('HOSPITAL') || orgName.includes('MINSA')) {
+      if (msg.id % 2 === 0) return 'Província de Cabinda';
+      return 'Luanda (Hospital Central)';
+    } else if (orgName.includes('PORTO')) {
+      return 'Porto de Luanda';
+    }
+    return 'Luanda, Angola';
+  };
+  const messageLocality = getMessageLocality(selectedMessage);
+
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [showQRValidation, setShowQRValidation] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -2288,10 +2314,39 @@ export function MessageDetail({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
             >
-              <div className="pb-3 border-b border-line mb-4">
-                <h3 className="text-sm md:text-lg font-bold text-primary">{selectedMessage.org}</h3>
-                <div className="text-slate-600 text-[10px] md:text-sm font-medium">
-                  Canal oficial verificado
+              <div className="pb-4 border-b border-line mb-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-sm md:text-lg font-bold text-primary uppercase tracking-tight">{selectedMessage.org}</h3>
+                  <div className="text-slate-600 text-[10px] md:text-xs font-semibold uppercase tracking-wider mt-0.5">
+                    Canal oficial de correspondência verificado
+                  </div>
+                </div>
+                
+                {/* Metadados obrigatórios do correio: Data, Hora e Localidade */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-705 bg-slate-50 border border-slate-205 rounded-[18px] p-2.5 px-4 shadow-3xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Calendar size={13} className="text-indigo-650 shrink-0" />
+                    <div>
+                      <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider font-display leading-none">Data</span>
+                      <span className="text-xs font-bold text-slate-800 font-mono mt-0.5 block leading-none">{messageDate}</span>
+                    </div>
+                  </div>
+                  <div className="w-[1px] h-5 bg-slate-200 hidden sm:block" />
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Clock size={13} className="text-indigo-650 shrink-0" />
+                    <div>
+                      <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider font-display leading-none">Hora</span>
+                      <span className="text-xs font-bold text-slate-800 font-mono mt-0.5 block leading-none">{messageTime}</span>
+                    </div>
+                  </div>
+                  <div className="w-[1px] h-5 bg-slate-200 hidden sm:block" />
+                  <div className="flex items-center gap-2 min-w-0">
+                    <MapPin size={13} className="text-indigo-650 shrink-0" />
+                    <div>
+                      <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider font-display leading-none">Localidade</span>
+                      <span className="text-xs font-bold text-slate-850 mt-0.5 block truncate max-w-[140px] leading-none">{messageLocality}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <p className="text-slate-700 mb-6 leading-relaxed font-medium text-[11px] md:text-base">{selectedMessage.preview}</p>
@@ -2338,7 +2393,37 @@ export function MessageDetail({
                               <Calendar size={16} className="text-slate-500" />
                             </div>
                             <div>
-                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Data Limite</small>
+                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Data de Emissão (Data)</small>
+                              <div className="text-xs md:text-sm font-bold text-primary">{messageDate}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              <Clock size={16} className="text-slate-500" />
+                            </div>
+                            <div>
+                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Hora de Registo (Hora)</small>
+                              <div className="text-xs md:text-sm font-bold text-primary">{messageTime}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              <MapPin size={16} className="text-slate-500" />
+                            </div>
+                            <div>
+                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Localidade de Tramitação</small>
+                              <div className="text-xs md:text-sm font-bold text-primary">{messageLocality}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-slate-700">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                              <Calendar size={16} className="text-slate-500" />
+                            </div>
+                            <div>
+                              <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Prazo Limite Regulamentar</small>
                               <div className="text-xs md:text-sm font-bold text-primary">{selectedMessage.details.deadline}</div>
                             </div>
                           </div>

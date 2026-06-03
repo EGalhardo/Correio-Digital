@@ -4,7 +4,7 @@
  */
 
 import { motion } from 'motion/react';
-import { Home, Mail, QrCode, Users, User, BarChart3, Shield, Activity, Scan, Folder, Receipt } from 'lucide-react';
+import { Home, Mail, QrCode, Users, User, BarChart3, Shield, Activity, Scan, Folder, Receipt, FileText, Landmark, Settings } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Message, Document, AppMode } from '../../types';
 
@@ -38,9 +38,13 @@ const institutionItems: MenuItem[] = [
 
 const adminItems: MenuItem[] = [
   { id: 'gov-dashboard', label: 'Painel', icon: BarChart3 },
-  { id: 'gov-interoperabilidade', label: 'Instituição', icon: Activity },
-  { id: 'gov-contatos', label: 'Usuário', icon: Users },
+  { id: 'gov-interoperabilidade', label: 'Instituições', icon: Landmark },
+  { id: 'gov-correspondencias', label: 'Correios', icon: Mail },
+  { id: 'gov-contatos', label: 'Cidadãos', icon: User },
   { id: 'gov-trabalhadores', label: 'Agentes', icon: Users },
+  { id: 'gov-relatorio', label: 'Relatórios', icon: FileText },
+  { id: 'gov-seguranca', label: 'Auditoria', icon: Shield },
+  { id: 'gov-perfil', label: 'Conta', icon: Settings },
 ];
 
 export function MobileNavBar({ 
@@ -63,7 +67,9 @@ export function MobileNavBar({
   const isAdmin = appMode === 'admin';
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t flex items-center justify-around px-0.5 z-50 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors bg-white border-slate-100">
+    <nav className={`md:hidden fixed bottom-0 left-0 right-0 h-16 border-t flex items-center px-2 z-50 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors bg-white border-slate-100 ${
+      isAdmin ? 'overflow-x-auto justify-start gap-4' : 'justify-around'
+    }`}>
       {currentItems.map(({ id, label, icon: Icon }) => (
         <button
           key={id}
@@ -73,7 +79,9 @@ export function MobileNavBar({
             if (id !== 'documento') setSelectedDoc(null);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className={`flex flex-col items-center justify-center gap-0.5 transition-all px-1 h-full relative flex-1 ${
+          className={`flex flex-col items-center justify-center gap-0.5 transition-all px-2.5 h-full relative shrink-0 ${
+            isAdmin ? 'min-w-[70px]' : 'flex-1'
+          } ${
             tab === id ? 'text-indigo-600' : 'text-slate-400'
           }`}
         >

@@ -32,6 +32,26 @@ import {
 import { Message, SENSITIVITY_LEVELS, PRIORITY_CONFIGS } from '../../types';
 import { getCategoryMetadata } from '../../utils/protocolGenerator';
 
+const getOrgBadgeStyles = (org: string) => {
+  const o = org.toUpperCase();
+  if (o.includes('SOC') || o.includes('EMERGÊNCIA')) {
+    return 'bg-red-50 text-red-700 border-red-200';
+  } else if (o === 'AGT' || o.includes('FINANÇAS') || o.includes('MINFIN') || o.includes('CONTRIBUINTE')) {
+    return 'bg-amber-50 text-amber-800 border-amber-200';
+  } else if (o === 'SME' || o.includes('MIGRAÇÃO') || o.includes('ESTRANGEIROS')) {
+    return 'bg-blue-50 text-blue-800 border-blue-200';
+  } else if (o === 'MINJUS' || o.includes('JUSTIÇA') || o.includes('REGISTO') || o.includes('CONSERVATÓRIA')) {
+    return 'bg-teal-50 text-teal-800 border-teal-200';
+  } else if (o.includes('TRIBUNAL') || o.includes('SUPREMO') || o.includes('COMARCA')) {
+    return 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200';
+  } else if (o === 'ENDE' || o.includes('ELETRICIDADE') || o.includes('FORÇA')) {
+    return 'bg-orange-50 text-orange-850 border-orange-200';
+  } else if (o === 'EPAL' || o.includes('ÁGUA')) {
+    return 'bg-sky-50 text-sky-850 border-sky-200';
+  }
+  return 'bg-slate-50 text-slate-700 border-slate-200';
+};
+
 function renderCategoryIcon(iconName: string, size = 10) {
   switch (iconName) {
     case 'Bell': return <Bell size={size} />;
@@ -226,26 +246,26 @@ export function MailContent({
       </div>
 
       {/* Filters & Tabs Container */}
-      <div className="bg-white border border-slate-100 rounded-[32px] p-2 shadow-sm flex flex-col lg:flex-row gap-3">
-        <div className="flex gap-1 p-1 bg-slate-50 rounded-2xl lg:min-w-[420px]">
+      <div className="bg-white border border-slate-300 rounded-[32px] p-2.5 shadow-sm flex flex-col lg:flex-row gap-3">
+        <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl lg:min-w-[420px]">
           {[
-            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length, color: 'text-emerald-600', dot: 'bg-emerald-600' },
-            { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length, color: 'text-red-600', dot: 'bg-red-600' },
-            { id: 'enviadas', label: 'Enviadas', count: sentMessages.length, color: 'text-blue-600', dot: 'bg-blue-600' }
+            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length, color: 'text-emerald-700 font-bold', dot: 'bg-emerald-750' },
+            { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length, color: 'text-red-750 font-bold', dot: 'bg-red-750' },
+            { id: 'enviadas', label: 'Enviadas', count: sentMessages.length, color: 'text-blue-750 font-bold', dot: 'bg-blue-750' }
           ].map(t => (
             <button 
               key={t.id}
               onClick={() => setCorrespondenciaTab(t.id)}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all ${
                 correspondenciaTab === t.id 
-                  ? `bg-white ${t.color} shadow-md shadow-slate-200 ring-1 ring-slate-100` 
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
+                  ? `bg-white ${t.color} shadow-md shadow-slate-300 ring-2 ring-slate-200` 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
               }`}
             >
               {t.label}
               {t.count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
-                  correspondenciaTab === t.id ? `${t.dot} text-white` : 'bg-slate-300 text-slate-600'
+                <span className={`px-2 py-0.5 rounded-md text-[9.5px] font-black ${
+                  correspondenciaTab === t.id ? `${t.dot} text-white` : 'bg-slate-300 text-slate-700'
                 }`}>
                   {t.count}
                 </span>
@@ -255,13 +275,13 @@ export function MailContent({
         </div>
 
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-550" size={16} />
           <input 
             type="text"
             placeholder="Pesquisar correspondência oficial..."
             value={searchMail}
             onChange={(e) => setSearchMail(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 py-3 md:py-3.5 text-xs md:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-primary/5 focus:bg-white focus:border-primary/20 transition-all outline-none placeholder:text-slate-400"
+            className="w-full bg-slate-50 border border-slate-300 rounded-2xl pl-12 pr-4 py-3 md:py-3.5 text-xs md:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-primary/10 focus:bg-white focus:border-primary/30 transition-all outline-none placeholder:text-slate-500"
           />
         </div>
       </div>
@@ -302,13 +322,16 @@ export function MailContent({
                       {/* Cidadão / Órgão Emissor Column */}
                       <td className="py-5 px-5">
                         <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                               item.unread 
                                 ? 'bg-[#fff5f5] text-[#e05252] border border-[#fdd8d8]' 
                                 : 'bg-slate-100 text-slate-500 border border-slate-200'
                             }`}>
                               {item.unread ? 'Não Lida' : 'Lida'}
+                            </span>
+                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${getOrgBadgeStyles(item.org)}`}>
+                              {item.org.toUpperCase().startsWith('SOC - ') ? 'SOC' : item.org}
                             </span>
                             <span className="text-[9px] font-bold text-slate-400 font-mono">ID: #{item.id}</span>
                             {item.unread && (
@@ -317,7 +340,13 @@ export function MailContent({
                           </div>
                           <div className="font-black italic text-slate-900 text-[11px] md:text-sm uppercase tracking-tight leading-none">
                             {isInst 
-                              ? `CIDADÃO: ${item.org}` 
+                              ? item.org
+                                  .replace(/^Cidadão:\s*Cidadão:\s*/i, '')
+                                  .replace(/^CIDADÃO:\s*CIDADÃO:\s*/i, '')
+                                  .replace(/^CIDADÃO:\s*Cidadão:\s*/i, '')
+                                  .replace(/^Cidadão:\s*CIDADÃO:\s*/i, '')
+                                  .replace(/^Cidadão:\s*/i, '')
+                                  .replace(/^CIDADÃO:\s*/i, '')
                               : (item.org.startsWith('SOC - ') 
                                   ? item.org.replace('SOC - ', '') 
                                   : `ÓRGÃO: ${item.org}`

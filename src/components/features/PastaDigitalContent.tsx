@@ -29,7 +29,7 @@ import {
   Globe,
   FileSignature
 } from 'lucide-react';
-import { Document, DocRequest } from '../../types';
+import { Document, DocRequest, Correspondence } from '../../types';
 
 export interface ActionableDoc {
   id: string;
@@ -223,6 +223,50 @@ const INITIAL_PERMANENT_DOCS: ActionableDoc[] = [
       'Número de Diploma': 'UAN-L-998-2022',
       'Reitor Responsável': 'Prof. Dr. Pedro Magalhães'
     }
+  },
+  {
+    id: 'CDA-88123',
+    name: 'Ofício de Homologação: Passaporte de Serviço',
+    category: 'correspondencias',
+    categoryLabel: 'Correspondências',
+    date: '01/06/2026',
+    institution: 'SME',
+    code: 'CDA-88123',
+    issuer: 'SME - Posto Aduaneiro',
+    status: 'Ativo',
+    description: 'Ofício formalizando o parecer deferido para a emissão especial do passaporte de categoria de serviço pelo Serviço de Migração e Estrangeiros.',
+    holder: 'Edlasio Galhardo',
+    isOfficial: true,
+    fileSizeKb: 145,
+    meta: {
+      'Código de Ofício': 'CDA-88123',
+      'Assunto': 'Homologação de Emissão de Passaporte de Serviço',
+      'Emissor': 'SME - Posto Aduaneiro',
+      'Validade Jurídica': 'Irrevogável',
+      'Procuradoria Tributária': 'SME-LEG-998A'
+    }
+  },
+  {
+    id: 'CDA-90118',
+    name: 'Circular Fiscal: Isenção Sócio-Profissional',
+    category: 'correspondencias',
+    categoryLabel: 'Correspondências',
+    date: '02/06/2026',
+    institution: 'AGT',
+    code: 'CDA-90118',
+    issuer: 'Ministério das Finanças (MINFIN)',
+    status: 'Ativo',
+    description: 'Notificação geral de validação eletrónica de isenção tributária temporária sobre os rendimentos laborais em conformidade com a resolução fiscal n. 450 do MINFIN.',
+    holder: 'Edlasio Galhardo',
+    isOfficial: true,
+    fileSizeKb: 190,
+    meta: {
+      'Código de Ofício': 'CDA-90118',
+      'Assunto': 'Isenção Fiscal Sócio-Profissional',
+      'Emissor': 'Ministério das Finanças (MINFIN)',
+      'Apoio Legal': 'Resolução Fiscal n. 450',
+      'Estado Fiscal': 'Confirmado e Ativo'
+    }
   }
 ];
 
@@ -233,6 +277,8 @@ interface PastaDigitalContentProps {
   setSelectedDoc: (doc: Document | null) => void;
   setTab: (tab: string) => void;
   logSecurityEvent?: (action: string, type: 'info' | 'warning' | 'critical' | 'success') => void;
+  emergencyMode?: boolean;
+  correspondences?: Correspondence[];
 }
 
 export function PastaDigitalContent({ 
@@ -241,7 +287,9 @@ export function PastaDigitalContent({
   onCreateRequest, 
   setSelectedDoc: setGlobalSelectedDoc, 
   setTab, 
-  logSecurityEvent 
+  logSecurityEvent,
+  emergencyMode = false,
+  correspondences = []
 }: PastaDigitalContentProps) {
 
   // Local document states
@@ -272,7 +320,7 @@ export function PastaDigitalContent({
 
   // Convert default custom state `documents` from App.tsx into equivalent ActionableDoc objects
   const systemOfficialDocs = useMemo<ActionableDoc[]>(() => {
-    return documents.map(doc => {
+    const defaultDocsMapped = documents.map(doc => {
       const nameLower = doc.name.toLowerCase();
       let category: ActionableDoc['category'] = 'certificados';
       let categoryLabel = 'Certificados';
@@ -300,7 +348,7 @@ export function PastaDigitalContent({
         institution: doc.issuer || 'Estado de Angola',
         code: doc.code || 'CDA-GEN-001',
         issuer: doc.issuer || 'SME ou Conservatória',
-        status: 'Ativo',
+        status: 'Ativo' as const,
         description: `Carta digital oficial emitida pelo Correio Digital de Angola e homologada via protocolo criptográfico do Estado.`,
         holder: doc.holder || 'Edlasio Galhardo',
         isOfficial: true,
@@ -314,7 +362,57 @@ export function PastaDigitalContent({
         }
       };
     });
-  }, [documents]);
+
+    const correspondencesMapped = (correspondences || [])
+      .filter(c => c.recipient.toLowerCase().includes('edlasio') || c.recipient.toLowerCase() === 'edlasio galhardo')
+      .map(c => {
+        let category: ActionableDoc['category'] = 'correspondencias';
+        let categoryLabel = 'Expedientes';
+
+        if (c.institution === 'SME') {
+          category = 'civil';
+          categoryLabel = 'Registos SME';
+        } else if (c.institution === 'AGT') {
+          category = 'fiscal';
+          categoryLabel = 'Registos AGT';
+        }
+
+        return {
+          id: c.id,
+          name: c.subject,
+          category,
+          categoryLabel,
+          date: c.date,
+          institution: c.sender,
+          code: c.id,
+          issuer: c.sender,
+          status: 'Ativo' as const,
+          description: c.body,
+          holder: c.recipient,
+          isOfficial: true,
+          fileSizeKb: 180,
+          meta: {
+            'Titular': c.recipient,
+            'Validade Jurídica': 'Homologado - Pleno Efeito Lei (CDA)',
+            'Código de Ofício': c.id,
+            'Emissor': c.sender,
+            'Instituição Beneficiária': c.institution || 'N/A',
+            'Província de Origem': c.originProvince,
+            'Província de Destino': c.destinationProvince,
+            'Estado do Expediente': c.status,
+            'Assunto de Expediente': c.subject
+          }
+        };
+      });
+
+    const combined = [...defaultDocsMapped, ...correspondencesMapped];
+    const seen = new Set<string>();
+    return combined.filter(d => {
+      const duplicate = seen.has(d.id);
+      seen.add(d.id);
+      return !duplicate;
+    });
+  }, [documents, correspondences]);
 
   // Merge everything into a cohesive, centralized directory of official records
   const unifiedDirectory = useMemo<ActionableDoc[]>(() => {
@@ -373,6 +471,11 @@ export function PastaDigitalContent({
   }, [qrSharingCode]);
 
   const handleCreateQrCode = (code: string) => {
+    if (emergencyMode) {
+      alert("Acesso Bloqueado: Não é permitido gerar QR Code de partilha sob o Protocolo de Emergência Ciber-Defensiva SOC-AN-2026.");
+      logSecurityEvent?.(`BLOQUEIO_SEGURANCA: Tentativa de gerar QR Code recusada para salvaguarda de soberania digital.`, 'critical');
+      return;
+    }
     setQrSharingCode(code);
     setQrCountdown(900); // Reset to 15 mins
     logSecurityEvent?.(`PARTILHA_QR_PASTA: QR-Code dinâmico de partilha temporário foi gerado com validade de 15 minutos.`, 'info');
@@ -382,6 +485,13 @@ export function PastaDigitalContent({
     setIsVerifyingIntegrity(true);
     setVerificationResult('checking');
     setTimeout(() => {
+      if (emergencyMode) {
+        alert("Erro de Validação: Chaves de autenticação do Estado estão cifradas e indisponíveis (SOC-AN-2026).");
+        setVerificationResult('none');
+        setIsVerifyingIntegrity(false);
+        logSecurityEvent?.(`FALHA_CONECTIVIDADE: Chaves de matching sequestradas sob emergência de mitigação de intrusão.`, 'critical');
+        return;
+      }
       setVerificationResult('success');
       setIsVerifyingIntegrity(false);
       logSecurityEvent?.(`VERIFICACAO_SHA: Integridade do documento digital validada perante o log central do Estado.`, 'success');
@@ -403,6 +513,11 @@ export function PastaDigitalContent({
   };
 
   const notifyDownloadLocal = (doc: ActionableDoc) => {
+    if (emergencyMode) {
+      alert("Acesso Bloqueado: Download de PDF suspenso durante o Protocolo Ativo de Emergência SOC-AN-2026.");
+      logSecurityEvent?.(`BLOQUEADO: Tentativa de descarga rejeitada preventivamente sob emergência para ${doc.name}.`, 'critical');
+      return;
+    }
     alert(`Descarregando cópia autenticada e verificada pelo CDA em formato PDF chancelado para o documento:\n${doc.name}\n\nEspaço consumido: ${doc.fileSizeKb} KB.`);
     logSecurityEvent?.(`DESCARGA_CERTIFICADA: Cópia autenticada de ${doc.name} transferida via PDF.`, 'success');
   };
@@ -444,6 +559,38 @@ export function PastaDigitalContent({
           </span>
         </div>
       </div>
+
+      {/* cyberemergency SOC-AN-2026 Alert Banner */}
+      {emergencyMode && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 bg-red-500/10 border-2 border-red-500/25 p-5 rounded-[28px] flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-lg shadow-red-500/5 animate-pulse"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 bg-red-600 text-white rounded-2xl shrink-0 mt-0.5">
+              <Lock size={20} />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="px-2 py-0.5 bg-red-600 text-white text-[8px] font-black uppercase tracking-widest rounded-full">
+                  BLOQUEIO ATIVO SOC-AN-2026
+                </span>
+                <span className="text-[10px] font-mono font-bold text-red-500 uppercase">&quot;Sovereignty Shield&quot; em Luanda</span>
+              </div>
+              <h4 className="text-sm font-black uppercase text-slate-900 tracking-tight leading-none italic mt-1 font-sans">
+                Acesso Biométrico e Portabilidade Identitária Suspensa
+              </h4>
+              <p className="text-slate-600 text-[11px] leading-relaxed max-w-2xl mt-1">
+                Por motivos de salvaguarda ciber-defensiva de soberania nacional, as chaves criptográficas de identificação de &quot;Edlasio Galhardo&quot; foram sequestradas preventivamente. Download, emissões, assinatura e partilhas externas estão suspensas até o restabelecimento do protocolo de segurança.
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1.5 bg-red-200 text-red-800 text-[9px] font-black uppercase tracking-widest rounded-xl text-center md:self-center shrink-0">
+            Nível 5: Crítico
+          </span>
+        </motion.div>
+      )}
 
       {/* 2. MINIMAL STATE STATEMENT BANNER */}
       <div className="bg-slate-50 border border-slate-150 rounded-[28px] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">

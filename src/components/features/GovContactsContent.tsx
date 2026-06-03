@@ -136,13 +136,63 @@ export function GovContactsContent({
   }
 
   const [workers, setWorkers] = useState<Trabajador[]>(() => {
-    const saved = localStorage.getItem('correio_digital_workers');
+    const isPlatformAdmin = appMode === 'admin-workers';
+    const key = isPlatformAdmin ? 'correio_digital_admin_workers' : 'correio_digital_workers';
+    const saved = localStorage.getItem(key);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (e) {
         // Fallback
       }
+    }
+    if (isPlatformAdmin) {
+      return [
+        {
+          id: 'w-admin-1',
+          name: 'Edlasio Galhardo',
+          email: 'e.galhardo@mindis.gov.ao',
+          role: 'Administrador Geral / Central',
+          department: 'Infraestrutura Central (CDA)',
+          agentId: 'CDA-0001',
+          status: 'Ativo',
+          lastAccess: 'Hoje, 10:22',
+          phone: '+244 923 888 777'
+        },
+        {
+          id: 'w-admin-2',
+          name: 'Kambanza Neto',
+          email: 'k.neto@cda.gov.ao',
+          role: 'Suporte Técnico Especializado',
+          department: 'Segurança Cibernética',
+          agentId: 'CDA-0050',
+          status: 'Ativo',
+          lastAccess: 'Hoje, 08:30',
+          phone: '+244 924 113 050'
+        },
+        {
+          id: 'w-admin-3',
+          name: 'Marta Viana',
+          email: 'm.viana@cda.gov.ao',
+          role: 'Auditora Geral',
+          department: 'Auditoria & Compliance',
+          agentId: 'CDA-0022',
+          status: 'Ativo',
+          lastAccess: 'Ontem, 15:44',
+          phone: '+244 912 770 022'
+        },
+        {
+          id: 'w-admin-4',
+          name: 'Valeriano Lima',
+          email: 'v.lima@cda.gov.ao',
+          role: 'Moderador de Cadastros',
+          department: 'Processamento de Identidade',
+          agentId: 'CDA-0099',
+          status: 'Ativo',
+          lastAccess: '28/05/2026',
+          phone: '+244 931 555 099'
+        }
+      ];
     }
     return [
       {
@@ -193,8 +243,9 @@ export function GovContactsContent({
   });
 
   React.useEffect(() => {
-    localStorage.setItem('correio_digital_workers', JSON.stringify(workers));
-  }, [workers]);
+    const key = appMode === 'admin-workers' ? 'correio_digital_admin_workers' : 'correio_digital_workers';
+    localStorage.setItem(key, JSON.stringify(workers));
+  }, [workers, appMode]);
 
   // Citizen State (adapted from Interoperabilidade page for Admin "Usuários" page)
   interface Citizen {
@@ -534,7 +585,8 @@ export function GovContactsContent({
     });
   }, [workers, workerSearch]);
 
-  if (appMode === 'institution') {
+  if (appMode === 'institution' || appMode === 'admin-workers') {
+    const isPlatformAdmin = appMode === 'admin-workers';
     return (
       <div className="pb-24 text-left animate-fadeIn">
         {/* Banner header for Workers */}
@@ -545,14 +597,16 @@ export function GovContactsContent({
                 <Users size={16} />
               </div>
               <span className="font-mono text-xs font-black uppercase text-indigo-650 tracking-[0.2em]">
-                Portal Institucional &bull; Recursos Humanos
+                {isPlatformAdmin ? 'Administração Central • Recursos Humanos' : 'Portal Institucional • Recursos Humanos'}
               </span>
             </div>
             <h1 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">
-              Gestão de Agentes
+              {isPlatformAdmin ? 'Gestão de Agentes da Plataforma' : 'Gestão de Agentes'}
             </h1>
             <p className="text-slate-500 font-medium text-xs mt-2 max-w-xl">
-              Controle de agentes públicos, funcionários e técnicos autorizados da instituição. Administre as credenciais operacionais e registe novos operadores do sistema.
+              {isPlatformAdmin 
+                ? 'Controle de administradores, moderadores e técnicos autorizados da plataforma central. Administre permissões, acessos e registe novos operadores da plataforma.'
+                : 'Controle de agentes públicos, funcionários e técnicos autorizados da instituição. Administre as credenciais operacionais e registe novos operadores do sistema.'}
             </p>
           </div>
 
@@ -561,27 +615,35 @@ export function GovContactsContent({
               resetForm();
               setShowAddWorkerModal(true);
             }}
-            className="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-600/10 cursor-pointer border-0 transition-all self-start md:self-auto"
+            className="flex items-center gap-2 px-5 py-3 bg-blue-950 hover:bg-blue-900 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-950/10 cursor-pointer border-0 transition-all self-start md:self-auto"
           >
             <UserPlus size={16} />
-            Adicionar Agente
+            {isPlatformAdmin ? 'Adicionar Agente da Plataforma' : 'Adicionar Agente'}
           </button>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
-            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Total de Agentes</span>
+            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">
+              {isPlatformAdmin ? 'Total de Agentes da Plataforma' : 'Total de Agentes'}
+            </span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-3xl font-black text-slate-900 italic font-mono">{workers.length}</span>
               <span className="text-[10px] text-slate-400 font-bold">Inscritos</span>
             </div>
           </div>
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
-            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Canal Regulamentado</span>
+            <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">
+              {isPlatformAdmin ? 'Plataforma Geral' : 'Canal Regulamentado'}
+            </span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-black text-indigo-600 italic font-mono">AGT</span>
-              <span className="text-[10px] text-indigo-500 font-bold">Acesso Governamental</span>
+              <span className="text-3xl font-black text-indigo-600 italic font-mono">
+                {isPlatformAdmin ? 'CDA' : 'AGT'}
+              </span>
+              <span className="text-[10px] text-indigo-500 font-bold">
+                {isPlatformAdmin ? 'Administração de Sistemas' : 'Acesso Governamental'}
+              </span>
             </div>
           </div>
         </div>
@@ -593,10 +655,12 @@ export function GovContactsContent({
               <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
               <div>
                 <h3 className="text-lg font-black tracking-tighter text-slate-900 uppercase italic">
-                  Quadro de Colaboradores Autorizados
+                  {isPlatformAdmin ? 'Quadro de Agentes da Plataforma' : 'Quadro de Colaboradores Autorizados'}
                 </h3>
                 <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase font-mono">
-                  Base de dados de funcionários associados às credenciais do sistema
+                  {isPlatformAdmin 
+                    ? 'Base de dados de técnicos e administradores com acesso operacional ao sistema'
+                    : 'Base de dados de funcionários associados às credenciais do sistema'}
                 </span>
               </div>
             </div>
@@ -606,7 +670,7 @@ export function GovContactsContent({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-450" size={13} />
                 <input
                   type="text"
-                  placeholder="Pesquisar por Nome, Cargo, Email..."
+                  placeholder={isPlatformAdmin ? "Pesquisar por Nome, Cargo, Email..." : "Pesquisar por Nome, Cargo, Email..."}
                   value={workerSearch}
                   onChange={(e) => setWorkerSearch(e.target.value)}
                   className="pl-8 pr-3 py-1.5 w-full sm:w-[220px] bg-slate-55 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 outline-none placeholder:text-slate-400"
@@ -615,79 +679,103 @@ export function GovContactsContent({
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-55/30">
-            <div className="overflow-auto max-h-[500px] custom-scrollbar">
-              <table className="w-full text-left border-collapse font-sans">
-                <thead className="sticky top-0 z-10 bg-primary">
-                  <tr className="bg-primary text-white text-[9px] font-black uppercase tracking-widest">
-                    <th className="py-3.5 px-5 rounded-l-2xl">Nome Completo</th>
-                    <th className="py-3.5 px-3">Email</th>
-                    <th className="py-3.5 px-3">Telefone</th>
-                    <th className="py-3.5 px-3">Função / Cargo</th>
-                    <th className="py-3.5 px-5 text-right rounded-r-2xl">Ações</th>
+          {/* Beautiful tabular list for workers/agents presented in lines/rows */}
+          {filteredWorkers.length > 0 ? (
+            <div className="overflow-auto rounded-[24px] bg-slate-50/20 custom-scrollbar max-h-[600px] border border-slate-200">
+              <table className="w-full text-left border-collapse min-w-[900px]">
+                <thead className="sticky top-0 z-10 bg-blue-950 text-white text-[10px] font-black uppercase tracking-widest">
+                  <tr>
+                    <th className="py-4 px-5 rounded-l-2xl">Colaborador / Agente</th>
+                    <th className="py-4 px-5">E-mail / Contacto</th>
+                    <th className="py-4 px-5">Telefone</th>
+                    <th className="py-4 px-5">Função / Cargo</th>
+                    <th className="py-4 px-5 text-center">Estado</th>
+                    <th className="py-4 px-5 text-center">Último Acesso</th>
+                    <th className="py-4 px-5 text-center rounded-r-2xl">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100/90 text-xs text-slate-800">
+                <tbody className="bg-white">
                   {filteredWorkers.map((w) => (
-                    <tr key={w.id} className="hover:bg-slate-100/40 transition-colors">
+                    <tr key={w.id} className="text-xs text-[#334155] hover:bg-slate-50/60 transition-colors border-b border-slate-100 last:border-b-0">
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-750 text-xs uppercase shadow-3xs">
-                            {w.name.split(' ').map(n => n[0]).slice(0, 2).join('') || 'AG'}
+                          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-755 text-xs uppercase shadow-3xs shrink-0 font-sans">
+                            {w.name.split(' ').map(n => n[0]).slice(0, 2).join('') || (isPlatformAdmin ? 'TR' : 'AG')}
                           </div>
-                          <div>
-                            <span className="font-extrabold text-slate-900 leading-tight block uppercase">{w.name}</span>
+                          <div className="min-w-0 text-left">
+                            <span className="font-display font-black text-slate-900 text-xs sm:text-sm uppercase tracking-tight block truncate leading-none">{w.name}</span>
+                            <span className="text-[9px] font-mono font-bold text-slate-400 block mt-1">ID: {w.agentId || w.id.toUpperCase()}</span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-4 px-3 font-semibold text-slate-600">
-                        {w.email}
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-2 font-bold text-slate-700">
+                          <Mail size={12} className="text-slate-400 shrink-0" />
+                          <span className="truncate">{w.email}</span>
+                        </div>
                       </td>
 
-                      <td className="py-4 px-3 font-semibold text-slate-600 font-mono text-[10.5px]">
-                        {w.phone}
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-2 font-mono font-bold text-slate-600">
+                          <Smartphone size={12} className="text-slate-400 shrink-0" />
+                          <span>{w.phone}</span>
+                        </div>
                       </td>
 
-                      <td className="py-4 px-3 font-bold text-slate-805 text-[11px]">
-                        {w.role}
+                      <td className="py-4 px-5">
+                        <div className="text-left space-y-0.5">
+                          <span className="font-bold text-slate-800 text-[11px] block truncate max-w-[200px]">{w.role}</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block font-display">{w.department || 'Serviços Centrais'}</span>
+                        </div>
                       </td>
 
-                      <td className="py-4 px-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-4 px-5 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border tracking-wider shrink-0 select-none ${
+                          w.status === 'Ativo' 
+                            ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
+                            : 'bg-amber-50 border-amber-100 text-amber-700'
+                        }`}>
+                          {w.status || 'Ativo'}
+                        </span>
+                      </td>
+
+                      <td className="py-4 px-5 text-center font-mono text-[10px] font-bold text-slate-500">
+                        {w.lastAccess || 'Sem registo'}
+                      </td>
+
+                      <td className="py-4 px-5 text-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleEditWorkerClick(w)}
                             title="Editar Dados"
-                            className="p-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-205 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-3xs cursor-pointer transition-colors"
+                            className="py-1.5 px-3 bg-white border border-slate-205 hover:border-slate-405 text-slate-650 hover:text-slate-950 rounded-xl text-[9.5px] font-black uppercase tracking-wider cursor-pointer transition-colors"
                           >
                             Editar
                           </button>
                           <button
                             onClick={() => handleDeleteWorker(w.id, w.name)}
-                            title="Remover Agente"
-                            className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 border-0 rounded-lg cursor-pointer transition-all"
+                            title={isPlatformAdmin ? "Remover Agente da Plataforma" : "Remover Agente"}
+                            className="py-1.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-150 rounded-xl cursor-pointer transition-colors"
                           >
-                            <Trash2 size={11} />
+                            <Trash2 size={12} className="mx-auto" />
                           </button>
                         </div>
                       </td>
                     </tr>
                   ))}
-
-                  {filteredWorkers.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-slate-400">
-                        <Users size={28} className="mx-auto text-slate-300 mb-2" />
-                        <span className="text-[10.5px] font-black uppercase tracking-wider block">Nenhum agente localizado...</span>
-                        <p className="text-[9.5px] text-slate-400 font-bold uppercase mt-1">Experimente alterar os critérios de filtro ou pesquisa.</p>
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
-          </div>
+          ) : (
+            <div className="py-16 bg-white border border-slate-200 rounded-[32px] text-center text-slate-400 shadow-3xs w-full">
+              <Users size={28} className="mx-auto text-slate-300 mb-2" />
+              <span className="text-[10.5px] font-black uppercase tracking-wider block">
+                {isPlatformAdmin ? 'Nenhum agente da plataforma localizado...' : 'Nenhum agente localizado...'}
+              </span>
+              <p className="text-[9.5px] font-bold uppercase mt-1">Experimente alterar os critérios de filtro ou pesquisa.</p>
+            </div>
+          )}
         </div>
 
         {/* MODAL / SLIDE-OVER PARA ADICIONAR/EDITAR AGENTE */}
@@ -713,10 +801,14 @@ export function GovContactsContent({
                 <div>
                   <h3 className="text-xl md:text-2xl font-black text-slate-950 uppercase italic tracking-tight flex items-center gap-2.5">
                     <UserPlus className="text-indigo-650" size={22} />
-                    {isEditingWorker ? 'Editar Ficha do Agente' : 'Registar Novo Agente'}
+                    {isPlatformAdmin 
+                      ? (isEditingWorker ? 'Editar Ficha do Agente da Plataforma' : 'Registar Novo Agente da Plataforma')
+                      : (isEditingWorker ? 'Editar Ficha do Agente' : 'Registar Novo Agente')}
                   </h3>
                   <p className="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-wider font-mono">
-                    Introduza as credenciais operacionais autorizadas pela instituição
+                    {isPlatformAdmin 
+                      ? 'Introduza as credenciais operacionais autorizadas para a plataforma central'
+                      : 'Introduza as credenciais operacionais autorizadas pela instituição'}
                   </p>
                 </div>
 
@@ -739,7 +831,7 @@ export function GovContactsContent({
                       required
                       type="email"
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                      placeholder="f.manuel@cda.gov.ao"
+                      placeholder={isPlatformAdmin ? "f.manuel@mindis.gov.ao" : "f.manuel@cda.gov.ao"}
                       value={newWorkerEmail}
                       onChange={(e) => setNewWorkerEmail(e.target.value)}
                     />
@@ -763,7 +855,7 @@ export function GovContactsContent({
                       required
                       type="text"
                       className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                      placeholder="Ex: Inspetor Chefe"
+                      placeholder={isPlatformAdmin ? "Ex: Administrador de Redes" : "Ex: Inspetor Chefe"}
                       value={newWorkerRole}
                       onChange={(e) => setNewWorkerRole(e.target.value)}
                     />
@@ -780,7 +872,7 @@ export function GovContactsContent({
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 transition-all cursor-pointer border-0 shadow-lg shadow-indigo-600/15 font-bold"
+                      className="px-5 py-2.5 bg-blue-900 hover:bg-blue-950 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer border-0 shadow-lg shadow-blue-900/15 font-bold"
                     >
                       {isEditingWorker ? 'Guardar' : 'Submeter'}
                     </button>
@@ -936,7 +1028,7 @@ export function GovContactsContent({
             </div>
           </div>
 
-          {/* Dynamic User List Rendering */}
+          {/* Beautiful tabular list layout replacing the card grid */}
           {filteredCitizens.length === 0 ? (
             <div className="py-16 text-center animate-fadeIn">
               <div className="max-w-md mx-auto space-y-3">
@@ -958,23 +1050,24 @@ export function GovContactsContent({
               </div>
             </div>
           ) : (
-            <div className="overflow-auto rounded-[24px] border border-slate-100 bg-slate-50/20 custom-scrollbar max-h-[500px]">
-              <table className="w-full text-left border-collapse min-w-[950px]">
-                <thead className="sticky top-0 z-10 bg-[#0e2b64]">
-                  <tr className="border-b border-primary/20 bg-[#0e2b64] text-[10px] font-black uppercase tracking-wider text-white">
-                    <th className="py-4 px-5 font-black">Nome do Usuário</th>
-                    <th className="py-4 px-5 font-black">Documentação Extraída do B.I.</th>
-                    <th className="py-4 px-5 font-black">Mídias do Registo</th>
-                    <th className="py-4 px-5 font-black">Contacto</th>
-                    <th className="py-4 px-5 font-black">Localidade</th>
-                    <th className="py-4 px-5 font-black">Estado e Verificação</th>
-                    <th className="py-4 px-5 text-center font-black">Decisão</th>
+            <div className="overflow-auto rounded-[24px] bg-slate-50/20 custom-scrollbar max-h-[600px] border border-slate-200">
+              <table className="w-full text-left border-collapse min-w-[1000px]">
+                <thead className="sticky top-0 z-10 bg-blue-950 text-white text-[10px] font-black uppercase tracking-widest">
+                  <tr>
+                    <th className="py-4 px-5 rounded-l-2xl">Cidadão / Tipo</th>
+                    <th className="py-4 px-5">Documento BI</th>
+                    <th className="py-4 px-5">Contacto</th>
+                    <th className="py-4 px-5">Localidade</th>
+                    <th className="py-4 px-5 text-center">Score Match IA</th>
+                    <th className="py-4 px-5 text-center">Estado</th>
+                    <th className="py-4 px-5 text-center">Anexos / Ficheiros</th>
+                    <th className="py-4 px-5 text-center rounded-r-2xl">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="bg-white">
                   {filteredCitizens.map((citizen) => (
                     <tr 
-                      key={citizen.id} 
+                      key={citizen.id}
                       onClick={() => {
                         setSelectedReviewCitizen(citizen);
                         if (citizen.status === 'Pendente') {
@@ -989,124 +1082,95 @@ export function GovContactsContent({
                           setIsRejecting(false);
                         }
                       }}
-                      className="text-xs text-slate-800 hover:bg-slate-50 hover:text-slate-900 transition-all duration-150 cursor-pointer group"
+                      className="text-xs text-[#334155] border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors cursor-pointer"
                     >
-                      <td className="py-4 px-5">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-[9px] text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full uppercase tracking-wider group-hover:bg-indigo-100/50">
-                              {citizen.category}
-                            </span>
-                            <span className="text-[9px] font-mono font-bold text-slate-400">ID: {citizen.id.toUpperCase()}</span>
-                          </div>
-                          <div className="font-extrabold text-slate-900 group-hover:text-indigo-600 text-sm uppercase italic tracking-tight transition-colors">{citizen.name}</div>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-5">
-                        <div className="space-y-0.5">
-                          <div className="text-[11px] font-mono font-black text-slate-800 tracking-tight flex items-center gap-1">
-                            <IdCard size={12} className="text-slate-450" />
-                            {citizen.biNumber}
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-bold block uppercase leading-none truncate max-w-[180px]">{citizen.name}</span>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-5">
+                      <td className="py-4 px-5 font-bold text-slate-900">
                         <div className="flex items-center gap-3">
-                          {/* Fotocópia BI Indicador */}
-                          <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 rounded-lg p-1.5 py-1 text-[10px] font-bold text-slate-600 shadow-3xs" title="Fotocópia do B.I. integrada">
-                            <FileText size={12} className="text-indigo-650" />
-                            <span className="font-mono text-[9px]">BI.pdf</span>
+                          <div className="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0">
+                            <img src={citizen.facePhoto} alt="Rosto" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           </div>
-
-                          {/* Captura de Face Ativa */}
-                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-lg p-1 px-1.5 text-[10px] font-bold text-indigo-650 shadow-3xs" title="Auto-captura biométrica certificada">
-                            <div className="w-5 h-5 rounded-full overflow-hidden border border-indigo-200 flex-shrink-0">
-                              <img src={citizen.facePhoto} alt="Rosto" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <div className="min-w-0">
+                            <h4 className="font-display font-black text-slate-900 text-xs sm:text-sm uppercase leading-tight tracking-tight truncate max-w-[200px]">
+                              {citizen.name}
+                            </h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="font-extrabold text-[8.5px] text-indigo-650 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                {citizen.category}
+                              </span>
+                              <span className="text-[9px] font-mono font-bold text-slate-400">ID: {citizen.id.toUpperCase()}</span>
                             </div>
-                            <span className="font-mono text-[9px]">Face.raw</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="py-4 px-5 font-bold text-slate-600 font-mono text-[11px]">{citizen.contact}</td>
-
-                      <td className="py-4 px-5">
-                        <span className="font-extrabold text-slate-700 block text-[11px] leading-tight">{citizen.province}</span>
-                        <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">{citizen.municipio}</span>
-                      </td>
-
-                      <td className="py-4 px-5">
-                        {citizen.status === 'Aprovado' && (
-                          <div className="space-y-0.5">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 text-[9px] font-black uppercase tracking-wider animate-fade-in">
-                              <ShieldCheck size={11} /> Aprovado por IA
-                            </span>
-                            {citizen.verificationScore && (
-                              <span className="text-[9px] font-mono text-emerald-600/80 block font-bold uppercase tracking-wider">Match: {citizen.verificationScore}%</span>
+                            {citizen.reason && citizen.status === 'Não Aprovado' && (
+                              <p className="text-[9.5px] text-rose-600 line-clamp-1 italic mt-1 font-semibold" title={citizen.reason}>
+                                Rejeitado: {citizen.reason}
+                              </p>
                             )}
                           </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5 font-mono font-bold text-slate-800">
+                        <div className="flex items-center gap-1">
+                          <IdCard size={11} className="text-slate-400 shrink-0" />
+                          <span>{citizen.biNumber}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5 font-mono text-slate-600 font-bold">
+                        {citizen.contact}
+                      </td>
+                      <td className="py-4 px-5 font-bold text-slate-705">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={11} className="text-slate-400 shrink-0" />
+                          <div>
+                            <span className="text-slate-800 block leading-tight">{citizen.province}</span>
+                            <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wider">{citizen.municipio}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5 text-center font-mono font-black text-emerald-600">
+                        {citizen.verificationScore && citizen.status !== 'Não Aprovado' ? (
+                          <span>{citizen.verificationScore}%</span>
+                        ) : (
+                          <span className="text-slate-300">&mdash;</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-5 text-center">
+                        {citizen.status === 'Aprovado' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-black uppercase tracking-wider select-none">
+                            <ShieldCheck size={11} /> Aprovado
+                          </span>
                         )}
                         {citizen.status === 'Pendente' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-650 border border-orange-100 text-[9px] font-black uppercase tracking-wider animate-pulse">
-                            <Scan size={11} /> Pendente IA
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-655 border border-orange-100 text-[9px] font-black uppercase tracking-wider animate-pulse select-none">
+                            <Scan size={11} /> Pendente
                           </span>
                         )}
                         {citizen.status === 'Não Aprovado' && (
-                          <div className="space-y-0.5 max-w-[200px]">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-650 border border-red-150 text-[9px] font-black uppercase tracking-wider animate-fade-in">
-                              <ShieldAlert size={11} /> Rejeitado
-                            </span>
-                            {citizen.reason && (
-                              <span className="text-[8.5px] leading-normal text-red-500 font-bold block truncate max-w-[160px]" title={citizen.reason}>
-                                Motivo: {citizen.reason}
-                              </span>
-                            )}
-                          </div>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-650 border border-red-150 text-[9px] font-black uppercase tracking-wider select-none">
+                            <ShieldAlert size={11} /> Rejeitado
+                          </span>
                         )}
                       </td>
-
-                      <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
-                        {citizen.status === 'Pendente' ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedReviewCitizen(citizen);
-                              setAiEvaluationState('idle');
-                              setAiMatchScore(null);
-                              setRejectionReason('');
-                              setIsRejecting(false);
-                              setReviewStepTab(1);
-                              setValidatedFields({
-                                name: true,
-                                bi: true,
-                                doc: true,
-                                photo: true,
-                                province: true,
-                                municipio: true,
-                                email: true,
-                                phone: true,
-                                emergency: true,
-                                fingerprint: true,
-                                facial: true
-                              });
-                              setRejectionStep('geral');
-                            }}
-                            className="bg-indigo-600 hover:bg-indigo-750 text-white font-black text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl cursor-pointer border-0 transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 mx-auto"
-                          >
-                            <Scan size={13} /> Analisar Credenciais
-                          </button>
-                        ) : (
-                          <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-4 px-5 text-center">
+                        <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1 bg-slate-50 border border-slate-205 rounded-lg p-1.5 py-0.5 text-[9.5px] font-bold text-slate-600 shadow-3xs" title="Fotocópia do B.I. integrada">
+                            <FileText size={10} className="text-indigo-650" />
+                            <span className="font-mono text-[8px]">BI.pdf</span>
+                          </div>
+                          <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-lg p-1 py-0.5 text-[9.5px] font-bold text-indigo-655 shadow-3xs" title="Auto-captura biométrica certificada">
+                            <Scan size={10} className="text-indigo-650" />
+                            <span className="font-mono text-[8px]">Face.raw</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5 text-center">
+                        <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          {citizen.status === 'Pendente' ? (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedReviewCitizen(citizen);
-                                setAiEvaluationState('completed');
-                                setAiMatchScore(citizen.verificationScore || 95.0);
-                                setRejectionReason(citizen.reason || '');
+                                setAiEvaluationState('idle');
+                                setAiMatchScore(null);
+                                setRejectionReason('');
                                 setIsRejecting(false);
                                 setReviewStepTab(1);
                                 setValidatedFields({
@@ -1124,25 +1188,56 @@ export function GovContactsContent({
                                 });
                                 setRejectionStep('geral');
                               }}
-                              className="bg-slate-50 hover:bg-slate-100 text-slate-700 font-black text-[10px] uppercase tracking-widest px-3.5 py-2.5 rounded-xl cursor-pointer border border-slate-200 transition-all flex items-center justify-center gap-1"
+                              className="bg-indigo-600 hover:bg-indigo-750 text-white font-black text-[9px] uppercase tracking-wide py-1.5 px-2.5 rounded-lg cursor-pointer border-0 transition-colors shadow-xs active:scale-95 flex items-center justify-center gap-1"
                             >
-                              <Eye size={13} /> Revisar
+                              <Scan size={11} /> Analisar
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (confirm(`Remover usuário "${citizen.name}" permanentemente do cadastro?`)) {
-                                  setCitizens(prev => prev.filter(c => c.id !== citizen.id));
-                                  addAuditLog?.(`Remoção: Usuário "${citizen.name}" removido permanentemente.`, 'critical');
-                                }
-                              }}
-                              className="bg-red-50 hover:bg-red-100 text-red-650 border-0 p-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center"
-                              title="Eliminar permanentemente"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        )}
+                          ) : (
+                            <div className="flex gap-1 justify-center">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedReviewCitizen(citizen);
+                                  setAiEvaluationState('completed');
+                                  setAiMatchScore(citizen.verificationScore || 95.0);
+                                  setRejectionReason(citizen.reason || '');
+                                  setIsRejecting(false);
+                                  setReviewStepTab(1);
+                                  setValidatedFields({
+                                    name: true,
+                                    bi: true,
+                                    doc: true,
+                                    photo: true,
+                                    province: true,
+                                    municipio: true,
+                                    email: true,
+                                    phone: true,
+                                    emergency: true,
+                                    fingerprint: true,
+                                    facial: true
+                                  });
+                                  setRejectionStep('geral');
+                                }}
+                                className="bg-white hover:bg-slate-50 text-slate-705 font-black text-[9px] uppercase tracking-wide py-1.5 px-2 rounded-lg cursor-pointer border border-slate-205 transition-colors flex items-center justify-center gap-0.5"
+                              >
+                                <Eye size={11} /> Revisar
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Remover usuário "${citizen.name}" permanentemente do cadastro?`)) {
+                                    setCitizens(prev => prev.filter(c => c.id !== citizen.id));
+                                    addAuditLog?.(`Remoção: Usuário "${citizen.name}" removido permanentemente.`, 'critical');
+                                  }
+                                }}
+                                className="bg-rose-50 hover:bg-rose-105 text-rose-650 border border-slate-200 p-1.5 rounded-lg cursor-pointer transition-colors"
+                                title="Eliminar permanentemente"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1565,26 +1660,7 @@ export function GovContactsContent({
         )}
       </AnimatePresence>
 
-      {/* CENTRAL BRANDING STATUS FOOTER */}
-      <div className="mt-12 bg-slate-55 border border-slate-150 p-6 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-4 text-left font-sans">
-        <div className="flex items-center gap-3">
-          <Layers className="text-indigo-650 shrink-0" size={20} />
-          <div>
-            <h5 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">
-              Conexão Unificada de Administração Geral (CDA)
-            </h5>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 leading-normal">
-              Protocolo de segurança robusto de ponta-a-ponta e distribuição certificada de credenciais governamentais.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0 animate-fadeIn">
-          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="font-mono text-[9px] font-black text-indigo-750 uppercase tracking-widest">
-            Barramento Activo: Central-Admin-Gateway
-          </span>
-        </div>
-      </div>
+      {/* CENTRAL BRANDING STATUS FOOTER REMOVED */}
 
     </div>
   );

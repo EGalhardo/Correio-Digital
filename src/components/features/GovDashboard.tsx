@@ -438,6 +438,28 @@ export function GovDashboard({
     [],
   );
 
+  const monthlyData = useMemo(() => [
+    { name: "Jan", correspondencias: 102400, documentos: 45000 },
+    { name: "Fev", correspondencias: 115000, documentos: 52000 },
+    { name: "Mar", correspondencias: 135400, documentos: 61000 },
+    { name: "Abr", correspondencias: 158200, documentos: 78000 },
+    { name: "Mai", correspondencias: 184500, documentos: 95000 },
+    { name: "Jun", correspondencias: 248752, documentos: 125000 }
+  ], []);
+
+  const topInstitutions = useMemo(() => [
+    { name: "SME - Serviço de Migração e Estrangeiros", volume: 342150, color: "bg-indigo-600" },
+    { name: "AGT - Administração Geral Tributária", volume: 298450, color: "bg-emerald-600" },
+    { name: "MINJUS - Ministério da Justiça", volume: 184200, color: "bg-slate-900" },
+    { name: "INSS - Segurança Social", volume: 156300, color: "bg-indigo-500" },
+    { name: "MINSA - Ministério da Saúde", volume: 112400, color: "bg-rose-500" },
+    { name: "ENDE - Electricidade de Angola", volume: 92100, color: "bg-amber-500" },
+    { name: "EPAL - Empresa Pública de Águas", volume: 84300, color: "bg-sky-500" },
+    { name: "PNA - Polícia Nacional", volume: 76500, color: "bg-blue-600" },
+    { name: "CNE - Comissão Nacional Eleitoral", volume: 62400, color: "bg-red-500" },
+    { name: "BPC - Banco Poupança e Crédito", volume: 54100, color: "bg-teal-500" }
+  ], []);
+
   const activities = useMemo(
     () => [
       {
@@ -764,45 +786,56 @@ export function GovDashboard({
           </div>
         </section>
 
-        {/* Stats Grid for Users & Provinces - Harmonizing with Trabalhadores page style with gray borders */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Total de Utilizadores</span>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-black text-slate-900 italic font-mono">1.842.150</span>
-                <span className="text-[10px] text-slate-400 font-bold">Cidadãos Inscritos</span>
-              </div>
+        {/* Indicadores Estratégicos Adicionais */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
+            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Processados Hoje</span>
+            <div className="mt-2">
+              <span className="text-xl font-black text-slate-900 italic font-mono leading-none">1.240</span>
+              <span className="text-[7.5px] text-emerald-600 font-bold block mt-1 uppercase tracking-wider">&bull; +14.2% HoH</span>
             </div>
-            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2 pt-2 border-t border-slate-100">
-              Cidadãos ativos registados no sistema nacional de Correio Digital de Angola.
-            </p>
           </div>
-          
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Distribuição Geográfica</span>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-black text-indigo-600 italic font-mono">18</span>
-                <span className="text-[10px] text-indigo-600 font-bold">Províncias Ativas</span>
-              </div>
+          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
+            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Tempo de Resposta</span>
+            <div className="mt-2">
+              <span className="text-xl font-black text-indigo-600 italic font-mono leading-none">4.2h</span>
+              <span className="text-[7.5px] text-indigo-500 font-bold block mt-1 uppercase tracking-wider">&bull; 98% no SLA</span>
             </div>
-            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2 pt-2 border-t border-slate-100">
-              Cobertura administrativa total estabelecida com sincronização provincial.
-            </p>
           </div>
-
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs flex flex-col justify-between">
-            <div>
-              <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">Taxa de Adesão Média</span>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-black text-emerald-600 italic font-mono">+12.5%</span>
-                <span className="text-[10px] text-emerald-600 font-bold">Crescimento Mensal</span>
-              </div>
+          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
+            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Insts. Activas</span>
+            <div className="mt-2">
+              <span className="text-xl font-black text-slate-900 italic font-mono leading-none">156</span>
+              <span className="text-[7.5px] text-slate-400 font-bold block mt-1 uppercase tracking-wider">&bull; 100% On-line</span>
             </div>
-            <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-2 pt-2 border-t border-slate-100">
-              Adesão média de novos utilizadores com assinatura biométrica validada.
-            </p>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
+            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Novos Cidadãos</span>
+            <div className="mt-2">
+              <span className="text-xl font-black text-emerald-600 italic font-mono leading-none">+350</span>
+              <span className="text-[7.5px] text-emerald-500 font-bold block mt-1 uppercase tracking-wider">&bull; Biometria OK</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
+            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Docs Emitidos</span>
+            <div className="mt-2">
+              <span className="text-xl font-black text-slate-900 italic font-mono leading-none">725.109</span>
+              <span className="text-[7.5px] text-slate-400 font-bold block mt-1 uppercase tracking-wider">&bull; Selados digital</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
+            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Uso de I.A.</span>
+            <div className="mt-2">
+              <span className="text-xl font-black text-slate-950 italic font-mono leading-none">87.5%</span>
+              <span className="text-[7.5px] text-indigo-500 font-bold block mt-1 uppercase tracking-wider">&bull; Automação</span>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
+            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Agentes Activos</span>
+            <div className="mt-2">
+              <span className="text-xl font-black text-indigo-600 italic font-mono leading-none">45</span>
+              <span className="text-[7.5px] text-slate-400 font-bold block mt-1 uppercase tracking-wider">&bull; Painel Admin</span>
+            </div>
           </div>
         </div>
 
@@ -1390,6 +1423,131 @@ export function GovDashboard({
               </div>
             </div>
           </section>
+        </div>
+
+        {/* Additional Strategic Widgets for Angola Admin Restructure */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mt-6">
+          
+          {/* Widget 1: Top 10 Instituições */}
+          <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-1 h-5 bg-indigo-600 rounded-full" />
+                <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
+                  Top 10 Instituições (Volume)
+                </h3>
+              </div>
+              <div className="space-y-3.5 mt-2">
+                {topInstitutions.map((inst, index) => {
+                  const percentage = Math.round((inst.volume / 350000) * 100);
+                  return (
+                    <div key={inst.name} className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-slate-700 truncate max-w-[200px]">{index + 1}. {inst.name}</span>
+                        <span className="font-mono text-slate-950 shrink-0">{inst.volume.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div className={`h-full ${inst.color} rounded-full`} style={{ width: `${percentage}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* Widget 2: Crescimento Mensal */}
+          <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col justify-between">
+            <div className="flex-1 flex flex-col justify-between">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-1 h-5 bg-indigo-600 rounded-full" />
+                <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
+                  Crescimento Geral CDA
+                </h3>
+              </div>
+              <div className="h-[250px] w-full flex-1 mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorCorr" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorDoc" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', color: '#ffffff', borderRadius: '12px', fontSize: '10px' }} />
+                    <Area type="monotone" dataKey="correspondencias" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#colorCorr)" name="Correios" />
+                    <Area type="monotone" dataKey="documentos" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorDoc)" name="Documentos" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex items-center justify-center gap-6 text-[10px] font-bold text-slate-500 mt-4 pt-4 border-t border-slate-100">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-xs bg-indigo-600" />
+                  <span>Correspondências</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
+                  <span>Documentos</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Widget 3: Actividade em Tempo Real */}
+          <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col justify-between">
+            <div className="flex-1 flex flex-col">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-3">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-650"></span>
+                  </span>
+                  <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
+                    Actividade em Tempo Real
+                  </h3>
+                </div>
+                <span className="text-[8px] font-mono font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 uppercase">Operando</span>
+              </div>
+              
+              <div className="space-y-4 mt-2 overflow-y-auto max-h-[300px] flex-1 pr-1 custom-scrollbar">
+                {[
+                  { desc: "AGT notificou cidadão Carlos Santos sobre folha fiscal", time: "Há 1 min", status: "success", info: "NIF 241098..." },
+                  { desc: "SME efetuou validação biométrica com êxito", time: "Há 4 mins", status: "success", info: "BI 009874..." },
+                  { desc: "Tribunal Supremo emitiu Certidão Digital de Não Devedor", time: "Há 8 mins", status: "info", info: "Proc #219" },
+                  { desc: "Tentativa de login de agente IP bloqueado temporariamente", time: "Há 12 mins", status: "warning", info: "IP: 197.80.3.5" },
+                  { desc: "ENDE publicou contrato multilateral unificado", time: "Há 18 mins", status: "success", info: "Contador #3A" },
+                  { desc: "Erro de handshake SSL no barramento da EPAL resoluto", time: "Há 22 mins", status: "success", info: "EPAL_GATE" },
+                  { desc: "MINJUS registrou novo agente de verificação física", time: "Há 25 mins", status: "info", info: "MINJUS_PROD" }
+                ].map((act, index) => (
+                  <div key={index} className="flex gap-3 justify-between items-start text-[10px] p-2.5 hover:bg-slate-50 rounded-2xl transition-colors border border-slate-50">
+                    <div className="space-y-1">
+                      <p className="font-bold text-slate-800 leading-normal">{act.desc}</p>
+                      <div className="flex items-center gap-2 font-mono text-[8.5px] text-slate-400">
+                        <span className="font-bold text-[8.5px] text-indigo-600 uppercase">{act.info}</span>
+                        <span>&bull;</span>
+                        <span>{act.time}</span>
+                      </div>
+                    </div>
+                    <span className={`text-[8px] uppercase font-mono font-black border px-2 py-0.5 rounded-md ${
+                      act.status === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+                      act.status === 'warning' ? 'bg-amber-50 border-amber-100 text-amber-700' :
+                      'bg-indigo-50 border-indigo-100 text-indigo-700'
+                    }`}>
+                      {act.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
         </div>
       </div>
     </div>

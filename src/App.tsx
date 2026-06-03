@@ -32,6 +32,8 @@ import {
   GovContactsContent,
   GovPerfilContent,
   GovSegurancaContent,
+  GovRelatorioContent,
+  GovCorrespondenciasContent,
   PastaDigitalContent,
   SolicitarDocumentoContent,
   RegisterStepper,
@@ -48,7 +50,7 @@ import {
   HIGHLIGHT_SLIDES,
   NOTIFICATIONS,
 } from './constants/data';
-import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocRequest } from './types';
+import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocRequest, Correspondence } from './types';
 import { ensureProtocolOnMessage, ensureProtocolOnDocument, generateProtocol } from './utils/protocolGenerator';
 import { OfflineManager, OfflineAction } from './utils/offlineManager';
 
@@ -178,6 +180,77 @@ export default function App() {
     ];
   });
 
+  const [correspondences, setCorrespondences] = useState<Correspondence[]>(() => {
+    const saved = localStorage.getItem('gov_correspondences');
+    if (saved) return JSON.parse(saved);
+    return [
+      {
+        id: "CDA-90118",
+        sender: "Ministério das Finanças (MINFIN)",
+        recipient: "Manuel de Vasconcelos",
+        subject: "Notificação Geral de Isenção Fiscal Sócio-Profissional",
+        originProvince: "Luanda",
+        destinationProvince: "Benguela",
+        institution: "AGT",
+        status: "Não Lida",
+        date: "02/06/2026",
+        body: "Prezado Cidadão, sob a égide da resolução fiscal n. 450 do Ministério das Finanças, confirmamos que a isenção tributária temporária sobre os rendimentos laborais está validada eletronicamente no sistema integrado."
+      },
+      {
+        id: "CDA-88123",
+        sender: "SME - Posto Aduaneiro",
+        recipient: "Edlasio Galhardo",
+        subject: "Homologação de Emissão de Passaporte de Serviço",
+        originProvince: "Cabinda",
+        destinationProvince: "Luanda",
+        institution: "SME",
+        status: "Lida",
+        date: "01/06/2026",
+        body: "Exmo Senhor, informamos que o pedido de emissão de passaporte de categoria de serviço foi deferido pela Direção Geral do Serviço de Migração e Estrangeiros."
+      },
+      {
+        id: "CDA-77123",
+        sender: "Tribunal de Comarca de Viana",
+        recipient: "Ana Maria dos Santos",
+        subject: "Intimação Administrativa Eletrónica Unificada",
+        originProvince: "Luanda",
+        destinationProvince: "Luanda",
+        institution: "Tribunal Supremo",
+        status: "Enviada",
+        date: "28/05/2026",
+        body: "Notificamos o destinatário sobre o parecer homologado de audiência arbitral no âmbito dos registros prediais integrados de Viana."
+      },
+      {
+        id: "CDA-65104",
+        sender: "Conservatória de Registo Civil",
+        recipient: "José Kalunga",
+        subject: "Disponibilização de Certidão de Nascimento Digitalizada",
+        originProvince: "Huambo",
+        destinationProvince: "Huíla",
+        institution: "Registo Civil",
+        status: "Não Lida",
+        date: "27/05/2026",
+        body: "Prezado requerente, informamos que o seu registro civil foi unificado a nível nacional e a certidão digital de nascimento correspondente encontra-se lavrada no barramento."
+      },
+      {
+        id: "CDA-44301",
+        sender: "ENDE - Direção Comercial",
+        recipient: "Filomena da Rocha",
+        subject: "Instalação Coletiva de Contador Pré-Pago Integrado",
+        originProvince: "Bengo",
+        destinationProvince: "Luanda",
+        institution: "ENDE",
+        status: "Enviada",
+        date: "25/05/2026",
+        body: "A ENDE vem comunicar que a regularização técnica e o plano de transição de contador pré-pago foi implementada no seu domicílio com apoio governamental."
+      }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('gov_correspondences', JSON.stringify(correspondences));
+  }, [correspondences]);
+
   const [emergencyMode, setEmergencyMode] = useState(() => {
     return localStorage.getItem('gov_emergency_mode') === 'true';
   });
@@ -301,6 +374,8 @@ export default function App() {
 
   // UI States
   const [loginSubMode, setLoginSubMode] = useState<'normal' | 'two-factor' | 'face-capture' | 'register'>('normal');
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   const [showVoiceGuide, setShowVoiceGuide] = useState(false);
   const [highlightSteps, setHighlightSteps] = useState(false);
   const [enteredOtp, setEnteredOtp] = useState('');
@@ -322,6 +397,10 @@ export default function App() {
   const [appMode, setAppMode] = useState<AppMode>('user');
   const isGovMode = appMode === 'admin';
   const isInstMode = appMode === 'institution';
+  
+  useEffect(() => {
+    setLoginError(null);
+  }, [loginSubMode, appMode]);
   
   const [correspondenciaTab, setCorrespondenciaTab] = useState('lidas');
   const [isComposing, setIsComposing] = useState(false);
@@ -373,13 +452,19 @@ export default function App() {
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (loginSubMode === 'face-capture' && faceProgress === 100) {
+      if (emergencyMode && !isInstMode && !isGovMode && (bi.toLowerCase().includes('002931298') || bi.toLowerCase().includes('edlasio') || profileName.toLowerCase().includes('edlasio'))) {
+        setLoginError("Autenticação Biométrica Recusada: Chaves Faciais Suspensas por Ordem do Protocolo SOC-AN-2026!");
+        setFaceProgress(0);
+        setIsFaceScanning(false);
+        return;
+      }
       timer = setTimeout(() => {
         setStage('app');
         addAuditLog('Acesso concedido via Biometria Facial no Portal', 'success');
       }, 800);
     }
     return () => clearTimeout(timer);
-  }, [faceProgress, loginSubMode]);
+  }, [faceProgress, loginSubMode, emergencyMode, bi, isInstMode, isGovMode, profileName]);
 
   useEffect(() => {
     if (loginSubMode !== 'face-capture') {
@@ -816,6 +901,11 @@ export default function App() {
     setContactForm({ name: '', bi: '', relation: '', type: 'Normal' });
   };
 
+  const handleUpdateContactType = (id: number, newType: 'Normal' | 'Emergência') => {
+    setContacts(prev => prev.map(c => c.id === id ? { ...c, type: newType } : c));
+    addAuditLog(`Prioridade do contacto atualizada para ${newType}`, 'info');
+  };
+
   const handleEmitDocument = (doc: Document, notification: AppNotification) => {
     setDocuments(prev => [doc, ...prev]);
     setNotifications(prev => [notification, ...prev]);
@@ -1052,6 +1142,7 @@ export default function App() {
             logSecurityEvent={logSecurityEvent}
             docRequests={docRequests.filter(r => r.userBi === bi)}
             onCreateRequest={handleCreateDocRequest}
+            emergencyMode={emergencyMode}
           />
         );
       case 'documento':
@@ -1084,6 +1175,8 @@ export default function App() {
             setSelectedDoc={setSelectedDoc}
             setTab={setTab}
             logSecurityEvent={logSecurityEvent}
+            emergencyMode={emergencyMode}
+            correspondences={correspondences}
           />
         );
       case 'contatos':
@@ -1125,6 +1218,7 @@ export default function App() {
             setSearchContact={setSearchContact}
             setIsAddingContact={setIsAddingContact}
             setContactToDelete={setContactToDelete}
+            onUpdateContactType={handleUpdateContactType}
           />
         );
       case 'perfil':
@@ -1190,7 +1284,57 @@ export default function App() {
             userRequests={userRequests.filter(r => r.status !== 'concluido')}
           />
         );
+      case 'gov-correspondencias':
+        return (
+          <GovCorrespondenciasContent 
+            correspondences={correspondences}
+            onAddCorrespondence={(newCor) => {
+              setCorrespondences(prev => [newCor, ...prev]);
+              addAuditLog(`Novo Expediente Enviado: ${newCor.id} de ${newCor.sender} para ${newCor.recipient}`, 'success');
+              
+              if (newCor.recipient.toLowerCase().includes('edlasio')) {
+                const newMailMessage: Message = {
+                  id: parseInt(newCor.id.replace(/\D/g, '')) || Math.floor(Math.random() * 1000000),
+                  org: newCor.sender,
+                  preview: newCor.subject,
+                  date: `${newCor.date} 12:00`,
+                  unread: 1,
+                  status: 'Urgente',
+                  details: {
+                    subject: newCor.subject,
+                    body: newCor.body,
+                    deadline: `${newCor.date}`,
+                    state: 'Pendente',
+                    actions: ['Visualizar', 'Baixar Recibo']
+                  },
+                  protocol: {
+                    internalId: `INT-${newCor.id}`,
+                    protocolNumber: `PROT-${newCor.id}-CDA`,
+                    issuerInstitution: newCor.sender,
+                    officialIssueDate: newCor.date,
+                    officialTime: "12:00",
+                    issuerResponsible: "Gabinete Central",
+                    category: "Oficial",
+                    documentType: "Expediente Eletrónico",
+                    currentState: "Ativo",
+                    priority: "Alta",
+                    deadlineDate: newCor.date,
+                    qrCodeUrl: "",
+                    digitalSignature: "VALIDA",
+                    documentHash: "sha255-automatic-correspondence-unification-integrity"
+                  }
+                };
+                setInbox(prev => [newMailMessage, ...prev]);
+              }
+            }}
+            onUpdateStatus={(id, newStatus) => {
+              setCorrespondences(prev => prev.map(c => c.id === id ? { ...c, status: newStatus as any } : c));
+              addAuditLog(`Expediente ${id} marcado como ${newStatus}`, 'info');
+            }}
+          />
+        );
       case 'gov-docs':
+      case 'gov-documentos':
         return (
           <GovDocsContent 
             documents={documents} 
@@ -1233,7 +1377,7 @@ export default function App() {
       case 'gov-trabalhadores':
         return (
           <GovContactsContent
-            appMode="institution"
+            appMode="admin-workers"
             bi={bi}
             setBi={setBi}
             nif={nif}
@@ -1314,8 +1458,83 @@ export default function App() {
         return null; // Removido ou integrado no painel principal
       case 'gov-interoperabilidade':
         return <GovInteroperabilidadeContent onLog={addAuditLog} />;
+      case 'gov-relatorio':
+        return (
+          <GovRelatorioContent 
+            correspondences={correspondences}
+            auditLogs={auditLogs}
+          />
+        );
       case 'gov-seguranca':
-        return <GovSegurancaContent />;
+        return (
+          <GovSegurancaContent 
+            emergencyMode={emergencyMode}
+            onToggleEmergencyMode={(enabled) => {
+              setEmergencyMode(enabled);
+              localStorage.setItem('gov_emergency_mode', enabled ? 'true' : 'false');
+              
+              if (enabled) {
+                // Add Audit logs
+                addAuditLog('PROTOCOLO SOC-AN-2026 ATIVADO: Bloqueio Identitário e Chaves Criptográficas Encriptadas', 'critical');
+                
+                // Add Notification to citizen
+                setNotifications(prev => [{
+                  id: Date.now(),
+                  title: 'ALERTA SOC-AN-2026 UNIFICADO',
+                  message: 'Protocolo de Emergência Ciber-Defensiva Ativado. Chaves Faciais e Biométricas de Edlasio Galhardo Temporariamente Suspensas / Bloqueadas para Salvaguarda de Soberania Digital!',
+                  time: 'Agora',
+                  type: 'warning',
+                  targetTab: 'home'
+                }, ...prev]);
+
+                // Despacho de Mensagem na Inbox (Mail)
+                const dateAO = new Date().toLocaleDateString('pt-AO');
+                const timeAO = new Date().toLocaleTimeString('pt-AO');
+                const emergencyRoom = "Gabinete de Gestão de Crises - Luanda, Angola";
+
+                const killSwitchMessage: Message = {
+                  id: 2026911,
+                  org: "SOC",
+                  preview: "ALERTA CRÍTICO: ATIVAÇÃO PROTOCOLO NACIONAL SOC-AN-2026",
+                  date: `${dateAO} ${timeAO}`,
+                  unread: 1,
+                  status: 'Crítico',
+                  details: {
+                    subject: "ALERTA CRÍTICO: ATIVAÇÃO PROTOCOLO NACIONAL SOC-AN-2026",
+                    body: `PROT: SOC-AN-2026\nDATA: ${dateAO}\nHORA: ${timeAO}\nLOCALIZAÇÃO: ${emergencyRoom}\n\nATENÇÃO CIDADÃO: Por directiva da tutela de Defesa e Soberania Digital, as chaves de acesso facial e credenciais criptográficas associadas à entidade legal 'Edlasio Galhardo' foram quarentenadas preventivamente. O seu acesso biométrico ao barramento estatal permanece temporariamente suspenso para salvaguarda de integridade.`,
+                    deadline: "IMEDIATO",
+                    state: "Quarentena Activa",
+                    actions: ["Ver Protocolo", "Baixar Auto de Suspensão"]
+                  },
+                  protocol: {
+                    internalId: "INT-SOC-AN-2026",
+                    protocolNumber: "SOC-AN-2026",
+                    issuerInstitution: "SOC - CENTRO DE SEGURANÇA NACIONAL",
+                    officialIssueDate: dateAO,
+                    officialTime: timeAO,
+                    issuerResponsible: "Gabinete de Crise",
+                    category: "Cibernética",
+                    documentType: "Protocolo Nacional",
+                    currentState: "Suspenso",
+                    priority: "Crítica",
+                    deadlineDate: dateAO,
+                    qrCodeUrl: "",
+                    digitalSignature: "VALIDA",
+                    documentHash: "sha256-6bd19ac268c2-emergency-protocol-block-key-strict"
+                  }
+                };
+
+                setInbox(prev => [killSwitchMessage, ...prev]);
+
+                // Suspend the active citizen profile status indicator
+                setVerificationStatus('Acesso Biométrico Suspenso / Chaves Bloqueadas para Salvaguarda de Soberania');
+              } else {
+                addAuditLog('PROTOCOLO SOC-AN-2026 DESATIVADO: Restabelecimento Geral de Credenciais Faciais', 'success');
+                setVerificationStatus('Totalmente verificado');
+              }
+            }}
+          />
+        );
 
       default:
         return null;
@@ -1368,6 +1587,11 @@ export default function App() {
 
   if (stage === 'login') {
     const handleLoginSubmit = () => {
+      if (emergencyMode && !isInstMode && !isGovMode && (bi.toLowerCase().includes('002931298') || bi.toLowerCase().includes('edlasio') || profileName.toLowerCase().includes('edlasio'))) {
+        setLoginError("Credenciais e chaves biométricas suspensas / bloqueadas temporariamente ao abrigo do protocolo SOC-AN-2026 para salvaguarda de soberania digital nacional.");
+        addAuditLog("BLOQUEIO IDENTITÁRIO: Tentativa de login por Edlasio Galhardo suspensa (SOC-AN-2026)", "critical");
+        return;
+      }
       if (hasTwoFactor) {
         setLoginSubMode('two-factor');
       } else {
@@ -1446,6 +1670,21 @@ export default function App() {
             }`}
           >
             <AnimatePresence mode="wait">
+              {loginError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="bg-red-50 border border-red-200/60 text-red-700 px-4 py-3 rounded-2xl text-[10.5px] font-bold flex items-start gap-2 mb-4 leading-normal"
+                >
+                  <AlertTriangle size={15} className="text-red-500 shrink-0 mt-0.5 animate-bounce" />
+                  <div>
+                    <span className="font-extrabold block">ACESSO NEGADO / PROTOCOLO CRÍTICO</span>
+                    {loginError}
+                  </div>
+                </motion.div>
+              )}
+
               {loginSubMode === 'normal' && (
                 <motion.div
                   key="login-normal"
@@ -1502,6 +1741,11 @@ export default function App() {
                       <button 
                         type="button"
                         onClick={() => {
+                          if (emergencyMode && !isInstMode && !isGovMode && (bi.toLowerCase().includes('002931298') || bi.toLowerCase().includes('edlasio') || profileName.toLowerCase().includes('edlasio'))) {
+                            setLoginError("Autenticação Biométrica Recusada: Credenciais e chaves biométricas bloqueadas temporariamente ao abrigo do protocolo SOC-AN-2026.");
+                            addAuditLog("INTERRUPÇÃO COCOS: Tentativa de login facial por Edlasio Galhardo suspensa (SOC-AN-2026)", "critical");
+                            return;
+                          }
                           setFaceProgress(0);
                           setLoginSubMode('face-capture');
                           addAuditLog('Iniciado Login Biométrico Facial', 'info');
@@ -1756,6 +2000,11 @@ export default function App() {
                     type="button"
                     disabled={isFaceScanning || faceProgress === 100}
                     onClick={() => {
+                      if (emergencyMode && !isInstMode && !isGovMode && (bi.toLowerCase().includes('002931298') || bi.toLowerCase().includes('edlasio') || profileName.toLowerCase().includes('edlasio'))) {
+                        setLoginError("Autenticação Biométrica Recusada: Credenciais e chaves biométricas bloqueadas temporariamente ao abrigo do protocolo SOC-AN-2026. Acesso Suspenso para Salvaguarda de Soberania.");
+                        addAuditLog("INTERRUPÇÃO COCOS: Caputra facial recusada (SOC-AN-2026)", "critical");
+                        return;
+                      }
                       setFaceProgress(0);
                       setIsFaceScanning(true);
                       addAuditLog('Iniciou digitalização biométrica facial no portal', 'info');

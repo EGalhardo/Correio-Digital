@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Home, Mail, QrCode, Users, User, LogOut, Trash2, Landmark, BarChart3, Shield, Activity, Settings, Scan, Folder, Receipt } from 'lucide-react';
+import { Home, Mail, QrCode, Users, User, LogOut, Trash2, Landmark, BarChart3, Shield, Activity, Settings, Scan, Folder, Receipt, FileText } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Message, Document, AppMode } from '../../types';
 
@@ -41,10 +41,13 @@ const institutionItems: MenuItem[] = [
 
 const adminItems: MenuItem[] = [
   { id: 'gov-dashboard', label: 'Painel', icon: BarChart3 },
-  { id: 'gov-interoperabilidade', label: 'Instituição', icon: Activity },
-  { id: 'gov-contatos', label: 'Usuário', icon: Users },
-  { id: 'gov-trabalhadores', label: 'Agentes', icon: Users },
-  { id: 'gov-perfil', label: 'Conta', icon: User },
+  { id: 'gov-interoperabilidade', label: 'Instituições', icon: Landmark },
+  { id: 'gov-correspondencias', label: 'Correspondências', icon: Mail },
+  { id: 'gov-contatos', label: 'Cidadãos', icon: User },
+  { id: 'gov-trabalhadores', label: 'Agentes da Plataforma', icon: Users },
+  { id: 'gov-relatorio', label: 'Relatórios', icon: FileText },
+  { id: 'gov-seguranca', label: 'Auditoria', icon: Shield },
+  { id: 'gov-perfil', label: 'Conta', icon: Settings },
 ];
 
 export function Sidebar({ 

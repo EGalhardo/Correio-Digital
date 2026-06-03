@@ -17,6 +17,7 @@ interface WalletContentProps {
   logSecurityEvent?: (action: string, type: 'info' | 'warning' | 'critical' | 'success') => void;
   docRequests: DocRequest[];
   onCreateRequest: (docType: string, institution: string) => void;
+  emergencyMode?: boolean;
 }
 
 export function WalletContent({
@@ -28,6 +29,7 @@ export function WalletContent({
   logSecurityEvent,
   docRequests,
   onCreateRequest,
+  emergencyMode = false,
 }: WalletContentProps) {
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestData, setRequestData] = useState({ institution: 'AGT', docType: '' });
@@ -51,6 +53,38 @@ export function WalletContent({
 
   return (
     <section className="space-y-8 pb-10">
+      {/* SOC-AN-2026 Alert Banner inside Wallet */}
+      {emergencyMode && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border-2 border-red-500/25 p-5 rounded-[28px] flex flex-col md:flex-row items-start md:items-center justify-between gap-5 shadow-lg shadow-red-500/5"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 bg-red-600 text-white rounded-2xl shrink-0 mt-0.5 animate-pulse">
+              <XCircle size={20} />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="px-2 py-0.5 bg-red-650 text-white text-[8px] font-mono font-black uppercase tracking-widest rounded-full animate-bounce">
+                  BLOQUEIO DE SEGURANÇA NACIONAL
+                </span>
+                <span className="text-[10px] font-mono font-bold text-red-500 uppercase">SOC-AN-2026 ACTIVADO</span>
+              </div>
+              <h4 className="text-sm font-black uppercase text-slate-900 tracking-tight leading-none italic mt-1 font-sans">
+                Chaves Criptográficas Encriptadas e Bloqueadas
+              </h4>
+              <p className="text-slate-600 text-[11px] leading-relaxed max-w-2xl mt-1">
+                Ao abrigo do protocolo de defesa do Estado angolano, as portas biométricas de identificação do cidadão &quot;Edlasio Galhardo&quot; foram recolhidas preventivamente para salvaguardar a soberania digital contra intrusões de redes externas.
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1.5 bg-red-200 text-red-800 text-[9px] font-black uppercase tracking-widest rounded-xl text-center md:self-center shrink-0">
+            Acesso Restrito
+          </span>
+        </motion.div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
@@ -119,12 +153,31 @@ export function WalletContent({
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ delay: index * 0.04 }}
                 onClick={() => {
+                  if (emergencyMode) {
+                    logSecurityEvent?.(`BLOQUEIO DE SEGURANÇA NACIONAL: Acesso ao documento ${doc.name} recusado.`, 'critical');
+                    return;
+                  }
                   setSelectedDoc(doc);
                   setTab('documento');
                   logSecurityEvent?.(`Acesso ao documento: ${doc.name} (${doc.code})`, 'info');
                 }}
                 className="w-full text-left relative overflow-hidden rounded-[40px] shadow-2xl group transition-all hover:scale-[1.02] active:scale-95"
               >
+                {emergencyMode && (
+                  <div className="absolute inset-0 bg-red-950/85 backdrop-blur-md z-30 flex flex-col items-center justify-center p-6 text-center transition-all duration-300">
+                    <div className="w-12 h-12 rounded-full bg-red-650/30 flex items-center justify-center border border-red-500/40 mb-3 animate-pulse text-red-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-alert"><path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                    </div>
+                    <span className="text-[10px] font-mono font-black uppercase tracking-[0.25em] text-red-150 bg-red-900/60 border border-red-700/80 px-3 py-1 rounded-full mb-1">
+                      PROTOCOLO SOC-AN-2026 ATIVO
+                    </span>
+                    <h5 className="text-white text-base font-black uppercase italic tracking-tight leading-none">Acesso Temporariamente Restrito</h5>
+                    <p className="text-red-200/80 text-[10px] mt-2 leading-relaxed max-w-[240px]">
+                      Chaves criptográficas bloqueadas por motivos de segurança e integridade cibernética nacional.
+                    </p>
+                  </div>
+                )}
+
                 {/* Background Pattern */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${getTheme()}`} />
                 <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none">

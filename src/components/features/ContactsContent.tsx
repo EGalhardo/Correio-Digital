@@ -15,6 +15,7 @@ interface ContactsContentProps {
   setSearchContact: (search: string) => void;
   setIsAddingContact: (isAdding: boolean) => void;
   setContactToDelete: (contact: Contact) => void;
+  onUpdateContactType?: (id: number, newType: 'Normal' | 'Emergência') => void;
 }
 
 export function ContactsContent({
@@ -24,6 +25,7 @@ export function ContactsContent({
   setSearchContact,
   setIsAddingContact,
   setContactToDelete,
+  onUpdateContactType,
 }: ContactsContentProps) {
   const [selectedClassification, setSelectedClassification] = useState<'Todos' | 'Emergência' | 'Normal'>('Todos');
 
@@ -155,13 +157,29 @@ export function ContactsContent({
                           <ShieldCheck size={10} className="text-indigo-500" />
                           Protocolo Ativo
                         </div>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest ${
-                          (contact.type || 'Normal') === 'Emergência'
-                            ? 'bg-red-50 text-red-700 border border-red-150'
-                            : 'bg-slate-100 text-slate-600 border border-slate-200'
-                        }`}>
-                          {contact.type || 'Normal'}
-                        </span>
+                        <div className="flex gap-1">
+                          {(['Normal', 'Emergência'] as const).map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => {
+                                if (onUpdateContactType) {
+                                  onUpdateContactType(contact.id, t);
+                                }
+                              }}
+                              className={`px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest border transition-all cursor-pointer ${
+                                (contact.type || 'Normal') === t
+                                  ? t === 'Emergência'
+                                    ? 'bg-red-50 text-red-700 border-red-300 ring-2 ring-red-100 shadow-3xs font-extrabold'
+                                    : 'bg-primary/10 text-primary border-primary-300 ring-2 ring-primary/5 shadow-3xs font-extrabold'
+                                  : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700 hover:bg-slate-50'
+                              }`}
+                              title={`Mudar prioridade para ${t}`}
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
                       </td>
                       <td className="py-4 px-5">
                         <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider ${
