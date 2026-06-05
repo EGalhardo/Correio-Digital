@@ -33,6 +33,7 @@ const institutionItems: MenuItem[] = [
   { id: 'home', label: 'Painel', icon: Home },
   { id: 'correspondencias', label: 'Correio', icon: Mail },
   { id: 'gov-contatos', label: 'Agentes', icon: Users },
+  { id: 'inst-qrcode', label: 'QR Code', icon: QrCode },
   { id: 'perfil', label: 'Conta', icon: User },
 ];
 

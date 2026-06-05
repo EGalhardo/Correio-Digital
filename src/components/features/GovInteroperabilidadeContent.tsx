@@ -315,7 +315,7 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
 
         <button
           onClick={openCreateModal}
-          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md transition-all shrink-0 cursor-pointer flex items-center gap-2"
+          className="px-6 py-3 bg-indigo-950 hover:bg-indigo-900 border border-indigo-950 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-md transition-all shrink-0 cursor-pointer flex items-center gap-2"
         >
           <Plus size={14} strokeWidth={3} /> Registar Instituição
         </button>
@@ -331,18 +331,23 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {/* Search */}
+          {/* Search Dropdown replacing input */}
           <div className="space-y-1.5 col-span-1 md:col-span-2">
             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Localizar Instituição (Sigla/Nome)</label>
             <div className="relative">
-              <input 
-                type="text" 
-                value={searchTerm} 
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} 
-                placeholder="Ex: AGT, ENDE..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-850 focus:bg-white"
-              />
-              <Search size={13} className="text-slate-400 absolute left-3 top-3.5" />
+              <select
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-850 cursor-pointer appearance-none"
+              >
+                <option value="">Todas as Instituições</option>
+                {institutions.map(inst => (
+                  <option key={inst.id} value={inst.name}>{inst.name} - {inst.fullName}</option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <ChevronDown size={14} />
+              </div>
             </div>
           </div>
 
@@ -422,96 +427,96 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
       {/* Beautiful tabular list layout replacing the card grid */}
       <div className="space-y-6">
         {paginatedInstitutions.length > 0 ? (
-          <div className="overflow-auto rounded-[24px] bg-slate-50/20 custom-scrollbar max-h-[600px] border border-slate-200">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
-              <thead className="sticky top-0 z-10 bg-blue-950 text-white text-[10px] font-black uppercase tracking-widest">
+          <div className="overflow-x-auto rounded-[24px] bg-slate-50/20 max-h-[600px] border border-slate-200">
+            <table className="w-full text-left border-collapse text-[10px] md:text-xs">
+              <thead className="sticky top-0 z-10 bg-blue-950 text-white text-[8px] md:text-[9.5px] font-black uppercase tracking-wider">
                 <tr>
-                  <th className="py-4 px-5 rounded-l-2xl">Instituição / Sigla</th>
-                  <th className="py-4 px-5">Categoria</th>
-                  <th className="py-4 px-5">Província / Município</th>
-                  <th className="py-4 px-5 text-center">Volume Correio</th>
-                  <th className="py-4 px-5 text-center">Agentes</th>
-                  <th className="py-4 px-5 text-center">Taxa Resposta</th>
-                  <th className="py-4 px-5 text-center">Atividade</th>
-                  <th className="py-4 px-5 text-center">Estado</th>
-                  <th className="py-4 px-5 text-center rounded-r-2xl min-w-[280px]">Ações</th>
+                  <th className="py-2.5 px-3 rounded-l-2xl">Instituição</th>
+                  <th className="py-2.5 px-3">Categoria</th>
+                  <th className="py-2.5 px-3">Localidade</th>
+                  <th className="py-2.5 px-3 text-center">Correio</th>
+                  <th className="py-2.5 px-3 text-center">Agentes</th>
+                  <th className="py-2.5 px-3 text-center">Resposta</th>
+                  <th className="py-2.5 px-3 text-center">Atividade</th>
+                  <th className="py-2.5 px-3 text-center">Estado</th>
+                  <th className="py-2.5 px-3 text-center rounded-r-2xl w-[190px]">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
                 {paginatedInstitutions.map((inst) => (
-                  <tr key={inst.id} className="text-xs text-[#334155] border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
-                    <td className="py-4 px-5 font-bold text-slate-900">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-xl bg-slate-950 text-white flex items-center justify-center font-mono font-black text-xs uppercase shadow-3xs shrink-0 select-none">
+                  <tr key={inst.id} className="text-[#334155] border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60 transition-colors">
+                    <td className="py-2 px-3 font-bold text-slate-900">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-7 h-7 rounded-lg bg-slate-950 text-white flex items-center justify-center font-mono font-black text-[9px] uppercase shadow-3xs shrink-0 select-none">
                           {inst.name.slice(0, 3)}
                         </div>
                         <div className="min-w-0">
-                          <span className="font-display font-black text-slate-900 block uppercase leading-none">{inst.name}</span>
-                          <span className="text-[10px] text-slate-400 block mt-1 truncate max-w-[220px] font-medium">{inst.fullName}</span>
+                          <span className="font-display font-black text-slate-850 block uppercase leading-none text-[10.5px]">{inst.name}</span>
+                          <span className="text-[8.5px] text-slate-400 block mt-0.5 truncate max-w-[150px] font-medium">{inst.fullName}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-5">
-                      <span className="bg-slate-100 border border-slate-200 text-slate-800 px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-extrabold font-display">
+                    <td className="py-2 px-3">
+                      <span className="bg-slate-100 border border-slate-200 text-slate-800 px-2 py-0.5 rounded-full text-[8.5px] uppercase tracking-wider font-extrabold font-display">
                         {inst.category}
                       </span>
                     </td>
-                    <td className="py-4 px-5 font-bold text-slate-750">
-                      <div className="flex items-center gap-1">
-                        <MapPin size={11} className="text-slate-400" />
-                        <span>{inst.province} &bull; {inst.municipio}</span>
+                    <td className="py-2 px-3 font-bold text-slate-750">
+                      <div className="flex items-center gap-0.5 text-[9.5px]">
+                        <MapPin size={10} className="text-slate-400 shrink-0" />
+                        <span className="truncate max-w-[130px]">{inst.province} &bull; {inst.municipio}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-5 text-center font-mono font-bold text-slate-700">
+                    <td className="py-2 px-3 text-center font-mono font-bold text-slate-700 text-[10.5px]">
                       {inst.totalCorrespondence.toLocaleString()}
                     </td>
-                    <td className="py-4 px-5 text-center font-mono font-bold text-slate-700">
+                    <td className="py-2 px-3 text-center font-mono font-bold text-slate-700 text-[10.5px]">
                       {inst.totalAgents}
                     </td>
-                    <td className="py-4 px-5 text-center font-mono font-black text-emerald-600">
+                    <td className="py-2 px-3 text-center font-mono font-black text-emerald-600 text-[10.5px]">
                       {inst.responseRate}
                     </td>
-                    <td className="py-4 px-5 text-center font-bold text-slate-500">
-                      <div className="flex items-center justify-center gap-1">
-                        <Clock size={11} className="text-slate-400" />
+                    <td className="py-2 px-3 text-center font-bold text-slate-500">
+                      <div className="flex items-center justify-center gap-0.5 text-[9.5px]">
+                        <Clock size={10} className="text-slate-400 shrink-0" />
                         <span>{inst.lastActivity}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-5 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border tracking-wider shrink-0 select-none ${
+                    <td className="py-2 px-3 text-center">
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase border tracking-wider shrink-0 select-none ${
                         inst.status === 'Ativa' 
                           ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
-                          : 'bg-rose-50 border-rose-105 text-rose-700'
+                          : 'bg-rose-50 border-rose-100 text-rose-700'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${inst.status === 'Ativa' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <span className={`w-1 h-1 rounded-full ${inst.status === 'Ativa' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                         {inst.status}
                       </span>
                     </td>
-                    <td className="py-4 px-5 text-center min-w-[280px]">
-                      <div className="flex items-center justify-center gap-1.5">
+                    <td className="py-2 px-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => openEditModal(inst)}
-                          className="py-1 px-2.5 bg-white border border-slate-200 hover:border-slate-450 rounded-lg text-slate-655 hover:text-slate-950 transition-colors cursor-pointer text-[9.5px] font-black uppercase tracking-wider"
+                          className="py-1 px-1.5 bg-white border border-slate-200 hover:border-slate-400 rounded-md text-slate-600 hover:text-slate-900 transition-colors cursor-pointer text-[8.5px] font-black uppercase tracking-wider"
                           title="Editar Instituição"
                         >
-                          Editar
+                          Edit
                         </button>
                         <button
                           onClick={() => setSelectedInstHistory(inst)}
-                          className="py-1 px-2.5 bg-white border border-slate-200 hover:border-slate-450 rounded-lg text-slate-655 hover:text-indigo-650 transition-colors cursor-pointer text-[9.5px] font-black uppercase tracking-wider"
-                          title="Histórico"
+                          className="py-1 px-1.5 bg-white border border-slate-200 hover:border-slate-400 rounded-md text-slate-600 hover:text-indigo-650 transition-colors cursor-pointer text-[8.5px] font-black uppercase tracking-wider"
+                          title="Historial"
                         >
-                          Histórico
+                          Hist
                         </button>
                         <button
                           onClick={() => toggleStatus(inst)}
-                          className={`px-2.5 py-1 rounded-lg border text-[9.5px] font-black uppercase tracking-wider transition-colors cursor-pointer ${
+                          className={`px-1.5 py-1 rounded-md border text-[8.5px] font-black uppercase tracking-wider transition-colors cursor-pointer ${
                             inst.status === 'Ativa'
                               ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100/30'
                               : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100/30'
                           }`}
                         >
-                          {inst.status === 'Ativa' ? 'Desactivar' : 'Activar'}
+                          {inst.status === 'Ativa' ? 'Off' : 'On'}
                         </button>
                       </div>
                     </td>

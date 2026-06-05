@@ -5,7 +5,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { ShieldCheck, Mail, FileText, Send, Clock } from 'lucide-react';
-import { HIGHLIGHT_SLIDES, GOV_HIGHLIGHT_SLIDES } from '../../constants/data';
+import { HIGHLIGHT_SLIDES, INST_HIGHLIGHT_SLIDES } from '../../constants/data';
 import { Message } from '../../types';
 
 interface HomeContentProps {
@@ -19,6 +19,7 @@ interface HomeContentProps {
   handleSelectMessage: (msg: Message) => void;
   onCreateRequest?: (type: string, priority: 'Alta' | 'Média' | 'Baixa') => void;
   isInst?: boolean;
+  onDoubleClickInstitution?: (name: string) => void;
 }
 
 export function HomeContent({
@@ -31,9 +32,10 @@ export function HomeContent({
   sentMessages,
   handleSelectMessage,
   onCreateRequest,
-  isInst
+  isInst,
+  onDoubleClickInstitution
 }: HomeContentProps) {
-  const slides = isInst ? GOV_HIGHLIGHT_SLIDES : HIGHLIGHT_SLIDES;
+  const slides = isInst ? INST_HIGHLIGHT_SLIDES : HIGHLIGHT_SLIDES;
   const currentSlide = slides[activeSlide % slides.length];
 
   return (
@@ -64,7 +66,7 @@ export function HomeContent({
           </motion.div>
         </AnimatePresence>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
 
         {/* Slide Indicators */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
@@ -124,12 +126,14 @@ export function HomeContent({
       </div>
 
       <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-5 shadow-sm overflow-hidden relative group">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-50">
           <div className="flex items-center gap-2">
              <div className="w-1.5 h-6 bg-primary rounded-full" />
-             <h3 className="text-slate-950 font-black text-xs md:text-base italic tracking-tighter uppercase">Instituições Conectadas</h3>
+             <div className="min-w-0">
+               <h3 className="text-slate-950 font-black text-xs md:text-base italic tracking-tighter uppercase leading-none">Instituições Conectadas</h3>
+             </div>
           </div>
-          <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Governação Electrónica</div>
+          <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest self-baseline sm:self-auto">Governação Electrónica</div>
         </div>
         <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
           {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras", "INE"].map((name) => (
@@ -144,7 +148,11 @@ export function HomeContent({
                    onCreateRequest?.("Certificação Estatística", "Média");
                 }
               }}
+              onDoubleClick={() => {
+                onDoubleClickInstitution?.(name);
+              }}
               className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-primary text-white border border-primary/20 whitespace-nowrap hover:bg-[#091f46] hover:border-primary transition-all cursor-pointer shrink-0 shadow-md hover:shadow-lg grow-0 text-left"
+              title="Dê duplo clique para ver detalhes desta instituição"
             >
               {name}
             </button>
@@ -191,7 +199,7 @@ export function HomeContent({
                   <span className="font-bold text-slate-700">{m.org}:</span>
                   <span className="ml-1 text-slate-500 font-medium">{m.preview}</span>
                 </div>
-                <span className="text-slate-600 font-black shrink-0 text-[10px] bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">{m.date}</span>
+                <span className="text-white font-black shrink-0 text-[10px] bg-emerald-600 px-2.5 py-1 rounded-lg border border-emerald-700 font-sans tracking-wide uppercase">{m.date}</span>
               </div>
             ))}
           </div>
@@ -212,7 +220,7 @@ export function HomeContent({
                   <span className="font-bold text-slate-700">{m.org}:</span>
                   <span className="ml-1 text-slate-500 font-medium">{m.preview}</span>
                 </div>
-                <span className="text-blue-600 font-black shrink-0 text-[10px] bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">{m.date}</span>
+                <span className="text-white font-black shrink-0 text-[10px] bg-blue-600 px-2.5 py-1 rounded-lg border border-blue-700 font-sans tracking-wide uppercase">{m.date}</span>
               </div>
             ))}
           </div>

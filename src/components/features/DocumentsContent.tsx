@@ -41,6 +41,31 @@ import {
 } from 'lucide-react';
 import { Message } from '../../types';
 
+const safeCopyToClipboard = (text: string): boolean => {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) {}
+
+  try {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.setAttribute('readonly', '');
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    return true;
+  } catch (err) {
+    console.error('Failed to copy: ', err);
+    return false;
+  }
+};
+
 function renderCategoryIcon(iconName: string, size = 10) {
   switch (iconName) {
     case 'Bell': return <Bell size={size} />;
@@ -1311,7 +1336,7 @@ export function DocumentsContent({
                         <button
                           type="button"
                           onClick={() => {
-                            navigator.clipboard.writeText(activePayingInvoice.reference);
+                            safeCopyToClipboard(activePayingInvoice.reference);
                             setCopiedInvoiceId(activePayingInvoice.id);
                             setTimeout(() => setCopiedInvoiceId(null), 2000);
                           }}

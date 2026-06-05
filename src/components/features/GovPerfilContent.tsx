@@ -88,14 +88,14 @@ export function GovPerfilContent({
           <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
           
           <div className="relative mt-4 mb-4">
-            <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border-4 border-slate-50 p-1.5 bg-white shadow-xl relative">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border border-slate-200 p-1.5 bg-white relative">
               <img 
                 src={USER_PROFILE_PHOTO} 
                 alt={profileName} 
                 className="w-full h-full rounded-[20px] object-cover"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl shadow-md border-2 border-white bg-emerald-500">
+              <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl border border-slate-200 bg-emerald-500">
                 <BadgeCheck size={16} />
               </div>
             </div>
@@ -140,13 +140,13 @@ export function GovPerfilContent({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Nome Completo */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo</span>
                 <span className="text-xs font-bold text-slate-800 block">{profileName}</span>
               </div>
 
               {/* B.I. */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Bilhete de Identidade (BI)</span>
                 <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? bi : bi.replace(/\(?[A-Z0-9]{6}\)?$/, '******')}
@@ -154,7 +154,7 @@ export function GovPerfilContent({
               </div>
 
               {/* Email */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Funcional</span>
                 <span className="text-xs font-bold text-slate-800 block mb-1">edlasio.galhardo@mindis.gov.ao</span>
                 <span className="text-[9px] text-amber-600 font-bold bg-amber-50 rounded-lg px-2 py-0.5 border border-amber-100 italic block w-fit">
@@ -163,7 +163,7 @@ export function GovPerfilContent({
               </div>
 
               {/* Telefone */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone Principal</span>
                 <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? phone : phone.replace(/\d{3} \d{3}$/, '*** ***')}
@@ -171,7 +171,7 @@ export function GovPerfilContent({
               </div>
 
               {/* Contribuinte (NIF) */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Contribuinte (NIF)</span>
                 <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? nif : nif.replace(/\d{4}$/, '****')}
@@ -179,7 +179,7 @@ export function GovPerfilContent({
               </div>
 
               {/* Passaporte */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Passaporte</span>
                 <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? passport : passport.replace(/[A-Z0-9]{4}$/, '****')}
@@ -187,13 +187,13 @@ export function GovPerfilContent({
               </div>
 
               {/* Morada */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl md:col-span-2">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Departamento / Administração</span>
                 <span className="text-xs font-bold text-slate-800 block">Ministério da Defesa e Infraestrutura de Segurança</span>
               </div>
 
               {/* Registo de Acesso */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl md:col-span-2">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nível de Acesso</span>
                 <span className="text-xs font-bold text-slate-800 block">Administrador de Sistema (Infraestrutura Central - CDA)</span>
               </div>
@@ -248,7 +248,7 @@ export function GovPerfilContent({
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</span>
                   <input 
                     type="password"
-                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                     placeholder="Senha atual"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
@@ -259,7 +259,7 @@ export function GovPerfilContent({
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Palavra-passe</span>
                   <input 
                     type="password"
-                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                     placeholder="Nova palavra-passe"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -270,7 +270,7 @@ export function GovPerfilContent({
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</span>
                   <input 
                     type="password"
-                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                     placeholder="Repita a nova senha"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}

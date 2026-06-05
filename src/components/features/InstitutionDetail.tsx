@@ -1,0 +1,714 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
+import { 
+  ArrowLeft, 
+  Mail, 
+  Send, 
+  FileText, 
+  Clock, 
+  Receipt, 
+  ShieldCheck, 
+  AlertCircle,
+  TrendingUp,
+  Inbox,
+  FileCheck,
+  X,
+  Download,
+  Printer,
+  Copy,
+  Check,
+  QrCode
+} from 'lucide-react';
+import { Message } from '../../types';
+
+const safeCopyToClipboard = (text: string): boolean => {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) {}
+
+  try {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.setAttribute('readonly', '');
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    return true;
+  } catch (err) {
+    console.error('Failed to copy: ', err);
+    return false;
+  }
+};
+
+interface InstitutionDetailProps {
+  institutionName: string;
+  inbox: Message[];
+  sentMessages: Message[];
+  docInbox: Message[];
+  onBack: () => void;
+  onSelectMessage: (msg: Message) => void;
+}
+
+const INSTITUTION_FULL_NAMES: Record<string, { full: string; desc: string; category: string }> = {
+  SME: { 
+    full: "SME - Serviço de Migração e Estrangeiros", 
+    desc: "Controle de entrada, permanência, saída e emissão de vistos, passaportes e documentos migratórios.",
+    category: "Defesa e Segurança" 
+  },
+  AGT: { 
+    full: "AGT - Administração Geral Tributária", 
+    desc: "Gestão de impostos, taxas aduaneiras e controle de conformidade fiscal e aduaneira da República de Angola.",
+    category: "Finanças e Fiscalidade" 
+  },
+  ENDE: { 
+    full: "ENDE - Empresa Nacional de Distribuição de Electricidade", 
+    desc: "Distribuição, manutenção operacional e comercialização de energia elétrica em todo o território nacional.",
+    category: "Infraestruturas e Energia" 
+  },
+  EPAL: { 
+    full: "EPAL - Empresa Pública de Águas de Luanda", 
+    desc: "Abastecimento de água potável, tratamento, canalização e saneamento básico na Província de Luanda.",
+    category: "Infraestruturas e Recursos Hídricos" 
+  },
+  Tribunal: { 
+    full: "Tribunal de Comarca de Luanda", 
+    desc: "Órgão do poder judicial responsável por dirimir conflitos civis, criminais e aplicar as leis no território.",
+    category: "Justiça e Direitos Humanos" 
+  },
+  Hospital: { 
+    full: "Hospital Geral de Luanda", 
+    desc: "Unidade hospitalar de referência para prestação de cuidados de saúde especializados e atendimento clínico.",
+    category: "Saúde e Bem-Estar" 
+  },
+  Ministerios: { 
+    full: "Ministérios Governamentais de Angola", 
+    desc: "Canais centrais integrados de governação eletrónica, serviços administrativos e regulação do Estado.",
+    category: "Administração Central" 
+  },
+  "Polícia Nacional": { 
+    full: "Polícia Nacional de Angola", 
+    desc: "Garantia da ordem pública, segurança dos cidadãos, combate à criminalidade e policiamento comunitário.",
+    category: "Defesa e Segurança" 
+  },
+  Notário: { 
+    full: "Cartório Notarial de Títulos de Luanda", 
+    desc: "Autenticação legal de documentos, escrituras públicas, certidões e garantia de fé pública jurídica.",
+    category: "Justiça e Registos" 
+  },
+  "Registo Civil": { 
+    full: "Conservatória do Registo Civil de Luanda", 
+    desc: "Emissão e controlo do estado civil do cidadão, desde registo de nascimento, casamentos a óbitos.",
+    category: "Justiça e Registos" 
+  },
+  "Seguro Social": { 
+    full: "INSS - Instituto Nacional de Segurança Social", 
+    desc: "Gestão dos regimes de previdência, pensões por invalidez ou velhice e abonos dos trabalhadores.",
+    category: "Previdência e Emprego" 
+  },
+  Administradoras: { 
+    full: "Administração Municipal de Luanda", 
+    desc: "Serviços comunitários descentralizados, saneamento municipal, licenciamento de obras e alvarás locais.",
+    category: "Administração Local" 
+  },
+  INE: { 
+    full: "INE - Instituto Nacional de Estatística", 
+    desc: "Produção e difusão de informação estatística oficial e demográfica da República de Angola.",
+    category: "Planeamento e Estatística" 
+  }
+};
+
+const getOrgBadgeStyles = (org: string) => {
+  const o = org.toUpperCase();
+  if (o.includes('SOC') || o.includes('EMERG')) {
+    return 'bg-red-50 text-red-700 border-red-200';
+  } else if (o === 'AGT' || o.includes('TRIBUT') || o.includes('FINAN')) {
+    return 'bg-amber-50 text-amber-800 border-amber-200';
+  } else if (o === 'SME' || o.includes('MIGRA')) {
+    return 'bg-blue-50 text-blue-800 border-blue-200';
+  } else if (o === 'MINJUS' || o.includes('REGISTO') || o.includes('CIVIL')) {
+    return 'bg-teal-50 text-teal-800 border-teal-200';
+  } else if (o.includes('TRIBUNAL') || o.includes('JUDIC')) {
+    return 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200';
+  } else if (o === 'ENDE' || o.includes('ELECTRIC') || o.includes('ENERG')) {
+    return 'bg-orange-50 text-orange-850 border-orange-200';
+  } else if (o === 'EPAL' || o.includes('AGUA')) {
+    return 'bg-sky-50 text-sky-850 border-sky-200';
+  }
+  return 'bg-slate-50 text-slate-700 border-slate-200';
+};
+
+export function InstitutionDetail({
+  institutionName,
+  inbox,
+  sentMessages,
+  docInbox,
+  onBack,
+  onSelectMessage
+}: InstitutionDetailProps) {
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const [previewType, setPreviewType] = useState<'invoice' | 'document' | null>(null);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const numericId = previewDoc?.id
+    ? (typeof previewDoc.id === 'number'
+        ? previewDoc.id
+        : parseInt(String(previewDoc.id).replace(/\D/g, ''), 10) || 45)
+    : 45;
+  const computedHash = `SHA256-AN-${numericId * 17929}-CDG882`;
+
+  const meta = INSTITUTION_FULL_NAMES[institutionName] || {
+    full: `${institutionName} - Instituição Oficial`,
+    desc: `Serviço integrado no ecossistema Correio Digital para agilizar procedimentos públicos e comunicações oficiais.`,
+    category: "Serviço Público"
+  };
+
+  // Safe normalize matching key
+  const matchesOrg = (orgField: string) => {
+    if (!orgField) return false;
+    const a = orgField.toLowerCase().trim();
+    const b = institutionName.toLowerCase().trim();
+    
+    // Exact or partial matches
+    if (a === b) return true;
+    if (a.includes(b) || b.includes(a)) return true;
+    
+    // Key mappings
+    if (b === 'ministerios' && (a.includes('mins') || a.includes('ministerio') || a.includes('ministério'))) return true;
+    if (b === 'seguro social' && (a.includes('inss') || a.includes('seguro'))) return true;
+    if (b === 'polícia nacional' && (a.includes('pna') || a.includes('policia') || a.includes('polícia'))) return true;
+    if (b === 'registo civil' && (a.includes('rciv') || a.includes('registo') || a.includes('civil') || a.includes('id'))) return true;
+    
+    return false;
+  };
+
+  // Filter regular messages (incoming to user / from org)
+  const incomingMessages = inbox.filter(m => matchesOrg(m.org));
+  
+  // Filter sent messages (to org / from user)
+  const outgoingMessages = sentMessages.filter(m => matchesOrg(m.org));
+
+  // Load invoices matching this institution from localStorage
+  const savedInvoicesRaw = localStorage.getItem('correio_digital_faturas');
+  let invoices: any[] = [];
+  if (savedInvoicesRaw) {
+    try {
+      const parsed = JSON.parse(savedInvoicesRaw);
+      invoices = parsed.filter((inv: any) => matchesOrg(inv.org));
+    } catch (e) {
+      invoices = [];
+    }
+  } else {
+    // Basic fallback if first time
+    invoices = [];
+  }
+
+  // Also read document request records from this institution
+  const incomingDocs = docInbox.filter(m => matchesOrg(m.org));
+
+  return (
+    <div className="space-y-4">
+      {/* Back to Panel Header */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/80 rounded-[20px] p-3 shadow-sm">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-black text-slate-800 hover:text-primary hover:bg-slate-50 transition-colors rounded-xl border border-slate-100 shadow-sm cursor-pointer"
+        >
+          <ArrowLeft size={14} />
+          Voltar ao Painel
+        </button>
+        <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase italic">
+          Interconexão Automática
+        </span>
+      </div>
+
+      {/* Institution Banner block */}
+      <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-6 shadow-sm overflow-hidden relative group">
+        <div className="absolute right-0 top-0 -mr-20 -mt-20 w-80 h-80 bg-primary/2.5 rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 max-w-2xl min-w-0">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-primary/5 text-primary tracking-wider border border-primary/10">
+              <ShieldCheck size={12} className="text-primary" />
+              {meta.category}
+            </span>
+            <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight italic uppercase">
+              {meta.full}
+            </h1>
+            <p className="text-xs md:text-sm text-slate-600 font-medium leading-relaxed">
+              {meta.desc}
+            </p>
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-3 md:flex gap-4 md:gap-6 shrink-0 border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
+            <div className="bg-slate-50/65 border border-slate-100 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px]">
+              <Mail className="text-blue-500 mb-1" size={16} />
+              <div className="text-sm md:text-lg font-black text-slate-900">{incomingMessages.length + outgoingMessages.length}</div>
+              <div className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Mensagens</div>
+            </div>
+            <div className="bg-slate-50/65 border border-slate-100 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px]">
+              <Receipt className="text-amber-500 mb-1" size={16} />
+              <div className="text-sm md:text-lg font-black text-slate-900">
+                {invoices.filter(i => i.status === 'Pendente').length}
+              </div>
+              <div className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Facturas</div>
+            </div>
+            <div className="bg-slate-50/65 border border-slate-100 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px]">
+              <FileText className="text-emerald-500 mb-1" size={16} />
+              <div className="text-sm md:text-lg font-black text-slate-900">
+                {incomingDocs.length}
+              </div>
+              <div className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Documentos</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Grid: Left column Correspondência, Right Column Facturas & Documentos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Box 1: Correspondência Completa */}
+        <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col h-[520px]">
+          <div className="flex items-center justify-between mb-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-6 bg-blue-500 rounded-full" />
+              <h3 className="text-slate-950 font-black text-sm italic tracking-tighter uppercase">
+                Correspondência & Notificações
+              </h3>
+            </div>
+            <span className="text-[9px] font-black text-slate-600 bg-slate-100 border border-slate-200/50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Enviados e Recebidos
+            </span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+            {incomingMessages.length === 0 && outgoingMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center h-full py-10 text-slate-400">
+                <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-2.5 shadow-sm">
+                  <Inbox size={20} className="text-slate-400" />
+                </div>
+                <p className="text-xs font-black uppercase text-slate-500 tracking-wider">Sem correspondência</p>
+                <p className="text-[11px] text-slate-400 mt-1 max-w-[280px]">
+                  Ainda não existem comunicações registadas de ou para esta instituição.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {/* Outgoing (Sent to Institution) Group */}
+                {outgoingMessages.length > 0 && (
+                  <div>
+                    <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-widest px-2.5 mb-2 flex items-center gap-1.5">
+                      <Send size={10} />
+                      Comunicações Enviadas por Si
+                    </h4>
+                    <div className="space-y-1.5 pb-4">
+                      {outgoingMessages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          role="button"
+                          onClick={() => onSelectMessage(msg)}
+                          className="flex justify-between items-center text-xs border border-slate-100 hover:border-blue-100 hover:bg-blue-50/20 transition-all cursor-pointer px-3.5 py-3 rounded-2xl group/item"
+                        >
+                          <div className="min-w-0 flex-1 truncate mr-3">
+                            <span className="font-bold text-slate-700 block text-[11px] uppercase tracking-wider mb-0.5 text-blue-600">Para: {msg.org}</span>
+                            <span className="text-slate-600 font-medium text-xs block truncate leading-tight">
+                              {msg.preview}
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span className="text-[9px] font-black text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">
+                              {msg.date}
+                            </span>
+                            <span className="text-[8px] font-black uppercase tracking-widest text-blue-600 px-1.5 bg-blue-50 rounded-md">
+                              {msg.status || 'Submetido'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Incoming Group */}
+                {incomingMessages.length > 0 && (
+                  <div>
+                    <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest px-2.5 mb-2 flex items-center gap-1.5">
+                      <Mail size={10} className="text-primary" />
+                      Notificações e Alertas Recebidos
+                    </h4>
+                    <div className="space-y-1.5">
+                      {incomingMessages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          role="button"
+                          onClick={() => onSelectMessage(msg)}
+                          className={`flex justify-between items-center text-xs border border-slate-200 hover:border-slate-300 hover:bg-slate-50/40 transition-all cursor-pointer px-3.5 py-3 rounded-2xl group/item ${
+                            msg.unread 
+                              ? 'bg-red-50/10 font-black' 
+                              : ''
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1 truncate mr-3">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className={`text-[9px] font-black uppercase px-2 py-0.2 rounded-md ${
+                                msg.unread ? 'bg-red-100 text-red-650' : 'bg-slate-100 text-slate-650'
+                              }`}>
+                                {msg.unread ? 'Novo' : 'Lido'}
+                              </span>
+                              <span className="font-black text-slate-850">{msg.org}</span>
+                            </div>
+                            <span className={`text-xs block truncate font-medium ${
+                              msg.unread ? 'text-slate-900 font-bold' : 'text-slate-600'
+                            }`}>
+                              {msg.preview}
+                            </span>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span className="text-[9px] font-black text-slate-500 bg-slate-50 border border-slate-150 px-2 py-0.5 rounded-lg">
+                              {msg.date}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Box 2: Facturas, Recibos e Documentos Oficiais */}
+        <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-5 md:p-6 shadow-sm flex flex-col h-[520px]">
+          <div className="flex items-center justify-between mb-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
+              <h3 className="text-slate-950 font-black text-sm italic tracking-tighter uppercase">
+                Facturas, Taxas e Documentos
+              </h3>
+            </div>
+            <span className="text-[9px] font-black text-slate-600 bg-slate-100 border border-slate-200/50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+              Finanças & Estado
+            </span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto pr-1 space-y-4 custom-scrollbar">
+            {/* Facturas Section */}
+            <div>
+              <h4 className="text-[10px] font-black text-amber-700 uppercase tracking-widest px-2.5 mb-2.5 flex items-center gap-1.5">
+                <Receipt size={11} />
+                Cobranças e Liquidações (Facturas)
+              </h4>
+
+              {invoices.length === 0 ? (
+                <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-4 text-center text-slate-400 text-xs mb-4">
+                  Nenhuma factura ou taxa de pagamento em atraso registada em {institutionName}.
+                </div>
+              ) : (
+                <div className="space-y-2 mb-4">
+                  {invoices.map((inv) => (
+                    <div 
+                      key={inv.id}
+                      role="button"
+                      onClick={() => {
+                        setPreviewDoc(inv);
+                        setPreviewType('invoice');
+                        setDownloadSuccess(false);
+                      }}
+                      className="border border-slate-200 hover:border-slate-300 hover:bg-slate-50/30 transition-all cursor-pointer rounded-2xl p-3.5 bg-white shadow-xs relative overflow-hidden group/inv"
+                    >
+                      <div className="flex justify-between items-start gap-2 mb-2">
+                        <div>
+                          <span className="text-[9px] font-black font-mono text-slate-650 bg-slate-100 border border-slate-150 px-1.5 py-0.5 rounded-md">
+                            {inv.invoiceNumber}
+                          </span>
+                          <p className="text-xs font-bold text-slate-800 mt-1.5">
+                            {inv.description}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-xs font-black block text-slate-900 font-mono">
+                            {inv.amount}
+                          </span>
+                          <span className={`inline-block mt-1 text-[8px] font-black uppercase px-2 py-0.2 rounded-md ${
+                            inv.status === 'Pago' 
+                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
+                              : 'bg-red-50 text-red-600 border border-red-100 animate-pulse'
+                          }`}>
+                            {inv.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Payment references */}
+                      <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-[10px] font-medium text-slate-600">
+                        <div>
+                          <span className="text-slate-400 block text-[8px] uppercase tracking-wider mb-0.5">Entidade</span>
+                          <span className="font-mono text-slate-800 font-bold">{inv.entity}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[8px] uppercase tracking-wider mb-0.5">Referência</span>
+                          <span className="font-mono text-slate-800 font-bold">{inv.reference}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[8px] uppercase tracking-wider mb-0.5">Vencimento</span>
+                          <span className="text-slate-700 font-bold">{inv.deadline}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Official digital documents received */}
+            <div>
+              <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest px-2.5 mb-2.5 flex items-center gap-1.5">
+                <FileCheck size={11} />
+                Certidões e Títulos Autorizados
+              </h4>
+
+              {incomingDocs.length === 0 ? (
+                <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-4 text-center text-slate-400 text-xs">
+                  Sem títulos ou certidões oficiais armazenados para {institutionName}.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {incomingDocs.map((doc) => (
+                    <div 
+                      key={doc.id}
+                      role="button"
+                      onClick={() => {
+                        setPreviewDoc(doc);
+                        setPreviewType('document');
+                        setDownloadSuccess(false);
+                      }}
+                      className="border border-slate-200 hover:border-slate-350 bg-white hover:bg-slate-50/85 transition-all flex items-center justify-between cursor-pointer p-3.5 rounded-2xl"
+                    >
+                      <div className="min-w-0 flex-1 truncate mr-2">
+                        <span className="text-[9px] font-black uppercase text-emerald-600 block mb-0.5">TÍTULO OFICIAL DISPONÍVEL</span>
+                        <span className="text-xs font-bold text-slate-800 block truncate">
+                          {doc.preview}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold text-slate-550 bg-white border border-slate-200 rounded-lg px-2 py-0.5 shadow-sm">
+                        {doc.date}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* EXIBIÇÃO DE DOCUMENTO OFICIAL / FACTURA EM POPUP */}
+      {previewDoc && (
+        <div className="fixed inset-0 bg-[#020817]/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-[28px] max-w-2xl w-full border border-slate-200 shadow-2xl flex flex-col overflow-hidden max-h-[95vh]"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-xl bg-slate-100 text-slate-800 border border-slate-200/50 block">
+                  <FileText size={16} />
+                </span>
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider leading-none">
+                    {previewType === 'invoice' ? 'Guia de Pagamento Autorizada' : 'Visualização do Documento Autenticado'}
+                  </h4>
+                  <span className="text-[10px] font-bold text-slate-500 block mt-1">
+                    {institutionName} • Correio Digital de Angola
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setPreviewDoc(null);
+                  setPreviewType(null);
+                  setDownloadSuccess(false);
+                }}
+                className="w-8 h-8 rounded-full border border-slate-100 hover:border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors flex items-center justify-center text-slate-600 hover:text-slate-900 cursor-pointer"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            {/* Content Viewport */}
+            <div className="flex-1 p-6 bg-slate-200/40 overflow-y-auto space-y-4 custom-scrollbar">
+              {downloadSuccess && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 font-bold flex items-center gap-2 animate-bounce">
+                  <span className="w-5 h-5 bg-emerald-500 text-white flex items-center justify-center rounded-full text-[10px]">✓</span>
+                  O Ficheiro original {previewType === 'invoice' ? 'GUIA_PAGAMENTO' : 'CERTIDÃO_DIGITAL'}.pdf foi simulado e baixado no seu dispositivo com sucesso!
+                </div>
+              )}
+
+              {/* PDF Print Page Container */}
+              <div className="bg-white rounded-2xl border-2 border-slate-350 shadow-lg p-6 md:p-8 space-y-6 relative overflow-hidden font-sans">
+                {/* Guilloché pattern simulated border or header */}
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600" />
+                
+                {/* Republic Seal */}
+                <div className="text-center space-y-1.5 pt-2">
+                  <div className="w-12 h-12 bg-amber-50/80 border border-amber-300 rounded-full mx-auto flex items-center justify-center text-amber-700 shadow-sm">
+                    <ShieldCheck size={28} />
+                  </div>
+                  <h2 className="text-xs font-black tracking-widest text-slate-930 uppercase leading-none">República de Angola</h2>
+                  <p className="text-[9px] font-bold tracking-wider text-slate-500 uppercase leading-none">Governo de Angola • Chapa Digital Unificada</p>
+                  <p className="text-[8px] font-black text-blue-600 font-mono tracking-widest uppercase mt-0.5">INTERCONEXÃO AUTENTICADA</p>
+                </div>
+
+                <div className="border-t border-b border-dashed border-slate-200 py-3 grid grid-cols-2 gap-4 text-[11px] text-slate-600">
+                  <div>
+                    <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider block">Emissor</span>
+                    <span className="font-bold text-slate-800">{meta.full}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider block">Destinatário Assinado</span>
+                    <span className="font-bold text-slate-800">Cidadão Correio Digital</span>
+                  </div>
+                </div>
+
+                {previewType === 'invoice' ? (
+                  /* Invoice detail */
+                  <div className="space-y-4">
+                    <div className="bg-slate-50/60 rounded-xl p-4 border border-slate-200/85 space-y-3">
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                        <span className="text-xs font-black uppercase text-slate-800">Guia de Cobrança</span>
+                        <span className="text-xs font-mono font-black text-slate-900">{previewDoc.invoiceNumber}</span>
+                      </div>
+                      
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                          <span className="font-bold text-slate-800 mr-1">Prestações Selecionadas:</span> {previewDoc.description}
+                        </p>
+                        <p className="text-xs text-slate-600 font-medium">
+                          <span className="font-bold text-slate-800 mr-1">Data de Vencimento:</span> {previewDoc.deadline}
+                        </p>
+                        <p className="text-xs text-slate-600 font-medium">
+                          <span className="font-bold text-slate-800 mr-1">Situação de Liquidação:</span> <span className="font-black text-emerald-600">{previewDoc.status}</span>
+                        </p>
+                      </div>
+
+                      <div className="border-t border-slate-200/80 pt-2 flex justify-between items-center">
+                        <span className="text-xs font-black text-slate-705 uppercase">Valor Total Liquidado</span>
+                        <span className="text-sm font-mono font-black text-emerald-600">{previewDoc.amount}</span>
+                      </div>
+                    </div>
+
+                    {/* QR Code and Barcode */}
+                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                      <div className="p-1.5 bg-white border border-slate-200 rounded-lg">
+                        <QrCode size={56} className="text-slate-800" />
+                      </div>
+                      <div className="flex-1 text-center sm:text-left space-y-1 min-w-0">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Identificadores de Compensação</span>
+                        <div className="font-mono text-[10px] font-bold text-slate-800">ENTIDADE: <span className="text-black font-black">{previewDoc.entity}</span></div>
+                        <div className="font-mono text-[10px] font-bold text-slate-800">REFERÊNCIA: <span className="text-black font-black">{previewDoc.reference}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Formal Document body from message */
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                      <div className="flex justify-between items-center pb-1.5 border-b border-slate-200">
+                        <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest block">Certificado Autenticado</span>
+                        <span className="text-[9px] font-mono font-bold text-slate-500">{previewDoc.date}</span>
+                      </div>
+                      
+                      <p className="text-[11.5px] text-slate-800 font-medium leading-relaxed text-justify">
+                        Certifica-se e faz-se público para todos os devidos efeitos, que se encontra devidamente autenticado e inserido com validação permanente sob a responsabilidade exclusiva do <strong className="text-slate-900">{institutionName}</strong> o seguinte registo em repositório nacional:
+                      </p>
+                      
+                      <p className="text-[12px] text-slate-900 font-black bg-white p-3 border border-slate-200 rounded-lg shadow-xs text-center leading-normal">
+                        "{previewDoc.preview}"
+                      </p>
+
+                      <p className="text-[10.5px] text-slate-500 leading-relaxed italic text-justify pt-1">
+                        Esta certidão oficial está digitalmente gerada e homologada pelo Decreto-Lei de Governação Electrónica da República de Angola, possuindo plena fé pública jurídica nacional e internacional.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 bg-emerald-50/50 border border-emerald-100 rounded-xl p-3">
+                      <span className="text-emerald-600 shrink-0 font-bold">✓</span>
+                      <p className="text-[10px] text-emerald-800 font-semibold leading-normal">
+                        Selo Digital Activo • Isento de qualquer autenticação física complementar ou taxas administrativas cartoriais.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer seal with stamp */}
+                <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-slate-500">
+                  <div className="space-y-0.5">
+                    <span className="uppercase text-[8px] font-black tracking-widest text-slate-400 block">Assinatura Certificada</span>
+                    <span className="font-mono font-bold select-all text-slate-800">HASH: {computedHash}</span>
+                  </div>
+
+                  {/* Stamp */}
+                  <div className="border-2 border-dashed border-blue-500/80 rounded-full px-4 py-1 text-center shrink-0 -rotate-3 bg-blue-50/5 pointer-events-none">
+                    <span className="text-[8px] font-black text-blue-600 uppercase tracking-wider block">CORREIO DIGITAL UNIFICADO</span>
+                    <span className="text-[7px] font-black text-blue-500 tracking-widest uppercase block">GOVERNO DE ANGOLA</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+              <button
+                onClick={() => {
+                  safeCopyToClipboard(computedHash);
+                  setCopiedKey(true);
+                  setTimeout(() => setCopiedKey(false), 2000);
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                {copiedKey ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                {copiedKey ? 'Chave Copiada!' : 'Copiar Hash'}
+              </button>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setDownloadSuccess(true);
+                    setTimeout(() => setDownloadSuccess(false), 4500);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-black text-white bg-primary hover:bg-[#091f46] border border-primary/20 rounded-xl transition-all shadow-md cursor-pointer"
+                >
+                  <Download size={14} />
+                  Baixar JPG/PDF
+                </button>
+                <button
+                  onClick={() => {
+                    window.print();
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer"
+                >
+                  <Printer size={14} />
+                  Imprimir
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}

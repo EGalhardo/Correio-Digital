@@ -251,29 +251,44 @@ export function GovEmissaoContent({
             <div className="bg-white border border-slate-100 rounded-[32px] p-2 shadow-sm flex flex-col lg:flex-row gap-3">
               <div className="flex gap-1 p-1 bg-slate-50 rounded-2xl lg:min-w-[420px]">
                 {[
-                  { id: 'naoLidas', label: 'Não Lidas', count: instituicaoInbox.filter(m => m.unread).length, color: 'text-red-600', dot: 'bg-red-600' },
-                  { id: 'lidas', label: 'Lidas', count: instituicaoInbox.filter(m => !m.unread).length, color: 'text-slate-600', dot: 'bg-slate-500' },
-                  { id: 'enviadas', label: 'Enviadas', count: recentDocuments.length, color: 'text-red-900', dot: 'bg-red-900' }
-                ].map(t => (
-                  <button 
-                    key={t.id}
-                    onClick={() => setCorrespondenciaTab(t.id)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all ${
-                      correspondenciaTab === t.id 
-                        ? `bg-white ${t.color} shadow-md shadow-slate-200 ring-1 ring-slate-100` 
-                        : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
-                    }`}
-                  >
-                    {t.label}
-                    {t.count > 0 && (
-                      <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${
-                        correspondenciaTab === t.id ? `${t.dot} text-white` : 'bg-slate-300 text-slate-600'
-                      }`}>
-                        {t.count}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                  { id: 'naoLidas', label: 'Não Lidas', count: instituicaoInbox.filter(m => m.unread).length },
+                  { id: 'lidas', label: 'Lidas', count: instituicaoInbox.filter(m => !m.unread).length },
+                  { id: 'enviadas', label: 'Enviadas', count: recentDocuments.length }
+                ].map(t => {
+                  const isActive = correspondenciaTab === t.id;
+                  let activeStyle = '';
+                  let badgeStyle = 'bg-slate-350 text-slate-700';
+
+                  if (isActive) {
+                    if (t.id === 'lidas') {
+                      activeStyle = 'bg-emerald-600 text-white shadow-md shadow-emerald-200 ring-2 ring-emerald-600';
+                      badgeStyle = 'bg-white text-emerald-700';
+                    } else if (t.id === 'naoLidas') {
+                      activeStyle = 'bg-red-600 text-white shadow-md shadow-red-200 ring-2 ring-red-600';
+                      badgeStyle = 'bg-white text-red-650';
+                    } else if (t.id === 'enviadas') {
+                      activeStyle = 'bg-blue-600 text-white shadow-md shadow-blue-200 ring-2 ring-blue-600';
+                      badgeStyle = 'bg-white text-blue-600';
+                    }
+                  } else {
+                    activeStyle = 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50';
+                  }
+
+                  return (
+                    <button 
+                      key={t.id}
+                      onClick={() => setCorrespondenciaTab(t.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all ${activeStyle}`}
+                    >
+                      {t.label}
+                      {t.count > 0 && (
+                        <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${badgeStyle}`}>
+                          {t.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="relative flex-1">

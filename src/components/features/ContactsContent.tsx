@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Plus, Search, ShieldCheck, Trash2, Info } from 'lucide-react';
+import { Users, Plus, Search, ShieldCheck, Trash2, Info, Edit } from 'lucide-react';
 import { Contact } from '../../types';
 
 interface ContactsContentProps {
@@ -28,6 +28,14 @@ export function ContactsContent({
   onUpdateContactType,
 }: ContactsContentProps) {
   const [selectedClassification, setSelectedClassification] = useState<'Todos' | 'Emergência' | 'Normal'>('Todos');
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+
+  const handleUpdateProtocol = (type: 'Normal' | 'Emergência') => {
+    if (editingContact && onUpdateContactType) {
+      onUpdateContactType(editingContact.id, type);
+      setEditingContact({ ...editingContact, type });
+    }
+  };
 
   const finalContacts = filteredContacts.filter(contact => {
     if (selectedClassification === 'Todos') return true;
@@ -153,32 +161,20 @@ export function ContactsContent({
                         {contact.bi}
                       </td>
                       <td className="py-4 px-5">
-                        <div className="flex items-center gap-1.5 text-indigo-700 font-mono text-[9px] font-black mb-1.5">
-                          <ShieldCheck size={10} className="text-indigo-500" />
-                          Protocolo Ativo
+                        <div className="flex items-center gap-1.5 text-indigo-705 font-mono text-[9px] font-black mb-1 border-b border-indigo-50 pb-0.5 max-w-[120px]">
+                          <ShieldCheck size={11} className="text-indigo-500" />
+                          <span>Protocolo Activo</span>
                         </div>
-                        <div className="flex gap-1">
-                          {(['Normal', 'Emergência'] as const).map((t) => (
-                            <button
-                              key={t}
-                              type="button"
-                              onClick={() => {
-                                if (onUpdateContactType) {
-                                  onUpdateContactType(contact.id, t);
-                                }
-                              }}
-                              className={`px-2 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest border transition-all cursor-pointer ${
-                                (contact.type || 'Normal') === t
-                                  ? t === 'Emergência'
-                                    ? 'bg-red-50 text-red-700 border-red-300 ring-2 ring-red-100 shadow-3xs font-extrabold'
-                                    : 'bg-primary/10 text-primary border-primary-300 ring-2 ring-primary/5 shadow-3xs font-extrabold'
-                                  : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700 hover:bg-slate-50'
-                              }`}
-                              title={`Mudar prioridade para ${t}`}
-                            >
-                              {t}
-                            </button>
-                          ))}
+                        <div className="inline-flex mt-1">
+                          {(contact.type || 'Normal') === 'Emergência' ? (
+                            <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 shadow-3xs">
+                              Emergência
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-3xs">
+                              Normal
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-4 px-5">
@@ -193,13 +189,24 @@ export function ContactsContent({
                       <td className="py-4 px-5 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button 
+                            onClick={() => setEditingContact(contact)}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border-0 bg-transparent cursor-pointer"
+                            title="Editar contacto e protocolo"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button 
                             onClick={() => setContactToDelete(contact)}
                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border-0 bg-transparent cursor-pointer"
                             title="Remover contacto"
                           >
                             <Trash2 size={14} />
                           </button>
-                          <button className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all border-0 bg-transparent cursor-pointer">
+                          <button 
+                            onClick={() => setEditingContact(contact)}
+                            className="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all border-0 bg-transparent cursor-pointer"
+                            title="Informações de Vínculo"
+                          >
                             <Info size={14} />
                           </button>
                         </div>
@@ -236,6 +243,113 @@ export function ContactsContent({
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {editingContact && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl border border-slate-100 space-y-6 text-left"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <Edit size={18} />
+                  </div>
+                  <div>
+                    <h2 className="font-black text-slate-900 text-base md:text-lg uppercase tracking-tight leading-none">Editar Contacto</h2>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Vínculo de Confiança</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingContact(null)}
+                  className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-705 transition-colors border-0 bg-transparent cursor-pointer text-sm font-bold"
+                  aria-label="Fechar"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* General Contact Info */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-150">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-lg uppercase tracking-wider shadow-3xs shrink-0">
+                    {editingContact.name?.substring(0, 2) || 'C'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span id="contact-name" className="block text-sm font-extrabold text-slate-950 uppercase tracking-tight truncate">
+                      {editingContact.name}
+                    </span>
+                    <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mt-0.5">
+                      Relação: {editingContact.relation}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-150/50">
+                    <small className="block text-[8px] font-black text-slate-400 uppercase tracking-wider mb-1">Cédula / Identidade BI</small>
+                    <span className="font-mono text-xs font-bold text-slate-800 tracking-wider block">{editingContact.bi}</span>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-150/50">
+                    <small className="block text-[8px] font-black text-slate-400 uppercase tracking-wider mb-1">Estado do Vínculo</small>
+                    <span className={`text-[10px] font-black block uppercase tracking-wide ${editingContact.status === 'Confirmado' ? 'text-emerald-600' : 'text-orange-700'}`}>
+                      {editingContact.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Switch active protocol */}
+                <div className="space-y-2 pt-2">
+                  <span className="block text-[10px] md:text-xs font-black text-slate-600 uppercase tracking-widest pl-1">
+                    Protocolo Activo de Comunicação
+                  </span>
+                  
+                  <div className="grid grid-cols-2 gap-3.5">
+                    {(['Normal', 'Emergência'] as const).map((t) => {
+                      const isCurrent = (editingContact.type || 'Normal') === t;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => handleUpdateProtocol(t)}
+                          className={`flex flex-col items-center justify-center p-3 rounded-2xl border gap-1.5 transition-all cursor-pointer ${
+                            isCurrent
+                              ? t === 'Emergência'
+                                ? 'bg-red-50 text-red-700 border-red-300 ring-4 ring-red-100 font-black'
+                                : 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-4 ring-emerald-50 font-black'
+                              : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800 hover:bg-slate-50'
+                          }`}
+                        >
+                          <ShieldCheck size={16} className={isCurrent ? (t === 'Emergência' ? 'text-red-500' : 'text-emerald-500') : 'text-slate-300'} />
+                          <span className="text-[10px] uppercase font-black tracking-widest">{t}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic font-semibold mt-1.5 leading-normal pl-1">
+                    * O protocolo regulamenta canais de transmissão prioritária de dados e notificações urgentes no âmbito estatal.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action button */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingContact(null)}
+                  className="w-full bg-slate-900 hover:bg-slate-850 active:scale-98 transition-all text-white font-black text-xs md:text-sm py-3.5 rounded-2xl shadow-lg border-0 cursor-pointer text-center uppercase tracking-wider"
+                >
+                  Confirmar e Fechar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -14,6 +14,8 @@ import {
 import { USER_PROFILE_PHOTO } from '../../constants/data';
 import { OfflineManager } from '../../utils/offlineManager';
 import { motion, AnimatePresence } from 'motion/react';
+import { Message, Document, Contact, UserRequest, DocRequest } from '../../types';
+import { supabaseService, hasValidSupabaseKeys } from '../../services/supabaseService';
 
 interface ProfileContentProps {
   isInst?: boolean;
@@ -42,6 +44,15 @@ interface ProfileContentProps {
   contactsCount: number;
   setTab: (tab: string) => void;
   handleLogout: (clearAll?: boolean) => void;
+  inbox?: Message[];
+  docInbox?: Message[];
+  sentMessages?: Message[];
+  contactsList?: Contact[];
+  documentsList?: Document[];
+  userRequests?: UserRequest[];
+  docRequests?: DocRequest[];
+  auditLogs?: any[];
+  addAuditLog?: (action: string, type?: 'info' | 'warning' | 'critical' | 'success') => void;
 }
 
 export function ProfileContent({
@@ -71,6 +82,15 @@ export function ProfileContent({
   contactsCount,
   setTab,
   handleLogout,
+  inbox = [],
+  docInbox = [],
+  sentMessages = [],
+  contactsList = [],
+  documentsList = [],
+  userRequests = [],
+  docRequests = [],
+  auditLogs: passedAuditLogs = [],
+  addAuditLog
 }: ProfileContentProps) {
   // Modal states
   const [isVerifying, setIsVerifying] = useState(false);
@@ -78,7 +98,7 @@ export function ProfileContent({
 
   // Citizen Preferences states
   const [isPrefsOpen, setIsPrefsOpen] = useState(false);
-  const [prefSubTab, setPrefSubTab] = useState<'geral' | 'notificacoes' | 'conectividade' | 'privacidade'>('geral');
+  const [prefSubTab, setPrefSubTab] = useState<'geral' | 'notificacoes' | 'conectividade' | 'privacidade' | 'supabase'>('geral');
   const [prefLanguage, setPrefLanguage] = useState(() => localStorage.getItem('gov_pref_language') || 'pt');
   const [prefNotificationSMS, setPrefNotificationSMS] = useState(() => localStorage.getItem('gov_pref_notif_sms') !== 'false');
   const [prefNotificationEmail, setPrefNotificationEmail] = useState(() => localStorage.getItem('gov_pref_notif_email') !== 'false');
@@ -141,6 +161,92 @@ export function ProfileContent({
   ]);
 
   const [backupsList, setBackupsList] = useState(() => OfflineManager.getBackups());
+
+  // Supabase states
+  const [supabaseTesting, setSupabaseTesting] = useState(false);
+  const [supabaseSyncing, setSupabaseSyncing] = useState(false);
+  const [supabaseStatusMsg, setSupabaseStatusMsg] = useState<string>('');
+  const [supabaseErrorMsg, setSupabaseErrorMsg] = useState<string>('');
+  const [supabaseSuccessMsg, setSupabaseSuccessMsg] = useState<string>('');
+  const [supabaseStats, setSupabaseStats] = useState<any>(null);
+
+  const handleTestSupabaseConnection = async () => {
+    setSupabaseTesting(true);
+    setSupabaseErrorMsg('');
+    setSupabaseSuccessMsg('');
+    setSupabaseStatusMsg('A testar ligação ao servidor Supabase...');
+
+    try {
+      const result = await supabaseService.testConnection();
+      if (result.success) {
+        setSupabaseSuccessMsg(result.message);
+        if (addAuditLog) {
+          addAuditLog('Ligação ao Supabase testada com sucesso', 'success');
+        }
+      } else {
+        setSupabaseErrorMsg(result.message);
+        if (addAuditLog) {
+          addAuditLog('Falha ao testar ligação do Supabase', 'warning');
+        }
+      }
+    } catch (e: any) {
+      setSupabaseErrorMsg(e?.message || 'Erro inesperado.');
+    } finally {
+      setSupabaseTesting(false);
+      setSupabaseStatusMsg('');
+    }
+  };
+
+  const handleSyncWithSupabase = async () => {
+    setSupabaseSyncing(true);
+    setSupabaseErrorMsg('');
+    setSupabaseSuccessMsg('');
+    setSupabaseStatusMsg('A iniciar sincronização e semeadura de dados com Supabase...');
+
+    // Prepare profile packet
+    const profilePacket = {
+      bi,
+      name: profileName,
+      phone,
+      nif,
+      passport,
+      birthDate: userBirthDate,
+      filiation: userFiliation,
+      maritalStatus: userMaritalStatus
+    };
+
+    try {
+      const result = await supabaseService.seedAll({
+        profile: profilePacket,
+        inbox,
+        docInbox,
+        sentMessages,
+        contacts: contactsList,
+        documents: documentsList,
+        userRequests,
+        docRequests,
+        auditLogs: passedAuditLogs
+      });
+
+      if (result.success) {
+        setSupabaseSuccessMsg(result.message);
+        setSupabaseStats(result.counts);
+        if (addAuditLog) {
+          addAuditLog('Sincronização bidireccional completa com Supabase', 'success');
+        }
+      } else {
+        setSupabaseErrorMsg(result.message);
+        if (result.counts) {
+          setSupabaseStats(result.counts);
+        }
+      }
+    } catch (e: any) {
+      setSupabaseErrorMsg(e?.message || 'Erro de rede ou permissões ao sincronizar.');
+    } finally {
+      setSupabaseSyncing(false);
+      setSupabaseStatusMsg('');
+    }
+  };
 
   // Handle webcam stream start
   const startWebcam = async () => {
@@ -234,24 +340,25 @@ export function ProfileContent({
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  if (!isInst) {
-    return (
-      <section className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  const renderProfileBody = () => {
+    if (!isInst) {
+      return (
+        <section className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Photo & Main Info Card */}
-          <div className="lg:col-span-1 bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+          <div className="lg:col-span-1 bg-white border border-slate-200 rounded-[32px] p-6 flex flex-col items-center text-center relative overflow-hidden">
             {/* Background decoration */}
             <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
             
             <div className="relative mt-4 mb-4">
-              <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border-4 border-slate-50 p-1.5 bg-white shadow-xl relative">
+              <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border border-slate-200 p-1.5 bg-white relative">
                 <img 
                   src={USER_PROFILE_PHOTO} 
                   alt="João Silva" 
                   className="w-full h-full rounded-[20px] object-cover"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl shadow-md border-2 border-white bg-emerald-500">
+                <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl border border-slate-200 bg-emerald-500">
                   <BadgeCheck size={16} />
                 </div>
               </div>
@@ -278,27 +385,39 @@ export function ProfileContent({
           {/* Right Column: Information fields & Security section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Information Container */}
-            <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6 text-left">
-              <div className="border-b border-slate-100 pb-4">
-                <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Informações de Conta</h4>
-                <p className="text-xs text-slate-500 font-medium">Histórico e dados cadastrados na infraestrutura digital do cidadão</p>
+            <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 space-y-6 text-left">
+              <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Informações de Conta</h4>
+                  <p className="text-xs text-slate-500 font-medium">Histórico e dados cadastrados na infraestrutura digital do cidadão</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsPrefsOpen(true);
+                    setPrefSubTab('supabase');
+                  }}
+                  className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-850 transition-all flex items-center gap-1.5 shadow-sm hover:scale-[1.02] cursor-pointer"
+                >
+                  <Server size={14} className="text-[#38bdf8]" />
+                  Conexão Supabase
+                </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Nome Completo */}
-                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo</span>
                   <span className="text-xs font-bold text-slate-800 block">João Silva</span>
                 </div>
 
                 {/* B.I. */}
-                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">B.I</span>
                   <span className="text-xs font-mono font-bold text-slate-800 block">123456789</span>
                 </div>
 
                 {/* Email */}
-                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Email</span>
                   <span className="text-xs font-bold text-slate-800 block mb-1">joao@cidadao.ao</span>
                   <span className="text-[9px] text-amber-600 font-bold bg-amber-50 rounded-lg px-2 py-0.5 border border-amber-100 italic block w-fit">
@@ -307,19 +426,19 @@ export function ProfileContent({
                 </div>
 
                 {/* Telefone */}
-                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone</span>
                   <span className="text-xs font-mono font-bold text-slate-800 block">+244 923 111 222</span>
                 </div>
 
                 {/* Morada */}
-                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl md:col-span-2">
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Morada</span>
                   <span className="text-xs font-bold text-slate-800 block">Rua da Paz, 45, Luanda</span>
                 </div>
 
                 {/* Conta Criada em */}
-                <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl md:col-span-2">
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Registo do Sistema</span>
                   <span className="text-xs font-bold text-slate-800 block">Conta criada em: 1 de junho de 2026</span>
                 </div>
@@ -327,7 +446,7 @@ export function ProfileContent({
             </div>
 
             {/* Security Section */}
-            <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm text-left space-y-6">
+            <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 text-left space-y-6">
               <div className="border-b border-slate-100 pb-4 flex items-center gap-3">
                 <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
                   <Lock size={18} />
@@ -363,7 +482,7 @@ export function ProfileContent({
                     <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</span>
                     <input 
                       type="password"
-                      className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                      className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                       placeholder="Senha atual"
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
@@ -374,7 +493,7 @@ export function ProfileContent({
                     <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Palavra-passe</span>
                     <input 
                       type="password"
-                      className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                      className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                       placeholder="Nova palavra-passe"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
@@ -385,7 +504,7 @@ export function ProfileContent({
                     <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</span>
                     <input 
                       type="password"
-                      className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                      className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                       placeholder="Repita a nova senha"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -438,19 +557,19 @@ export function ProfileContent({
     <section className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Photo & Main Info Card */}
-        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-[32px] p-6 flex flex-col items-center text-center relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
           
           <div className="relative mt-4 mb-4">
-            <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border-4 border-slate-50 p-1.5 bg-white shadow-xl relative">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border border-slate-200 p-1.5 bg-white relative">
               <img 
                 src={USER_PROFILE_PHOTO} 
                 alt={profileName} 
                 className="w-full h-full rounded-[20px] object-cover"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl shadow-md border-2 border-white bg-emerald-500">
+              <div className="absolute -bottom-1 -right-1 text-white p-1.5 rounded-xl border border-slate-200 bg-emerald-500">
                 <BadgeCheck size={16} />
               </div>
             </div>
@@ -477,27 +596,39 @@ export function ProfileContent({
         {/* Right Column: Information fields & Security section */}
         <div className="lg:col-span-2 space-y-6">
           {/* Information Container */}
-          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm space-y-6 text-left">
-            <div className="border-b border-slate-100 pb-4">
-              <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Informações de Função</h4>
-              <p className="text-xs text-slate-500 font-medium font-sans">Histórico e credenciais funcionais associados a este perfil de utilizador</p>
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 space-y-6 text-left">
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Informações de Função</h4>
+                <p className="text-xs text-slate-500 font-medium font-sans">Histórico e credenciais funcionais associados a este perfil de utilizador</p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsPrefsOpen(true);
+                  setPrefSubTab('supabase');
+                }}
+                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-850 transition-all flex items-center gap-1.5 shadow-sm hover:scale-[1.02] cursor-pointer"
+              >
+                <Server size={14} className="text-[#38bdf8]" />
+                Conexão Supabase
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Nome Completo */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Completo</span>
                 <span className="text-xs font-bold text-slate-800 block">{profileName}</span>
               </div>
 
               {/* Identificação de Agente */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Identificação de Agente</span>
                 <span className="text-xs font-mono font-bold text-slate-800 block">AGT-DE-2026-8841-EG</span>
               </div>
 
               {/* Email Funcional */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Funcional</span>
                 <span className="text-xs font-bold text-slate-800 block mb-1 font-sans">edlasio.galhardo@agt.minfin.gov.ao</span>
                 <span className="text-[9px] text-amber-600 font-bold bg-amber-50 rounded-lg px-2 py-0.5 border border-amber-100 italic block w-fit">
@@ -506,7 +637,7 @@ export function ProfileContent({
               </div>
 
               {/* NIF do Agente */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">NIF do Agente (Pessoal)</span>
                 <span className="text-xs font-mono font-bold text-slate-800 block">
                   {showSensitiveData ? nif : nif.replace(/\d{4}$/, '****')}
@@ -514,13 +645,13 @@ export function ProfileContent({
               </div>
 
               {/* Departamento */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl md:col-span-2">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 font-sans">Departamento / Repartição</span>
                 <span className="text-xs font-bold text-slate-800 block">Grandes Contribuintes - LUA</span>
               </div>
 
               {/* Registo de Acesso */}
-              <div className="bg-slate-50/60 border border-slate-200 p-4 rounded-2xl md:col-span-2">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl md:col-span-2">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Registo do Sistema</span>
                 <span className="text-xs font-bold text-slate-800 block">Conta criada em: 1 de junho de 2026</span>
               </div>
@@ -528,7 +659,7 @@ export function ProfileContent({
           </div>
 
           {/* Security Section */}
-          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm text-left space-y-6">
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 text-left space-y-6">
             <div className="border-b border-slate-100 pb-4 flex items-center gap-3">
               <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
                 <Lock size={18} />
@@ -564,7 +695,7 @@ export function ProfileContent({
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Atual</span>
                   <input 
                     type="password"
-                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                     placeholder="Senha atual"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
@@ -575,7 +706,7 @@ export function ProfileContent({
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Nova Palavra-passe</span>
                   <input 
                     type="password"
-                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                     placeholder="Nova palavra-passe"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -586,7 +717,7 @@ export function ProfileContent({
                   <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar Nova Senha</span>
                   <input 
                     type="password"
-                    className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
+                    className="w-full h-11 bg-white border border-slate-200 focus:border-primary/40 rounded-xl px-4 text-xs font-semibold outline-none transition-all"
                     placeholder="Repita a nova senha"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -631,10 +762,17 @@ export function ProfileContent({
           </div>
         </div>
       </div>
+    </section>
+  );
+};
+
+return (
+  <>
+    {renderProfileBody()}
 
 
 
-      {/* --- IDENTITY VERIFICATION WIZARD MODAL --- */}
+    {/* --- IDENTITY VERIFICATION WIZARD MODAL --- */}
       <AnimatePresence>
         {isVerifying && (
           <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
@@ -1118,7 +1256,8 @@ export function ProfileContent({
                   { id: 'geral', label: isInst ? 'Geral & Idioma AGT' : 'Geral & Idioma', icon: <Languages size={13} /> },
                   { id: 'notificacoes', label: isInst ? 'Canais Tributários' : 'Canais & Notifs', icon: <Bell size={13} /> },
                   { id: 'privacidade', label: isInst ? 'Privacidade & Biometria AGT' : 'Privacidade & Biometria', icon: <ShieldCheck size={13} /> },
-                  { id: 'conectividade', label: isInst ? 'Sessões & Terminais' : 'Sessões & Dispositivos', icon: <Smartphone size={13} /> }
+                  { id: 'conectividade', label: isInst ? 'Sessões & Terminais' : 'Sessões & Dispositivos', icon: <Smartphone size={13} /> },
+                  { id: 'supabase', label: 'Conexão Supabase', icon: <Server size={13} /> }
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -1565,6 +1704,122 @@ export function ProfileContent({
                     </div>
                   </div>
                 )}
+
+                {prefSubTab === 'supabase' && (
+                  <div className="space-y-4 text-left">
+                    <div className="bg-slate-900 text-white rounded-2xl p-4 md:p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center border border-slate-800 shadow-lg select-none">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2.5 h-2.5 rounded-full ${hasValidSupabaseKeys() ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                          <span className="text-[10px] font-black uppercase tracking-widest font-mono text-slate-300">
+                            {hasValidSupabaseKeys() ? 'Estado: Chaves Detectadas' : 'Estado: Chaves Ausentes'}
+                          </span>
+                        </div>
+                        <h4 className="font-extrabold text-[#38bdf8] text-base font-sans leading-tight">Project ID: zwusqnrjesyfiocyhrrl</h4>
+                        <p className="text-[10px] text-slate-400 font-mono">
+                          Servidor: <span className="bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded text-[9px]">https://zwusqnrjesyfiocyhrrl.supabase.co</span>
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2 w-full md:w-auto self-stretch md:self-auto font-sans">
+                        <button
+                          type="button"
+                          onClick={handleTestSupabaseConnection}
+                          disabled={supabaseTesting || supabaseSyncing}
+                          className="flex-1 md:flex-none px-3.5 py-2 text-[10px] uppercase font-black tracking-wider text-white bg-slate-800 hover:bg-slate-705 rounded-xl transition-all border border-slate-700 cursor-pointer disabled:opacity-50 select-none h-10 flex items-center justify-center font-bold"
+                        >
+                          {supabaseTesting ? 'A Testar...' : 'Testar Ligação'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSyncWithSupabase}
+                          disabled={supabaseTesting || supabaseSyncing || !hasValidSupabaseKeys()}
+                          className="flex-1 md:flex-none px-4 py-2 text-[10px] uppercase font-black tracking-wider text-slate-900 bg-[#38bdf8] hover:bg-[#38bdf8]/90 rounded-xl transition-all cursor-pointer disabled:opacity-50 select-none h-10 flex items-center justify-center font-bold"
+                        >
+                          {supabaseSyncing ? 'A Sincronizar...' : 'Sincronizar Tudo (Seed)'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Status Feedback Banners */}
+                    {supabaseStatusMsg && (
+                      <div className="p-3.5 bg-sky-50 text-sky-805 border border-sky-200 rounded-xl flex items-center gap-2.5 text-xs font-medium font-sans animate-pulse">
+                        <RefreshCw size={14} className="animate-spin text-sky-600 shrink-0" />
+                        <span>{supabaseStatusMsg}</span>
+                      </div>
+                    )}
+
+                    {supabaseErrorMsg && (
+                      <div className="p-3.5 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs font-medium font-sans">
+                        <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-bold">Aviso de Configuração:</p>
+                          <p className="text-slate-600 text-[11px] leading-relaxed">{supabaseErrorMsg}</p>
+                          <div className="mt-2 text-[10px] bg-white/70 p-2.5 border border-amber-100 rounded-lg text-slate-750 font-sans space-y-1 leading-snug">
+                            <span className="font-extrabold uppercase text-[8px] tracking-wider text-slate-500 block">Como Resolver:</span>
+                            <p>1. Verifique se adicionou os segredos com os nomes exatos: <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-amber-800">VITE_SUPABASE_URL</code> e <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-amber-800">VITE_SUPABASE_ANON_KEY</code>.</p>
+                            <p className="mt-1">2. Abra o painel do Supabase, vá ao "SQL Editor", cole o script que preparámos em <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">/supabase/schema.sql</code> e execute para activar as tabelas estruturadas do Correio Digital.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {supabaseSuccessMsg && (
+                      <div className="p-3.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded-xl flex items-start gap-2.5 text-xs font-medium font-sans">
+                        <CheckCircle2 size={15} className="text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1.5 flex-1 p-0.5">
+                          <p className="font-bold text-emerald-850">{supabaseSuccessMsg}</p>
+                          <p className="text-slate-600 text-[11px]">Sincronização bidireccional activa nos bastidores do portal nacional de Angola!</p>
+                          
+                          {supabaseStats && (
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 mt-2">
+                              {[
+                                { label: 'Perfis Sincronizados', val: supabaseStats.profiles ?? 0 },
+                                { label: 'Correspondências', val: supabaseStats.messages ?? 0 },
+                                { label: 'Contactos Seguros', val: supabaseStats.contacts ?? 0 },
+                                { label: 'Atos e Documentos', val: supabaseStats.documents ?? 0 },
+                                { label: 'Pedidos de Serviços', val: supabaseStats.requests ?? 0 },
+                                { label: 'Logs de Auditoria', val: supabaseStats.auditLogs ?? 0 },
+                              ].map((stat, idx) => (
+                                <div key={idx} className="bg-white/80 p-2 rounded-xl border border-emerald-100 text-center">
+                                  <span className="font-mono text-base font-black text-emerald-700 block leading-none">{stat.val}</span>
+                                  <span className="text-[8px] font-bold text-slate-500 block uppercase tracking-wider mt-1">{stat.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Developer Guide Card */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                      <h5 className="font-black text-[10px] uppercase tracking-widest text-slate-400 font-sans">Guia Rápido de Integração</h5>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs text-slate-650 leading-snug">
+                        <div className="space-y-1.5">
+                          <span className="font-bold text-slate-805 flex items-center gap-1.5 font-sans">
+                            <span className="w-4 h-4 rounded-full bg-indigo-50 border border-indigo-150 text-indigo-600 flex items-center justify-center font-mono text-[10px] font-black">1</span>
+                            Tabelas no Supabase
+                          </span>
+                          <p className="pl-5 text-[11px] text-slate-500 leading-normal">
+                            Abra o SQL Editor do Supabase no projecto <code className="font-mono px-1 py-0.5 bg-slate-100 rounded text-slate-700">zwusqnrjesyfiocyhrrl</code>, cole o script <code className="font-mono bg-slate-100 text-slate-700 rounded px-1">/supabase/schema.sql</code> e execute para que as tabelas sejam criadas.
+                          </p>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <span className="font-bold text-slate-805 flex items-center gap-1.5 font-sans">
+                            <span className="w-4 h-4 rounded-full bg-indigo-50 border border-indigo-150 text-indigo-600 flex items-center justify-center font-mono text-[10px] font-black">2</span>
+                            Segurança RLS Activa
+                          </span>
+                          <p className="pl-5 text-[11px] text-slate-500 leading-normal">
+                            As nossas tabelas têm Row Level Security (RLS) habilitada por defeito, garantindo privacidade militar onde cada cidadão só consegue aceder às suas próprias correspondências e documentos.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Foot */}
@@ -1617,6 +1872,6 @@ export function ProfileContent({
           50% { top: 100%; }
         }
       `}</style>
-    </section>
+    </>
   );
 }

@@ -263,20 +263,7 @@ export function MessageDetail({
     : (selectedMessage.protocol?.officialTime || '10:45');
 
   const getMessageLocality = (msg: Message) => {
-    const orgName = msg.org.toUpperCase();
-    if (orgName.includes('AGT') || orgName.includes('SME') || orgName.includes('GOVERNO') || orgName.includes('MINJUS') || orgName.includes('MINISTÉRIO')) {
-      return 'Luanda (Sede Geral)';
-    } else if (orgName.includes('ENDE') || orgName.includes('EPAL')) {
-      if (msg.id % 3 === 0) return 'Benguela';
-      if (msg.id % 3 === 1) return 'Huíla (Lubango)';
-      return 'Luanda (Talatona)';
-    } else if (orgName.includes('HOSPITAL') || orgName.includes('MINSA')) {
-      if (msg.id % 2 === 0) return 'Província de Cabinda';
-      return 'Luanda (Hospital Central)';
-    } else if (orgName.includes('PORTO')) {
-      return 'Porto de Luanda';
-    }
-    return 'Luanda, Angola';
+    return 'Rua Deolinda Rodrigues, n-227, Benfica, Luanda';
   };
   const messageLocality = getMessageLocality(selectedMessage);
 
@@ -2344,7 +2331,7 @@ export function MessageDetail({
                     <MapPin size={13} className="text-indigo-650 shrink-0" />
                     <div>
                       <span className="text-[8px] font-black text-slate-400 block uppercase tracking-wider font-display leading-none">Localidade</span>
-                      <span className="text-xs font-bold text-slate-850 mt-0.5 block truncate max-w-[140px] leading-none">{messageLocality}</span>
+                      <span className="text-xs font-bold text-slate-850 mt-0.5 block md:max-w-md leading-relaxed">{messageLocality}</span>
                     </div>
                   </div>
                 </div>

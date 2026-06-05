@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, 
@@ -44,6 +44,7 @@ import {
   Edit,
   MapPin
 } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
 import { 
   ResponsiveContainer, 
   AreaChart, 
@@ -419,6 +420,60 @@ export function GovContactsContent({
   React.useEffect(() => {
     localStorage.setItem('gov_admin_citizens', JSON.stringify(citizens));
   }, [citizens]);
+
+  useEffect(() => {
+    const fetchSupabaseCitizens = async () => {
+      const isSupabaseReady = (import.meta as any).env.VITE_SUPABASE_URL && (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+      if (!isSupabaseReady) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('solicitacoes_registo')
+          .select('*')
+          .order('criado_em', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching citizens from Supabase:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const supabaseCitizens: Citizen[] = data.map((item: any) => {
+            let st: 'Aprovado' | 'Pendente' | 'Não Aprovado' = 'Pendente';
+            if (item.status === 'Aprovado') st = 'Aprovado';
+            if (item.status === 'Reprovado' || item.status === 'Não Aprovado') st = 'Não Aprovado';
+
+            return {
+              id: item.id,
+              name: item.nome,
+              category: 'Cidadão',
+              province: 'Luanda',
+              municipio: 'Belas',
+              address: 'Centralidade do Kilamba, Bloco T22',
+              contact: item.email,
+              status: st,
+              biNumber: item.bi_numero,
+              facePhoto: item.url_selfie || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face',
+              reason: item.observacoes || '',
+              verificationScore: item.status === 'Aprovado' ? 98.4 : undefined,
+              urlFrente: item.url_frente || '',
+              urlVerso: item.url_verso || '',
+              dbUUID: item.id
+            };
+          });
+
+          setCitizens(prev => {
+            const localFiltered = prev.filter(c => !data.some((item: any) => item.bi_numero === c.biNumber));
+            return [...supabaseCitizens, ...localFiltered];
+          });
+        }
+      } catch (err) {
+        console.error('Error in fetchSupabaseCitizens:', err);
+      }
+    };
+
+    fetchSupabaseCitizens();
+  }, []);
 
   const [addUserName, setAddUserName] = useState('');
   const [addUserCategory, setAddUserCategory] = useState('Trabalhador');
@@ -1303,87 +1358,148 @@ export function GovContactsContent({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
-                  {/* Painel Esquerdo: Fotocópia do BI Digitalizado (Renderizado de forma incrivelmente autêntica via CSS) */}
+                             {/* Painel Esquerdo: Fotocópia do BI Digitalizado (com abas de Frente/Verso ou imagens reais do Supabase) */}
                   <div className="space-y-3">
-                    <span className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Painel Esquerdo &bull; Fotocópia do BI</span>
-                    
-                    <div className="bg-gradient-to-br from-indigo-50/70 to-slate-105 border border-slate-200 rounded-3xl p-5 relative overflow-hidden h-[240px] flex flex-col justify-between shadow-2xs">
-                      {/* Micro-marcas d'água */}
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none w-56 h-56 rounded-full border-4 border-indigo-900 flex items-center justify-center font-bold text-center text-xs">
-                        REPÚBLICA DE ANGOLA
-                      </div>
-                      <div className="absolute top-2 right-2 w-16 h-16 bg-gradient-to-br from-yellow-300/10 to-indigo-500/10 rounded-full blur-xl pointer-events-none" />
-
-                      {/* Top Header do Documento */}
-                      <div className="flex items-start justify-between border-b pb-2 border-slate-200">
-                        <div className="flex gap-2.5 items-center">
-                          {/* Bandeira Mocked de Angola */}
-                          <div className="w-6 h-4 bg-red-650 flex flex-col relative rounded-xs overflow-hidden border border-slate-200 flex-shrink-0">
-                            <div className="h-1/2 bg-red-600" />
-                            <div className="h-1/2 bg-black" />
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[4px] text-yellow-500 font-extrabold">&bull;</div>
-                          </div>
-                          <div>
-                            <span className="text-[7.5px] font-black text-indigo-950 uppercase tracking-wider block">República de Angola</span>
-                            <span className="text-[6.5px] font-bold text-slate-400 uppercase block">Ministério da Justiça e Direitos Humanos</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[7.5px] font-black text-rose-600 bg-rose-50 border border-rose-100 p-0.5 px-1.5 rounded uppercase font-mono">B.I. Oficial</span>
-                        </div>
-                      </div>
-
-                      {/* Dados Centrais do BI */}
-                      <div className="grid grid-cols-3 gap-3 my-auto items-center">
-                        {/* Foto do BI - com filtro impresso cinza */}
-                        <div className="col-span-1 h-20 bg-slate-200 rounded-xl overflow-hidden border-2 border-slate-300 relative shadow-3xs flex-shrink-0">
-                          <img 
-                            src={selectedReviewCitizen.facePhoto} 
-                            alt="Rosto BI" 
-                            className="w-full h-full object-cover filter grayscale contrast-125 brightness-95" 
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="absolute inset-0 bg-indigo-950/10 mix-blend-color" />
-                        </div>
-
-                        {/* Dados textuais do civil */}
-                        <div className="col-span-2 space-y-1 text-left text-[9px]">
-                          <div>
-                            <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Nome Completo:</span>
-                            <span className="font-extrabold text-slate-900 uppercase block text-[10px] tracking-tight">{selectedReviewCitizen.name}</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Nº B.I.:</span>
-                              <span className="font-black text-slate-900 font-mono text-[9px] block">{selectedReviewCitizen.biNumber}</span>
-                            </div>
-                            <div>
-                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none font-sans">Nacionalidade:</span>
-                              <span className="font-extrabold text-slate-800 uppercase block">Angolana</span>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Província:</span>
-                              <span className="font-extrabold text-slate-700 block text-[8px] uppercase">{selectedReviewCitizen.province}</span>
-                            </div>
-                            <div>
-                              <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Natural de:</span>
-                              <span className="font-extrabold text-slate-700 block text-[8px] uppercase">{selectedReviewCitizen.municipio}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Footer do BI */}
-                      <div className="border-t pt-1.5 border-slate-250 flex items-center justify-between text-[6.5px] font-mono text-slate-400 leading-none">
-                        <span>EMISSÃO: 12/04/2024</span>
-                        <span>VALIDADE: 12/04/2029</span>
-                        <span className="font-bold text-slate-700">ASSINATURA DIGITAL SME</span>
+                    <div className="flex items-center justify-between">
+                      <span className="block text-[10px] font-black text-slate-400 uppercase tracking-wider">Painel Esquerdo &bull; Fotocópia do BI</span>
+                      
+                      {/* Abas Frente / Verso */}
+                      <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setReviewStepTab(1)}
+                          className={`px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider rounded-lg transition-all border-0 ${
+                            reviewStepTab === 1 
+                              ? 'bg-indigo-950 text-white shadow-xs' 
+                              : 'text-slate-600 hover:text-slate-900 bg-transparent cursor-pointer font-bold'
+                          }`}
+                        >
+                          Frente
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setReviewStepTab(2)}
+                          className={`px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider rounded-lg transition-all border-0 ${
+                            reviewStepTab === 2 
+                              ? 'bg-indigo-950 text-white shadow-xs' 
+                              : 'text-slate-600 hover:text-slate-900 bg-transparent cursor-pointer font-bold'
+                          }`}
+                        >
+                          Verso
+                        </button>
                       </div>
                     </div>
-                    
+
+                    {reviewStepTab === 1 ? (
+                      selectedReviewCitizen.urlFrente ? (
+                        <div className="h-[240px] relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-900 shadow-sm flex items-center justify-center select-none">
+                          <img src={selectedReviewCitizen.urlFrente} alt="B.I. Frente" className="max-h-full max-w-full object-contain pointer-events-none" />
+                          <div className="absolute top-2 right-2 bg-blue-950/85 px-2 py-0.5 text-[7px] font-bold text-white rounded-md uppercase tracking-wider shadow-md">Ficheiro Real Supabase</div>
+                        </div>
+                      ) : (
+                        <div className="bg-gradient-to-br from-indigo-50/70 to-slate-105 border border-slate-200 rounded-3xl p-5 relative overflow-hidden h-[240px] flex flex-col justify-between shadow-2xs">
+                          {/* Micro-marcas d'água */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none w-56 h-56 rounded-full border-4 border-indigo-900 flex items-center justify-center font-bold text-center text-xs">
+                            REPÚBLICA DE ANGOLA
+                          </div>
+                          <div className="absolute top-2 right-2 w-16 h-16 bg-gradient-to-br from-yellow-300/10 to-indigo-500/10 rounded-full blur-xl pointer-events-none" />
+
+                          {/* Top Header do Documento */}
+                          <div className="flex items-start justify-between border-b pb-2 border-slate-200">
+                            <div className="flex gap-2.5 items-center">
+                              {/* Bandeira Mocked de Angola */}
+                              <div className="w-6 h-4 bg-red-650 flex flex-col relative rounded-xs overflow-hidden border border-slate-200 flex-shrink-0">
+                                <div className="h-1/2 bg-red-600" />
+                                <div className="h-1/2 bg-black" />
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[4px] text-yellow-500 font-extrabold">&bull;</div>
+                              </div>
+                              <div>
+                                <span className="text-[7.5px] font-black text-indigo-950 uppercase tracking-wider block">República de Angola</span>
+                                <span className="text-[6.5px] font-bold text-slate-400 uppercase block">Ministério da Justiça e Direitos Humanos</span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[7.5px] font-black text-rose-600 bg-rose-50 border border-rose-100 p-0.5 px-1.5 rounded uppercase font-mono">B.I. Oficial</span>
+                            </div>
+                          </div>
+
+                          {/* Dados Centrais do BI */}
+                          <div className="grid grid-cols-3 gap-3 my-auto items-center">
+                            {/* Foto do BI - com filtro impresso cinza */}
+                            <div className="col-span-1 h-20 bg-slate-200 rounded-xl overflow-hidden border-2 border-slate-300 relative shadow-3xs flex-shrink-0">
+                              <img 
+                                src={selectedReviewCitizen.facePhoto} 
+                                alt="Rosto BI" 
+                                className="w-full h-full object-cover filter grayscale contrast-125 brightness-95" 
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute inset-0 bg-indigo-950/10 mix-blend-color" />
+                            </div>
+
+                            {/* Dados textuais do civil */}
+                            <div className="col-span-2 space-y-1 text-left text-[9px]">
+                              <div>
+                                <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Nome Completo:</span>
+                                <span className="font-extrabold text-slate-900 uppercase block text-[10px] tracking-tight">{selectedReviewCitizen.name}</span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Nº B.I.:</span>
+                                  <span className="font-black text-slate-900 font-mono text-[9px] block">{selectedReviewCitizen.biNumber}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none font-sans">Nacionalidade:</span>
+                                  <span className="font-extrabold text-slate-800 uppercase block">Angolana</span>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Província:</span>
+                                  <span className="font-extrabold text-slate-700 block text-[8px] uppercase">{selectedReviewCitizen.province}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[6.5px] text-slate-400 uppercase block font-bold leading-none">Natural de:</span>
+                                  <span className="font-extrabold text-slate-700 block text-[8px] uppercase">{selectedReviewCitizen.municipio}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Footer do BI */}
+                          <div className="border-t pt-1.5 border-slate-250 flex items-center justify-between text-[6.5px] font-mono text-slate-400 leading-none">
+                            <span>EMISSÃO: 12/04/2024</span>
+                            <span>VALIDADE: 12/04/2029</span>
+                            <span className="font-bold text-slate-700">ASSINATURA DIGITAL SME</span>
+                          </div>
+                        </div>
+                      )
+                    ) : (
+                      selectedReviewCitizen.urlVerso ? (
+                        <div className="h-[240px] relative rounded-3xl overflow-hidden border border-slate-200 bg-slate-900 shadow-sm flex items-center justify-center select-none">
+                          <img src={selectedReviewCitizen.urlVerso} alt="B.I. Verso" className="max-h-full max-w-full object-contain pointer-events-none" />
+                          <div className="absolute top-2 right-2 bg-blue-950/85 px-2 py-0.5 text-[7px] font-bold text-white rounded-md uppercase tracking-wider shadow-md">Ficheiro Real Supabase</div>
+                        </div>
+                      ) : (
+                        <div className="bg-gradient-to-br from-slate-100 to-slate-200 border border-slate-300 rounded-3xl p-5 relative overflow-hidden h-[240px] flex flex-col justify-between shadow-2xs">
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 pointer-events-none w-56 h-56 rounded-full border-4 border-indigo-900 flex items-center justify-center font-bold text-center text-xs">
+                            REPÚBLICA DE ANGOLA
+                          </div>
+                          <div className="text-center font-mono space-y-2 mt-4 text-[#0f172a] text-[8px] uppercase font-bold leading-relaxed">
+                            <p className="text-[7.5px] font-extrabold text-slate-700">Assinatura Certificada do Titular</p>
+                            <div className="w-36 h-6 border-b border-dashed border-slate-400 mx-auto opacity-70" />
+                            <p className="mt-4 text-[7.5px] font-extrabold text-slate-700">Impressão Digitalizada Dactiloscópica (Polegar Direito)</p>
+                            <div className="w-10 h-12 bg-slate-300 opacity-60 rounded-md border border-slate-400 mx-auto flex items-center justify-center">
+                              <Fingerprint size={18} className="text-slate-800" />
+                            </div>
+                          </div>
+                          <div className="border-t pt-1.5 border-slate-300 flex items-center justify-between text-[6.5px] font-mono text-slate-500 leading-none">
+                            <span>SERVIÇO DE MIGRAÇÃO E ESTRANGEIROS</span>
+                            <span>CADA-V1</span>
+                          </div>
+                        </div>
+                      )
+                    )}
+
                     <div className="bg-slate-50 border border-slate-150 rounded-2xl p-3 text-[10px] font-medium text-slate-500 uppercase tracking-tight flex items-center gap-2">
                       <IdCard size={14} className="text-slate-400" />
                       <span>Nome Declarado e BI Batem 100% com o Banco do Registo Civil Angolano.</span>
@@ -1425,7 +1541,7 @@ export function GovContactsContent({
                       {/* Rosto do Cidadão no Centro com linhas de rastreamento se IA estiver ativa */}
                       <div className="relative w-24 h-24 mx-auto my-auto rounded-full border-2 border-indigo-400/60 overflow-hidden shadow-xl shadow-black/30 z-10">
                         <img 
-                          src={selectedReviewCitizen.facePhoto} 
+                          src={selectedReviewCitizen.urlSelfie || selectedReviewCitizen.facePhoto} 
                           alt="Face HD" 
                           className="w-full h-full object-cover" 
                           referrerPolicy="no-referrer"
@@ -1592,7 +1708,7 @@ export function GovContactsContent({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={async () => {
                             if (!rejectionReason.trim()) {
                               alert('Insira uma justificativa para a rejeição fiscal.');
                               return;
@@ -1602,6 +1718,23 @@ export function GovContactsContent({
                               status: 'Não Aprovado', 
                               reason: rejectionReason 
                             } : c));
+
+                            // Supabase update if synced
+                            if (selectedReviewCitizen.dbUUID || selectedReviewCitizen.id.length > 20) {
+                              try {
+                                const { error } = await supabase
+                                  .from('solicitacoes_registo')
+                                  .update({ 
+                                    status: 'Reprovado', 
+                                    observacoes: rejectionReason 
+                                  })
+                                  .eq('id', selectedReviewCitizen.dbUUID || selectedReviewCitizen.id);
+                                if (error) console.error('Erro update status Supabase:', error);
+                              } catch (err) {
+                                console.error('Erro update status Supabase:', err);
+                              }
+                            }
+
                             addAuditLog?.(`Auditoria: Registo de "${selectedReviewCitizen.name}" REJEITADO do sistema CDA. Motivo: ${rejectionReason}`, 'critical');
                             setSelectedReviewCitizen(null);
                           }}
@@ -1613,14 +1746,30 @@ export function GovContactsContent({
 
                       <button
                         type="button"
-                        onClick={() => {
-                          // Se o agente aprova, muda para Aprovado e adiciona match score
+                        onClick={async () => {
                           const score = aiMatchScore || 98.4;
                           setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
                             ...c, 
                             status: 'Aprovado', 
                             verificationScore: score
                           } : c));
+
+                          // Supabase update if synced
+                          if (selectedReviewCitizen.dbUUID || selectedReviewCitizen.id.length > 20) {
+                            try {
+                              const { error } = await supabase
+                                .from('solicitacoes_registo')
+                                .update({ 
+                                  status: 'Aprovado',
+                                  observacoes: 'Homologado e ativado biometricamente pelo agente Admin.'
+                                })
+                                .eq('id', selectedReviewCitizen.dbUUID || selectedReviewCitizen.id);
+                              if (error) console.error('Erro update status Supabase:', error);
+                            } catch (err) {
+                              console.error('Erro update status Supabase:', err);
+                            }
+                          }
+
                           addAuditLog?.(`Auditoria: Cadastro do cidadão "${selectedReviewCitizen.name}" homologado e ativado biometricamente pelo agente Admin.`, 'success');
                           setSelectedReviewCitizen(null);
                         }}
@@ -1635,14 +1784,30 @@ export function GovContactsContent({
                   {selectedReviewCitizen.status !== 'Pendente' && (
                     <button
                       type="button"
-                      onClick={() => {
-                        // Reverter para Pendente para reavaliação se necessário
+                      onClick={async () => {
                         setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
                           ...c, 
                           status: 'Pendente', 
                           reason: undefined,
                           verificationScore: undefined 
                         } : c));
+
+                        // Supabase update if synced
+                        if (selectedReviewCitizen.dbUUID || selectedReviewCitizen.id.length > 20) {
+                          try {
+                            const { error } = await supabase
+                              .from('solicitacoes_registo')
+                              .update({ 
+                                status: 'Pendente',
+                                observacoes: 'Reaberto para nova revisão.'
+                              })
+                              .eq('id', selectedReviewCitizen.dbUUID || selectedReviewCitizen.id);
+                            if (error) console.error('Erro reset status Supabase:', error);
+                          } catch (err) {
+                            console.error('Erro reset status Supabase:', err);
+                          }
+                        }
+
                         addAuditLog?.(`Auditoria: Cadastro de "${selectedReviewCitizen.name}" reaberto para nova revisão e testes dactiloscópicos.`, 'info');
                         setSelectedReviewCitizen(null);
                       }}

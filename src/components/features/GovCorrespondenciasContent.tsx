@@ -190,7 +190,7 @@ export function GovCorrespondenciasContent({
           <button 
             type="button"
             onClick={() => setIsDispatchModalOpen(true)}
-            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-5 py-3 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95 transition-all text-xs font-black uppercase tracking-wider shadow-md shadow-indigo-650/10 cursor-pointer border-0 outline-none"
+            className="w-full sm:w-auto bg-indigo-950 hover:bg-indigo-900 border border-indigo-950 text-white rounded-2xl px-5 py-3 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-95 transition-all text-xs font-black uppercase tracking-wider shadow-md shadow-slate-300 cursor-pointer border-0 outline-none"
           >
             <Plus size={15} /> Novo Expediente
           </button>

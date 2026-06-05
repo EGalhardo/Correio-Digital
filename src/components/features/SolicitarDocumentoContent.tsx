@@ -444,7 +444,7 @@ export function SolicitarDocumentoContent({
     if (!createdDoc) return;
     
     const notif = {
-      id: Date.now(),
+      id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
       title: 'Novo Documento Oficial',
       message: `A sua solicitação foi processada. O documento "${createdDoc.name}" já está disponível na sua correspondência eletrónica.`,
       time: 'Agora',

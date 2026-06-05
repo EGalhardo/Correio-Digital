@@ -169,6 +169,35 @@ export function GovRelatorioContent({
     { name: 'Min. Saúde', valor: 450 },
   ];
 
+  const exportReportToCSV = (rep: GeneratedReport) => {
+    // Generates real CSV download of the report data
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "ID;Titulo;Tipo;Formato;Periodo;Data Gerada;Tamanho;Gerado Por\n";
+    csvContent += `"${rep.id}";"${rep.title}";"${rep.type}";"${rep.format}";"${rep.period}";"${rep.date}";"${rep.size}";"${rep.generatedBy}"\n\n`;
+    
+    if (rep.type === 'Auditoria') {
+      csvContent += "LOGS COMPILADOS DE AUDITORIA\n";
+      csvContent += "ID;Data;Agente;Modulo;Acao;Tipo\n";
+      auditLogs.forEach(log => {
+        csvContent += `"${log.id}";"${log.timestamp}";"${log.user}";"${(log as any).module || 'Geral'}";"${log.action}";"${log.type}"\n`;
+      });
+    } else {
+      csvContent += "EXPEDIENTES GERAIS EMITIDOS\n";
+      csvContent += "ID;Remetente;Destinatario;Assunto;Estado\n";
+      correspondences.forEach(c => {
+        csvContent += `"${c.id}";"${c.sender}";"${c.recipient}";"${c.subject}";"${c.status}"\n`;
+      });
+    }
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${rep.id || 'Relatorio'}_${rep.type.toLowerCase()}_export.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const triggerGenerate = (e: React.FormEvent) => {
     e.preventDefault();
     setIsGenerating(true);
@@ -192,7 +221,7 @@ export function GovRelatorioContent({
             else title += '(Últimos 30 dias)';
 
             const newRep: GeneratedReport = {
-              id: `REP-2026-0${history.length + 1}`,
+              id: `REP-2026-0${history.length + 1}-${Math.floor(Math.random() * 1000)}`,
               title,
               type: config.type === 'audit_log' ? 'Auditoria' : config.type === 'emissions' ? 'Emissões' : 'Geral',
               format: config.format.toUpperCase() as 'PDF' | 'XLSX' | 'CSV',
@@ -245,12 +274,12 @@ export function GovRelatorioContent({
             setSuccessMsg(false);
           }}
           className={`pb-3 px-4 font-black text-xs uppercase tracking-wider relative cursor-pointer border-0 transition-all ${
-            activeTab === 'instituicoes' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'instituicoes' ? 'text-indigo-950 font-black' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           Instituições
           {activeTab === 'instituicoes' && (
-            <motion.div layoutId="rel_bar" className="absolute bottom-0 inset-x-0 h-1 bg-indigo-600 rounded-t-full" />
+            <motion.div layoutId="rel_bar" className="absolute bottom-0 inset-x-0 h-1 bg-indigo-950 rounded-t-full" />
           )}
         </button>
         <button
@@ -259,12 +288,12 @@ export function GovRelatorioContent({
             setSuccessMsg(false);
           }}
           className={`pb-3 px-4 font-black text-xs uppercase tracking-wider relative cursor-pointer border-0 transition-all ${
-            activeTab === 'usuarios' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'usuarios' ? 'text-indigo-950 font-black' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           Usuários
           {activeTab === 'usuarios' && (
-            <motion.div layoutId="rel_bar" className="absolute bottom-0 inset-x-0 h-1 bg-indigo-600 rounded-t-full" />
+            <motion.div layoutId="rel_bar" className="absolute bottom-0 inset-x-0 h-1 bg-indigo-950 rounded-t-full" />
           )}
         </button>
         <button
@@ -273,12 +302,12 @@ export function GovRelatorioContent({
             setSuccessMsg(false);
           }}
           className={`pb-3 px-4 font-black text-xs uppercase tracking-wider relative cursor-pointer border-0 transition-all ${
-            activeTab === 'total' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+            activeTab === 'total' ? 'text-indigo-950 font-black' : 'text-slate-400 hover:text-slate-600'
           }`}
         >
           Total
           {activeTab === 'total' && (
-            <motion.div layoutId="rel_bar" className="absolute bottom-0 inset-x-0 h-1 bg-indigo-600 rounded-t-full" />
+            <motion.div layoutId="rel_bar" className="absolute bottom-0 inset-x-0 h-1 bg-indigo-950 rounded-t-full" />
           )}
         </button>
       </div>
@@ -776,15 +805,22 @@ export function GovRelatorioContent({
                     </div>
 
                     {/* Action trigger */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end">
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => exportReportToCSV(rep)}
+                        className="py-1.5 px-3 border border-indigo-200 hover:border-indigo-400 bg-white text-indigo-950 hover:text-indigo-900 rounded-xl text-[9.5px] font-black uppercase tracking-wider cursor-pointer transition-colors flex items-center justify-center gap-1"
+                        title="Exportar dados como CSV"
+                      >
+                        Exportar CSV
+                      </button>
                       <button
                         onClick={() => {
                           setSelectedReport(rep);
                         }}
-                        className="w-full py-1.5 px-3 border border-slate-205 hover:border-slate-405 bg-white text-slate-650 hover:text-slate-950 rounded-xl text-[9.5px] font-black uppercase tracking-wider cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+                        className="flex-1 py-1.5 px-3 border border-slate-205 hover:border-slate-405 bg-white text-slate-650 hover:text-slate-950 rounded-xl text-[9.5px] font-black uppercase tracking-wider cursor-pointer transition-colors flex items-center justify-center gap-1.5"
                         title="Visualizar Relatório de Auditoria"
                       >
-                        <Download size={12} /> Visualizar &amp; Descarregar
+                        <Download size={12} /> Visualizar
                       </button>
                     </div>
                   </div>
@@ -957,11 +993,16 @@ export function GovRelatorioContent({
                   onClick={() => setSelectedReport(null)}
                   className="px-5 py-2.5 bg-white border hover:bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer"
                 >
-                  Fechar Visualização
+                  Fechar
+                </button>
+                <button
+                  onClick={() => exportReportToCSV(selectedReport)}
+                  className="px-5 py-2.5 bg-indigo-950 hover:bg-indigo-900 border border-indigo-950 text-white font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer flex items-center gap-1.5"
+                >
+                  <Download size={12} /> Exportar CSV
                 </button>
                 <button
                   onClick={() => {
-                    alert(`Descarregando ficheiro oficial compilado ${selectedReport.id} (${selectedReport.format})...`);
                     window.print();
                   }}
                   className="px-5 py-2.5 bg-blue-900 hover:bg-blue-950 text-white font-black text-xs uppercase tracking-wider rounded-xl cursor-pointer flex items-center gap-1.5"

@@ -44,6 +44,7 @@ import {
 } from "recharts";
 
 import { Document, AppMode, UserRequest } from "../../types";
+import { GOV_HIGHLIGHT_SLIDES } from "../../constants/data";
 
 interface Institution {
   name: string;
@@ -236,6 +237,13 @@ export function GovDashboard({
   addAuditLog,
 }: GovDashboardProps & { appMode?: AppMode }) {
   const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % GOV_HIGHLIGHT_SLIDES.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, []);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedInst, setSelectedInst] = useState<Institution | null>(null);
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null);
@@ -674,6 +682,130 @@ export function GovDashboard({
             </span>
           </div>
         </header>
+
+        {/* Imagens Publicitárias / Destaques do Governo */}
+        <section className="relative h-[320px] md:h-[504px] rounded-[24px] md:rounded-[32px] overflow-hidden shadow-sm border border-slate-200">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`gov-destaque-${activeSlide}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className="absolute inset-0"
+            >
+              <motion.img 
+                src={GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].image} 
+                alt={GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].title}
+                initial={{ scale: 1.03 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 6, ease: "linear" }}
+                className="w-full h-full object-cover object-center"
+                loading="eager"
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+
+          {/* Slide Text & Actions */}
+          <div className="absolute bottom-6 left-6 right-6 md:left-10 md:right-10 flex flex-col md:flex-row md:items-center justify-between gap-4 z-10 text-left">
+            <div className="space-y-1">
+              <h3 className="text-white text-lg md:text-2xl font-black uppercase italic tracking-tight leading-tight">
+                {GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].title}
+              </h3>
+            </div>
+            {GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].btn && (
+              <button
+                type="button"
+                onClick={() => {
+                  const action = GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].action;
+                  if (action) onNavigate?.(action);
+                }}
+                className="px-5 py-2.5 bg-red-650 hover:bg-red-750 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shrink-0 cursor-pointer border-0 outline-none"
+              >
+                {GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].btn}
+              </button>
+            )}
+          </div>
+
+          {/* Slide Indicators */}
+          <div className="absolute top-6 right-6 flex gap-1.5 z-10">
+            {GOV_HIGHLIGHT_SLIDES.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActiveSlide(i)}
+                className={`h-1.5 rounded-full transition-all duration-300 border-0 outline-none cursor-pointer ${
+                  activeSlide % GOV_HIGHLIGHT_SLIDES.length === i ? 'w-5 bg-white' : 'w-1.5 bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* ID Digital & Novas Mensagens Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-5 md:p-6 flex items-center gap-4 md:gap-6 shadow-xs relative overflow-hidden text-left font-sans">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center shadow-xs shrink-0">
+              <ShieldCheck size={24} className="md:w-8 md:h-8 text-red-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">ID Digital do Admin</div>
+              <div className="text-base md:text-xl font-black text-slate-900 leading-tight italic tracking-tighter">
+                Gestor Operativo Verificado
+              </div>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] md:text-xs font-bold text-slate-650">Acesso Governamental Ativo (100%)</span>
+              </div>
+            </div>
+          </div>
+          
+          <div 
+            role="button"
+            onClick={() => onNavigate?.('gov-correspondencias')}
+            className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-5 md:p-6 flex items-center gap-4 md:gap-6 shadow-xs hover:shadow-md hover:border-red-600/20 transition-all cursor-pointer group relative overflow-hidden text-left font-sans"
+          >
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-red-500/5 text-red-600 rounded-2xl flex items-center justify-center shadow-xs shrink-0 group-hover:scale-110 transition-transform border border-red-500/10">
+              <Mail size={24} className="md:w-8 md:h-8" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 truncate">Central de Comunicações</div>
+              <div className="text-base md:text-xl font-black text-slate-900 leading-tight italic tracking-tighter">Novas Correspondências</div>
+              <div className="text-[9px] md:text-xs text-red-650 font-black mt-1">Iniciar Novo Expediente &rarr;</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Instituições Conectadas Horizontal Panel */}
+        <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-5 shadow-xs overflow-hidden relative text-left">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+               <div className="w-1.5 h-6 bg-red-600 rounded-full" />
+               <div className="min-w-0">
+                 <h3 className="text-slate-950 font-black text-xs md:text-base italic tracking-tighter uppercase leading-none">Instituições Conectadas</h3>
+               </div>
+            </div>
+            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest self-baseline sm:self-auto">Modo Gestão de Redes</div>
+          </div>
+          <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
+            {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras", "INE"].map((name) => (
+              <button 
+                key={name}
+                type="button" 
+                onClick={() => {
+                  onNavigate?.('gov-interoperabilidade');
+                }}
+                className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-slate-950 text-white border border-slate-900 whitespace-nowrap hover:bg-slate-900 transition-all cursor-pointer shrink-0 shadow-xs hover:shadow-sm"
+                title="Visualizar status de interoperabilidade"
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </section>
 
         {/* Resumo Geral - KPI panel */}
         <section

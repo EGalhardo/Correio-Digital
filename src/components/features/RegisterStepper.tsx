@@ -20,6 +20,24 @@ import {
   Sparkles,
   Loader2
 } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
+
+const base64ToBlob = (base64Str: string): Blob => {
+  try {
+    const parts = base64Str.split(';base64,');
+    const contentType = parts[0].split(':')[1];
+    const raw = window.atob(parts[1]);
+    const rawLength = raw.length;
+    const uInt8Array = new Uint8Array(rawLength);
+    for (let i = 0; i < rawLength; ++i) {
+      uInt8Array[i] = raw.charCodeAt(i);
+    }
+    return new Blob([uInt8Array], { type: contentType });
+  } catch (e) {
+    console.error('Error converting base64 to blob:', e);
+    return new Blob([], { type: 'image/jpeg' });
+  }
+};
 
 interface RegisterStepperProps {
   onCancel: () => void;
@@ -55,6 +73,10 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
   const [scanStateText, setScanStateText] = useState('Pronto para Captura');
   const [captureFinished, setCaptureFinished] = useState(false);
   const [savedFacePhoto, setSavedFacePhoto] = useState<string>('');
+
+  // Submissão ao Supabase
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
 
   // Calculate Password Strength in real time
   useEffect(() => {
@@ -175,8 +197,11 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
     }, 150);
   };
 
-  // Form submission and registration inside local storage
-  const handleFinalSubmit = () => {
+  // Form submission and registration inside Supabase (with fallback to local storage)
+  const handleFinalSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitMessage('Enviando documentos para o Supabase Storage...');
+
     // Standard register block
     const newUser = {
       id: `cit_${Date.now()}`,
@@ -193,7 +218,106 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
       reason: 'Aguardando validação formal de vivacidade e homologação de dados por analista tributário e SME.'
     };
 
-    // Save back to local storage list
+    let urlFrente = '';
+    let urlVerso = '';
+    let urlSelfie = '';
+
+    try {
+      const isSupabaseReady = (import.meta as any).env.VITE_SUPABASE_URL && (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+      
+      if (isSupabaseReady) {
+        const biClean = newUser.biNumber.replace(/\s+/g, '');
+        
+        // Upload front
+        if (documentFrente) {
+          const frontExt = documentFrente.name.split('.').pop() || 'jpg';
+          const frontPath = `${biClean}/frente_${Date.now()}.${frontExt}`;
+          const { error: fErr } = await supabase.storage
+            .from('documentos_registo')
+            .upload(frontPath, documentFrente);
+          if (fErr) console.error('Erro upload frente:', fErr);
+          else {
+            const { data } = supabase.storage.from('documentos_registo').getPublicUrl(frontPath);
+            urlFrente = data.publicUrl;
+          }
+        }
+
+        // Upload back
+        if (documentVerso) {
+          const backExt = documentVerso.name.split('.').pop() || 'jpg';
+          const backPath = `${biClean}/verso_${Date.now()}.${backExt}`;
+          const { error: bErr } = await supabase.storage
+            .from('documentos_registo')
+            .upload(backPath, documentVerso);
+          if (bErr) console.error('Erro upload verso:', bErr);
+          else {
+            const { data } = supabase.storage.from('documentos_registo').getPublicUrl(backPath);
+            urlVerso = data.publicUrl;
+          }
+        }
+
+        // Upload selfie
+        if (savedFacePhoto) {
+          try {
+            let selfieBlob: Blob | null = null;
+            if (savedFacePhoto.startsWith('data:image/')) {
+              selfieBlob = base64ToBlob(savedFacePhoto);
+            } else {
+              try {
+                const res = await fetch(savedFacePhoto);
+                selfieBlob = await res.blob();
+              } catch (_) {
+                // Ignore and use directly
+              }
+            }
+
+            if (selfieBlob) {
+              const selfiePath = `${biClean}/selfie_${Date.now()}.jpg`;
+              const { error: sErr } = await supabase.storage
+                .from('documentos_registo')
+                .upload(selfiePath, selfieBlob, { contentType: 'image/jpeg' });
+              if (sErr) console.error('Erro upload selfie:', sErr);
+              else {
+                const { data } = supabase.storage.from('documentos_registo').getPublicUrl(selfiePath);
+                urlSelfie = data.publicUrl;
+              }
+            } else {
+              urlSelfie = savedFacePhoto;
+            }
+          } catch (selfieErr) {
+            console.error('Erro processando selfie upload:', selfieErr);
+            urlSelfie = savedFacePhoto;
+          }
+        }
+
+        setSubmitMessage('Registando dados no Supabase Database...');
+
+        // Insert to Supabase table: solicitacoes_registo
+        const { error: insertErr } = await supabase
+          .from('solicitacoes_registo')
+          .insert([{
+            nome: newUser.name,
+            email: newUser.contact,
+            password_hash: password,
+            bi_numero: newUser.biNumber,
+            url_frente: urlFrente || null,
+            url_verso: urlVerso || null,
+            url_selfie: urlSelfie || null,
+            status: 'Pendente',
+            observacoes: newUser.reason
+          }]);
+
+        if (insertErr) {
+          console.error('Erro ao inserir solicitacao_registo no Supabase:', insertErr);
+        } else {
+          addAuditLog(`Adesão de ${newUser.name} registada com sucesso no Supabase!`, 'success');
+        }
+      }
+    } catch (err) {
+      console.error('Erro global no envio do Supabase:', err);
+    }
+
+    // Save back to local storage list (as fallback and for instant UI response)
     try {
       const saved = localStorage.getItem('gov_admin_citizens');
       let currentCitizens = [];
@@ -201,17 +325,19 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
         currentCitizens = JSON.parse(saved);
       }
       
-      // Inject to first position
-      const updated = [newUser, ...currentCitizens];
+      const updated = [{
+        ...newUser,
+        facePhoto: urlSelfie || newUser.facePhoto
+      }, ...currentCitizens];
       localStorage.setItem('gov_admin_citizens', JSON.stringify(updated));
-      
-      // Save specific citizen details in simulation session so login could resolve with BI in testing
       localStorage.setItem(`citizen_pass_${newUser.biNumber}`, password);
 
       addAuditLog(`Processo de Adesão de ${newUser.name} submetido ao SME`, 'info');
       setStep('success');
     } catch (e) {
       console.error('Erro ao guardar cidadão', e);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -781,27 +907,35 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
               )}
 
               {/* Action Buttons Voltar / Terminar */}
-              <div className="pt-3.5 border-t border-slate-100 flex gap-3 max-w-md mx-auto">
-                <button
-                  type="button"
-                  disabled={isScanning}
-                  onClick={() => setStep(2)}
-                  className="flex-1 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-800 font-extrabold text-[#0f172a] text-[11px] uppercase tracking-widest rounded-xl transition-all cursor-pointer bg-white flex items-center justify-center gap-1.5"
-                >
-                  <ArrowLeft size={12} /> VOLTAR
-                </button>
-                <button
-                  type="button"
-                  disabled={!captureFinished || isScanning}
-                  onClick={handleFinalSubmit}
-                  className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border-0 shadow-md flex items-center justify-center gap-1.5 ${
-                    captureFinished && !isScanning
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer shadow-blue-500/20' 
-                      : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                  }`}
-                >
-                  FINALIZAR SUBMISSÃO <Check size={12} />
-                </button>
+              <div className="pt-3.5 border-t border-slate-100 flex flex-col gap-2 max-w-md mx-auto">
+                {isSubmitting && (
+                  <div className="flex items-center justify-center gap-2 py-1 text-[9.5px] font-bold text-blue-600 animate-pulse">
+                    <Loader2 size={13} className="animate-spin" />
+                    {submitMessage}
+                  </div>
+                )}
+                <div className="flex gap-3 w-full">
+                  <button
+                    type="button"
+                    disabled={isScanning || isSubmitting}
+                    onClick={() => setStep(2)}
+                    className="flex-1 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-800 font-extrabold text-[#0f172a] text-[11px] uppercase tracking-widest rounded-xl transition-all cursor-pointer bg-white flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    <ArrowLeft size={12} /> VOLTAR
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!captureFinished || isScanning || isSubmitting}
+                    onClick={handleFinalSubmit}
+                    className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border-0 shadow-md flex items-center justify-center gap-1.5 ${
+                      captureFinished && !isScanning && !isSubmitting
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white cursor-pointer shadow-blue-500/20' 
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200 shadow-none'
+                    }`}
+                  >
+                    {isSubmitting ? 'A ENVIAR...' : 'FINALIZAR SUBMISSÃO'} <Check size={12} />
+                  </button>
+                </div>
               </div>
 
             </motion.div>

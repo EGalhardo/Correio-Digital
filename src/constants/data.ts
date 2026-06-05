@@ -779,6 +779,57 @@ export const GOV_HIGHLIGHT_SLIDES: Slide[] = [
   }
 ];
 
+export const INST_HIGHLIGHT_SLIDES: Slide[] = [
+  {
+    id: 1,
+    title: "Interoperabilidade Ativa",
+    subtitle: "Conectividade em tempo real entre todas as instituições do Estado para um serviço público ágil.",
+    image: "https://i.postimg.cc/Z5WRTqbM/e1.png",
+    btn: "Ver Redes",
+    action: "home"
+  },
+  {
+    id: 2,
+    title: "Comunicação Consular e Diplomática",
+    subtitle: "Expediente digital seguro para embaixadas, consulados e missões diplomáticas no exterior.",
+    image: "https://i.postimg.cc/sfKD7Wvd/e2.png",
+    btn: "Ver Mensagens",
+    action: "home"
+  },
+  {
+    id: 3,
+    title: "Segurança de Dados Institucionais",
+    subtitle: "Criptografia avançada e auditoria permanente em todos os fluxos de correspondência oficial.",
+    image: "https://i.postimg.cc/dQWwLKxJ/e3.png",
+    btn: "Auditoria",
+    action: "home"
+  },
+  {
+    id: 4,
+    title: "Modernização Administrativa",
+    subtitle: "Redução de burocracia e facilitação de processos de emissão de certidões e alvarás.",
+    image: "https://i.postimg.cc/qMPf3Bc8/e4.png",
+    btn: "Consultar",
+    action: "home"
+  },
+  {
+    id: 5,
+    title: "Angola Digital 2026",
+    subtitle: "Uma nova era de governação eletrónica mais eficiente, inclusiva e transparente.",
+    image: "https://i.postimg.cc/rwXbpncJ/e5.png",
+    btn: "Saber Mais",
+    action: "home"
+  },
+  {
+    id: 6,
+    title: "Gestão Integrada de Redes",
+    subtitle: "Monitorização em tempo real da conectividade e tráfego de dados intergovenamentais.",
+    image: "https://i.postimg.cc/nVspjW8N/e6.png",
+    btn: "Monitor de Tráfego",
+    action: "home"
+  }
+];
+
 export const NOTIFICATIONS: AppNotification[] = [
   { id: 1, title: 'BI Renovado', message: 'O seu Bilhete de Identidade foi renovado com sucesso.', time: '2h atrás', type: 'success', targetTab: 'correspondencias' },
   { id: 2, title: 'Alerta de Segurança', message: 'Novo acesso detectado a partir de um dispositivo Chrome em Luanda.', time: '5h atrás', type: 'warning', targetTab: 'perfil' },

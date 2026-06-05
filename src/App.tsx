@@ -38,6 +38,8 @@ import {
   SolicitarDocumentoContent,
   RegisterStepper,
   VoiceGuideAssistant,
+  InstitutionDetail,
+  InstQrCodeContent,
 } from './components';
 
 // Constants & Types
@@ -53,10 +55,12 @@ import {
 import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocRequest, Correspondence } from './types';
 import { ensureProtocolOnMessage, ensureProtocolOnDocument, generateProtocol } from './utils/protocolGenerator';
 import { OfflineManager, OfflineAction } from './utils/offlineManager';
+import { supabaseService } from './services/supabaseService';
 
 export default function App() {
   const [stage, setStage] = useState('splash');
   const [tab, setTab] = useState('home');
+  const [selectedInstitution, setSelectedInstitution] = useState<string | null>(null);
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [accessModalTitle, setAccessModalTitle] = useState('');
   const [accessModalMessage, setAccessModalMessage] = useState('');
@@ -404,7 +408,7 @@ export default function App() {
   
   const [correspondenciaTab, setCorrespondenciaTab] = useState('lidas');
   const [isComposing, setIsComposing] = useState(false);
-  const [composeData, setComposeData] = useState({ to: '', subject: '', body: '' });
+  const [composeData, setComposeData] = useState<{ to: string; subject: string; body: string; attachments?: string[] }>({ to: '', subject: '', body: '', attachments: [] });
 
   const [documentosTab, setDocumentosTab] = useState('lidas');
   const [isDocComposing, setIsDocComposing] = useState(false);
@@ -579,7 +583,7 @@ export default function App() {
       
       // Notify citizen user
       const newNotif: AppNotification = {
-        id: Date.now(),
+        id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
         type: 'success',
         title: 'Sincronização Finalizada',
         message: `${queue.length} acções offline foram consolidadas com a base central. Backup de emergência v1.2 atualizado.`,
@@ -712,6 +716,7 @@ export default function App() {
       type
     };
     setAuditLogs(prev => [newLog, ...prev]);
+    supabaseService.insertAuditLog(newLog).catch(() => {});
   };
 
   // Handlers
@@ -770,14 +775,15 @@ export default function App() {
         body: composeData.body,
         deadline: "Sem prazo",
         state: "Entregue & Autenticado",
-        actions: ["Ver detalhes"]
+        actions: ["Ver detalhes"],
+        attachments: composeData.attachments || []
       },
       protocol: protocol
     };
 
     setSentMessages(prev => [newMessage, ...prev]);
     setIsComposing(false);
-    setComposeData({ to: '', subject: '', body: '' });
+    setComposeData({ to: '', subject: '', body: '', attachments: [] });
 
     if (!isOnline) {
       const q = OfflineManager.queueAction('SEND_MESSAGE', { messageId, to: composeData.to, subject: composeData.subject });
@@ -790,6 +796,8 @@ export default function App() {
     } else {
       addAuditLog(`Correspondência enviada com Protocolo ${protocol.protocolNumber}`, 'info');
       OfflineManager.createAutomaticBackup();
+      // Sync to Supabase
+      supabaseService.insertMessage(newMessage, bi).catch(() => {});
     }
   };
 
@@ -797,7 +805,8 @@ export default function App() {
     setComposeData({
       to: msg.org,
       subject: `RE: ${msg.details?.subject || msg.preview.substring(0, 30)}`,
-      body: `\n\n--------------------------------\nEm resposta à mensagem de ${msg.date}:\n"${msg.preview}"`
+      body: `\n\n--------------------------------\nEm resposta à mensagem de ${msg.date}:\n"${msg.preview}"`,
+      attachments: []
     });
     setTab('correspondencias');
     setIsComposing(true);
@@ -866,6 +875,8 @@ export default function App() {
       } else {
         addAuditLog(`Contacto removido: ${contactToDelete.name}`, 'warning');
         OfflineManager.createAutomaticBackup();
+        // Background sync to Supabase
+        supabaseService.deleteContact(contactToDelete.id).catch(() => {});
       }
       
       setContactToDelete(null);
@@ -874,17 +885,16 @@ export default function App() {
 
   const handleAddContact = () => {
     if (!contactForm.name || !contactForm.bi) return;
-    setContacts(prev => [
-      {
-        id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
-        name: contactForm.name,
-        bi: contactForm.bi,
-        relation: contactForm.relation || "Contato",
-        status: "Pendente",
-        type: contactForm.type || "Normal",
-      },
-      ...prev
-    ]);
+    const newContact = {
+      id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
+      name: contactForm.name,
+      bi: contactForm.bi,
+      relation: contactForm.relation || "Contato",
+      status: "Pendente",
+      type: contactForm.type || "Normal",
+    };
+
+    setContacts(prev => [newContact, ...prev]);
 
     if (!isOnline) {
       OfflineManager.queueAction('ADD_CONTACT', { name: contactForm.name, bi: contactForm.bi });
@@ -895,6 +905,8 @@ export default function App() {
     } else {
       addAuditLog(`Novo contacto adicionado: ${contactForm.name}`, 'success');
       OfflineManager.createAutomaticBackup();
+      // Background sync to Supabase
+      supabaseService.insertContact(newContact, bi).catch(() => {});
     }
 
     setIsAddingContact(false);
@@ -902,7 +914,15 @@ export default function App() {
   };
 
   const handleUpdateContactType = (id: number, newType: 'Normal' | 'Emergência') => {
-    setContacts(prev => prev.map(c => c.id === id ? { ...c, type: newType } : c));
+    setContacts(prev => prev.map(c => {
+      if (c.id === id) {
+        const updated = { ...c, type: newType };
+        // Sync update
+        supabaseService.insertContact(updated, bi).catch(() => {});
+        return updated;
+      }
+      return c;
+    }));
     addAuditLog(`Prioridade do contacto atualizada para ${newType}`, 'info');
   };
 
@@ -949,7 +969,7 @@ export default function App() {
 
   const handleCreateRequest = (type: string, priority: 'Alta' | 'Média' | 'Baixa' = 'Média') => {
     const newReq: UserRequest = {
-      id: Date.now(),
+      id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
       user: 'Edlasio Galhardo', // Currently logged in user
       type,
       priority,
@@ -961,7 +981,7 @@ export default function App() {
 
     // Format new notification correctly satisfying AppNotification type
     const newNotif: AppNotification = {
-      id: Date.now(),
+      id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
       title: 'Solicitação Enviada',
       message: `O seu pedido de ${type} foi enviado à AGT.`,
       time: 'Agora',
@@ -1006,7 +1026,7 @@ export default function App() {
       setDocuments(prev => [newDoc, ...prev]);
       
       const systemMsg: Message = {
-        id: Date.now(),
+        id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
         org: request.institution,
         preview: `A sua solicitação de ${request.docType} foi aprovada.`,
         date: "Agora",
@@ -1022,7 +1042,7 @@ export default function App() {
       if (request.userBi === bi) {
         setInbox(prev => [systemMsg, ...prev]);
         setNotifications(prev => [{
-          id: Date.now(),
+          id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
           title: 'Documento Aprovado',
           message: `O seu pedido de ${request.docType} foi aprovado e emitido.`,
           time: 'Agora',
@@ -1039,7 +1059,7 @@ export default function App() {
 
   const handleCreateDocRequest = (docType: string, institution: string) => {
     const newReq: DocRequest = {
-      id: Date.now(),
+      id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
       userName: 'Edlasio Galhardo',
       userBi: bi,
       docType,
@@ -1067,6 +1087,29 @@ export default function App() {
             handleSelectMessage={handleSelectMessage}
             onCreateRequest={handleCreateRequest}
             isInst={isInstMode}
+            onDoubleClickInstitution={(name) => {
+              if (isInstMode) return; // Na versão institucional, clicar 2x no Painel não deve realizar nenhuma acção
+              setSelectedInstitution(name);
+              setTab('instituicao');
+            }}
+          />
+        );
+      case 'instituicao':
+        if (!selectedInstitution) {
+          setTab('home');
+          return null;
+        }
+        return (
+          <InstitutionDetail
+            institutionName={selectedInstitution}
+            inbox={currentInbox}
+            sentMessages={sentMessages}
+            docInbox={currentDocInbox}
+            onBack={() => {
+              setSelectedInstitution(null);
+              setTab('home');
+            }}
+            onSelectMessage={handleSelectMessage}
           />
         );
       case 'correspondencias':
@@ -1179,6 +1222,13 @@ export default function App() {
             correspondences={correspondences}
           />
         );
+      case 'inst-qrcode':
+        return (
+          <InstQrCodeContent
+            documents={documents}
+            addAuditLog={addAuditLog}
+          />
+        );
       case 'contatos':
         return appMode === 'institution' ? (
           <GovContactsContent
@@ -1250,6 +1300,15 @@ export default function App() {
             contactsCount={contacts.length}
             setTab={setTab}
             handleLogout={handleLogout}
+            inbox={inbox}
+            docInbox={docInbox}
+            sentMessages={sentMessages}
+            contactsList={contacts}
+            documentsList={documents}
+            userRequests={userRequests}
+            docRequests={docRequests}
+            auditLogs={auditLogs}
+            addAuditLog={addAuditLog}
           />
         );
       case 'gov-dashboard':
@@ -1443,7 +1502,7 @@ export default function App() {
                 };
                 setInbox(prev => [systemAlert, ...prev]);
                 setNotifications(prev => [{
-                  id: Date.now(),
+                  id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
                   title: 'ALERTA NACIONAL',
                   message: 'Protocolo de Emergência Activado pelo SOC',
                   time: 'Agora',
@@ -1479,7 +1538,7 @@ export default function App() {
                 
                 // Add Notification to citizen
                 setNotifications(prev => [{
-                  id: Date.now(),
+                  id: Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`),
                   title: 'ALERTA SOC-AN-2026 UNIFICADO',
                   message: 'Protocolo de Emergência Ciber-Defensiva Ativado. Chaves Faciais e Biométricas de Edlasio Galhardo Temporariamente Suspensas / Bloqueadas para Salvaguarda de Soberania Digital!',
                   time: 'Agora',

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
@@ -27,7 +28,21 @@ import {
   Coins,
   Scale,
   FileText,
-  Lock
+  Lock,
+  Undo,
+  Redo,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  Quote,
+  Eraser,
+  Trash2,
+  Paperclip
 } from 'lucide-react';
 import { Message, SENSITIVITY_LEVELS, PRIORITY_CONFIGS } from '../../types';
 import { getCategoryMetadata } from '../../utils/protocolGenerator';
@@ -74,8 +89,8 @@ function renderCategoryIcon(iconName: string, size = 10) {
 interface MailContentProps {
   isComposing: boolean;
   setIsComposing: (composing: boolean) => void;
-  composeData: { to: string; subject: string; body: string };
-  setComposeData: (data: { to: string; subject: string; body: string }) => void;
+  composeData: { to: string; subject: string; body: string; attachments?: string[] };
+  setComposeData: (data: { to: string; subject: string; body: string; attachments?: string[] }) => void;
   handleSendMessage: () => void;
   unreadTotal: number;
   correspondenciaTab: string;
@@ -108,6 +123,170 @@ export function MailContent({
   bi,
   isInst
 }: MailContentProps) {
+  const [editorBold, setEditorBold] = useState(false);
+  const [editorItalic, setEditorItalic] = useState(false);
+  const [editorUnderline, setEditorUnderline] = useState(false);
+  const [editorFont, setEditorFont] = useState('sans-serif');
+  const [editorFontSize, setEditorFontSize] = useState('base');
+  const [editorAlignment, setEditorAlignment] = useState('left');
+  const [editorColor, setEditorColor] = useState('#1e293b');
+  const [editorIsQuote, setEditorIsQuote] = useState(false);
+  const [editorListType, setEditorListType] = useState<string | null>(null);
+
+  const [textHistory, setTextHistory] = useState<string[]>([composeData.body || '']);
+  const [historyIndex, setHistoryIndex] = useState(0);
+
+  const [provincia, setProvincia] = useState('Luanda');
+  const [cidade, setCidade] = useState('Luanda');
+  const [municipio, setMunicipio] = useState('Benfica');
+
+  const PROVINCIAS_OPCOES = [
+    { value: 'Luanda', label: 'Luanda' },
+    { value: 'Benguela', label: 'Benguela' },
+    { value: 'Huíla', label: 'Huíla' },
+    { value: 'Cabinda', label: 'Cabinda' },
+  ];
+
+  const CIDADES_OPCOES: Record<string, { value: string; label: string }[]> = {
+    Luanda: [
+      { value: 'Luanda', label: 'Luanda' },
+      { value: 'Talatona', label: 'Talatona' },
+      { value: 'Cacuaco', label: 'Cacuaco' },
+      { value: 'Viana', label: 'Viana' }
+    ],
+    Benguela: [
+      { value: 'Benguela', label: 'Benguela' },
+      { value: 'Lobito', label: 'Lobito' },
+      { value: 'Catumbela', label: 'Catumbela' }
+    ],
+    Huíla: [
+      { value: 'Lubango', label: 'Lubango' },
+      { value: 'Humpata', label: 'Humpata' },
+      { value: 'Chibia', label: 'Chibia' }
+    ],
+    Cabinda: [
+      { value: 'Cabinda', label: 'Cabinda' },
+      { value: 'Cacongo', label: 'Cacongo' }
+    ]
+  };
+
+  const MUNICIPIOS_OPCOES: Record<string, { value: string; label: string }[]> = {
+    Luanda: [
+      { value: 'Benfica', label: 'Benfica' },
+      { value: 'Belas', label: 'Belas' },
+      { value: 'Sambizanga', label: 'Sambizanga' },
+      { value: 'Cazenga', label: 'Cazenga' }
+    ],
+    Talatona: [
+      { value: 'Talatona Centro', label: 'Talatona Centro' },
+      { value: 'Camama', label: 'Camama' }
+    ],
+    Cacuaco: [
+      { value: 'Cacuaco Sede', label: 'Cacuaco Sede' },
+      { value: 'Kicolo', label: 'Kicolo' }
+    ],
+    Viana: [
+      { value: 'Viana Sede', label: 'Viana Sede' },
+      { value: 'Estalagem', label: 'Estalagem' }
+    ],
+    Benguela: [
+      { value: 'Benguela Sede', label: 'Benguela Sede' },
+      { value: 'Baía Farta', label: 'Baía Farta' }
+    ],
+    Lobito: [
+      { value: 'Lobito Sede', label: 'Lobito Sede' },
+      { value: 'Canata', label: 'Canata' }
+    ],
+    Catumbela: [
+      { value: 'Catumbela Sede', label: 'Catumbela Sede' }
+    ],
+    Lubango: [
+      { value: 'Lubango Sede', label: 'Lubango Sede' },
+      { value: 'Arriba', label: 'Arriba' }
+    ],
+    Humpata: [
+      { value: 'Humpata Sede', label: 'Humpata Sede' }
+    ],
+    Chibia: [
+      { value: 'Chibia Sede', label: 'Chibia Sede' }
+    ],
+    Cabinda: [
+      { value: 'Cabinda Sede', label: 'Cabinda Sede' },
+      { value: 'Landana', label: 'Landana' }
+    ],
+    Cacongo: [
+      { value: 'Cacongo Sede', label: 'Cacongo Sede' }
+    ]
+  };
+
+  useEffect(() => {
+    if (isComposing) {
+      setTextHistory([composeData.body || '']);
+      setHistoryIndex(0);
+    }
+  }, [isComposing]);
+
+  const updateBodyText = (newText: string) => {
+    setComposeData({ ...composeData, body: newText });
+    const nextHistory = textHistory.slice(0, historyIndex + 1);
+    setTextHistory([...nextHistory, newText]);
+    setHistoryIndex(nextHistory.length);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const prevIdx = historyIndex - 1;
+      setHistoryIndex(prevIdx);
+      setComposeData({ ...composeData, body: textHistory[prevIdx] });
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < textHistory.length - 1) {
+      const nextIdx = historyIndex + 1;
+      setHistoryIndex(nextIdx);
+      setComposeData({ ...composeData, body: textHistory[nextIdx] });
+    }
+  };
+
+  const clearFormatting = () => {
+    setEditorBold(false);
+    setEditorItalic(false);
+    setEditorUnderline(false);
+    setEditorFont('sans-serif');
+    setEditorFontSize('base');
+    setEditorAlignment('left');
+    setEditorColor('#1e293b');
+    setEditorIsQuote(false);
+    setEditorListType(null);
+  };
+
+  const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const currentList = composeData.attachments || [];
+      const newFiles: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!currentList.includes(file.name)) {
+          newFiles.push(file.name);
+        }
+      }
+      setComposeData({
+        ...composeData,
+        attachments: [...currentList, ...newFiles]
+      });
+    }
+  };
+
+  const handleFileRemove = (name: string) => {
+    const currentList = composeData.attachments || [];
+    setComposeData({
+      ...composeData,
+      attachments: currentList.filter(f => f !== name)
+    });
+  };
+
   if (isComposing) {
     return (
       <motion.div 
@@ -131,13 +310,13 @@ export function MailContent({
         </div>
 
         <div className="bg-white border border-line rounded-[24px] md:rounded-[32px] p-5 md:p-10 shadow-sm space-y-5 md:space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
-                {isInst ? 'Destinatário' : 'Destinatário Institucional'}
-              </label>
-              <div className="relative">
-                {isInst ? (
+          {isInst ? (
+            <div className="grid grid-cols-1 gap-5 md:gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
+                  Destinatário
+                </label>
+                <div className="relative">
                   <input 
                     type="text"
                     placeholder="Introduza o N-BI"
@@ -145,8 +324,27 @@ export function MailContent({
                     onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
                     className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-mono font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                   />
-                ) : (
-                  <>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Assunto</label>
+                <input 
+                  type="text"
+                  placeholder="Qual o tema da sua mensagem?"
+                  value={composeData.subject}
+                  onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                  className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-5 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-5 md:gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
+                    Destinatário Institucional
+                  </label>
+                  <div className="relative">
                     <select 
                       value={composeData.to}
                       onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
@@ -160,48 +358,402 @@ export function MailContent({
                     <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                       <ArrowLeft className="-rotate-90" size={14} />
                     </div>
-                  </>
-                )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
+                    Província
+                  </label>
+                  <div className="relative">
+                    <select 
+                      value={provincia}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setProvincia(val);
+                        const firstCity = CIDADES_OPCOES[val]?.[0]?.value || '';
+                        setCidade(firstCity);
+                        const listM = MUNICIPIOS_OPCOES[firstCity] || MUNICIPIOS_OPCOES[val] || [];
+                        setMunicipio(listM[0]?.value || '');
+                      }}
+                      className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
+                    >
+                      {PROVINCIAS_OPCOES.map(prov => (
+                        <option key={prov.value} value={prov.value}>{prov.label}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ArrowLeft className="-rotate-90" size={14} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
+                    Cidade
+                  </label>
+                  <div className="relative">
+                    <select 
+                      value={cidade}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCidade(val);
+                        const listM = MUNICIPIOS_OPCOES[val] || [];
+                        setMunicipio(listM[0]?.value || '');
+                      }}
+                      className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
+                    >
+                      {(CIDADES_OPCOES[provincia] || []).map(cid => (
+                        <option key={cid.value} value={cid.value}>{cid.label}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ArrowLeft className="-rotate-90" size={14} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
+                    Município
+                  </label>
+                  <div className="relative">
+                    <select 
+                      value={municipio}
+                      onChange={(e) => setMunicipio(e.target.value)}
+                      className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
+                    >
+                      {(MUNICIPIOS_OPCOES[cidade] || MUNICIPIOS_OPCOES[provincia] || []).map(mun => (
+                        <option key={mun.value} value={mun.value}>{mun.label}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                      <ArrowLeft className="-rotate-90" size={14} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Assunto</label>
+                <input 
+                  type="text"
+                  placeholder="Qual o tema da sua mensagem?"
+                  value={composeData.subject}
+                  onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
+                  className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Assunto</label>
-              <input 
-                type="text"
-                placeholder="Qual o tema da sua mensagem?"
-                value={composeData.subject}
-                onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
-                className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
-              />
-            </div>
-          </div>
+          )}
 
           <div className="space-y-2">
             <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Conteúdo da Mensagem</label>
+            
+            {/* Rich text Toolbar for composing, styled exactly like the official responder */}
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-2xl mb-2 shadow-xs">
+              {/* Undo / Redo */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={handleUndo}
+                  disabled={historyIndex === 0}
+                  title="Desfazer (Undo)"
+                  className={`p-2 rounded-xl hover:bg-slate-200/80 active:scale-95 transition-all ${
+                    historyIndex === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Undo size={14} className="stroke-[2.5]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRedo}
+                  disabled={historyIndex >= textHistory.length - 1}
+                  title="Refazer (Redo)"
+                  className={`p-2 rounded-xl hover:bg-slate-200/80 active:scale-95 transition-all ${
+                    historyIndex >= textHistory.length - 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Redo size={14} className="stroke-[2.5]" />
+                </button>
+              </div>
+
+              <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+              {/* Font Family Selector Dropdown */}
+              <div className="relative">
+                <select
+                  value={editorFont}
+                  onChange={(e) => setEditorFont(e.target.value)}
+                  className="bg-transparent text-slate-700 text-xs font-semibold py-1 pl-2 pr-5 border border-transparent rounded-xl hover:bg-slate-200/60 cursor-pointer focus:outline-none appearance-none font-sans"
+                >
+                  <option value="sans-serif">Sans Serif</option>
+                  <option value="serif">Serif (Editorial)</option>
+                  <option value="monospace">Monospace</option>
+                </select>
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px] font-black">▼</div>
+              </div>
+
+              <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+              {/* Font Size Selector Dropdown "tT" */}
+              <div className="relative flex items-center">
+                <span className="text-[10px] font-black mr-1 text-slate-500">tT</span>
+                <select
+                  value={editorFontSize}
+                  onChange={(e) => setEditorFontSize(e.target.value)}
+                  className="bg-transparent text-slate-700 text-xs font-semibold py-1 pl-1.5 pr-4 border border-transparent rounded-xl hover:bg-slate-200/60 cursor-pointer focus:outline-none appearance-none font-sans"
+                >
+                  <option value="sm">Pequeno</option>
+                  <option value="base">Normal</option>
+                  <option value="lg">Grande</option>
+                  <option value="xl">Título</option>
+                </select>
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[8px] font-black">▼</div>
+              </div>
+
+              <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+              {/* Inline formatting styles B, I, U */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => setEditorBold(!editorBold)}
+                  title="Negrito (Bold)"
+                  className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                    editorBold 
+                      ? 'bg-indigo-100/80 text-indigo-755 border border-indigo-200/30' 
+                      : 'text-slate-650 hover:bg-slate-200/60 hover:text-slate-900'
+                  }`}
+                >
+                  <Bold size={13} className="stroke-[3]" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEditorItalic(!editorItalic)}
+                  title="Itálico (Italic)"
+                  className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                    editorItalic 
+                      ? 'bg-indigo-100/80 text-indigo-755 border border-indigo-200/30' 
+                      : 'text-slate-650 hover:bg-slate-200/60 hover:text-slate-900'
+                  }`}
+                >
+                  <Italic size={13} className="stroke-[3]" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setEditorUnderline(!editorUnderline)}
+                  title="Sublinhado (Underline)"
+                  className={`p-1.5 rounded-xl active:scale-95 transition-all font-black text-xs min-w-[28px] flex items-center justify-center ${
+                    editorUnderline 
+                      ? 'bg-indigo-100/80 text-indigo-755 border border-indigo-200/30' 
+                      : 'text-slate-650 hover:bg-slate-200/60 hover:text-slate-900'
+                  }`}
+                >
+                  <Underline size={13} className="stroke-[3]" />
+                </button>
+              </div>
+
+              <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+              {/* Font Color Selection */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  title="Cor do Texto"
+                  className="p-1.5 rounded-xl text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 active:scale-95 transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <span className="font-extrabold text-xs border-b-2 leading-none" style={{ borderColor: editorColor }}>A</span>
+                  <span className="text-[6px]">▼</span>
+                </button>
+                <div className="absolute left-0 top-8 hidden group-hover:flex group-focus-within:flex flex-col bg-white border border-slate-200 rounded-xl p-2 shadow-xl z-20 min-w-[130px] gap-1 text-left">
+                  <span className="text-[8px] font-bold text-slate-400 select-none uppercase tracking-widest px-1">Cor da Fonte</span>
+                  <div className="grid grid-cols-5 gap-1 pt-1">
+                    {[
+                      { label: 'Slate', value: '#1e293b', bgClass: 'bg-slate-800' },
+                      { label: 'Red', value: '#dc2626', bgClass: 'bg-red-600' },
+                      { label: 'Blue', value: '#2563eb', bgClass: 'bg-blue-600' },
+                      { label: 'Green', value: '#16a34a', bgClass: 'bg-green-600' },
+                      { label: 'Gold', value: '#ca8a04', bgClass: 'bg-yellow-600' }
+                    ].map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => setEditorColor(color.value)}
+                        title={color.label}
+                        className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer ${color.bgClass} ${
+                          editorColor === color.value ? 'ring-2 ring-indigo-500 ring-offset-1 border-white' : 'border-black/5'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+              {/* Paragraph Alignment Selector Button Row */}
+              <div className="flex items-center gap-0.5">
+                {[
+                  { val: 'left', icon: <AlignLeft size={13} />, title: 'Alinhar à Esquerda' },
+                  { val: 'center', icon: <AlignCenter size={13} />, title: 'Alinhar ao Centro' },
+                  { val: 'right', icon: <AlignRight size={13} />, title: 'Alinhar à Direita' },
+                  { val: 'justify', icon: <AlignJustify size={13} />, title: 'Justificar' }
+                ].map((align) => (
+                  <button
+                    key={align.val}
+                    type="button"
+                    onClick={() => setEditorAlignment(align.val)}
+                    title={align.title}
+                    className={`p-1.5 rounded-xl active:scale-95 transition-all text-slate-600 cursor-pointer ${
+                      editorAlignment === align.val 
+                        ? 'bg-indigo-100/85 text-indigo-755 border border-indigo-200/30' 
+                        : 'hover:bg-slate-200/60 hover:text-slate-900'
+                    }`}
+                  >
+                    {align.icon}
+                  </button>
+                ))}
+              </div>
+
+              <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+              {/* List Type Bullet/Ordered Toggles */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (editorListType === 'bullet') {
+                      setEditorListType(null);
+                    } else {
+                      setEditorListType('bullet');
+                      if (!composeData.body.trim().startsWith('•') && !composeData.body.trim().startsWith('-')) {
+                        updateBodyText(`• ` + composeData.body);
+                      }
+                    }
+                  }}
+                  title="Lista de Marcadores (Bullets)"
+                  className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer ${
+                    editorListType === 'bullet'
+                      ? 'bg-indigo-100/85 text-indigo-755 border border-indigo-200/30'
+                      : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                  }`}
+                >
+                  <List size={13} />
+                </button>
+              </div>
+
+              <div className="w-[1px] h-4 bg-slate-200 mx-0.5" />
+
+              {/* Blockquote Toggle */}
+              <button
+                type="button"
+                onClick={() => setEditorIsQuote(!editorIsQuote)}
+                title="Citação (Blockquote)"
+                className={`p-1.5 rounded-xl active:scale-95 transition-all cursor-pointer ${
+                  editorIsQuote
+                    ? 'bg-indigo-100/85 text-indigo-755 border border-indigo-200/30'
+                    : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                }`}
+              >
+                <Quote size={13} />
+              </button>
+
+              {/* Clear formatting Eraser */}
+              <button
+                type="button"
+                onClick={clearFormatting}
+                title="Limpar Formatação"
+                className="p-1.5 rounded-xl text-slate-600 hover:bg-slate-200 hover:text-red-650 hover:bg-red-50/70 active:scale-95 transition-all ml-auto cursor-pointer"
+              >
+                <Eraser size={13} />
+              </button>
+            </div>
+
             <textarea 
               rows={8}
               placeholder="Descreva detalhadamente o seu pedido ou informação..."
               value={composeData.body}
-              onChange={(e) => setComposeData({ ...composeData, body: e.target.value })}
-              className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-medium text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none leading-relaxed"
+              onChange={(e) => updateBodyText(e.target.value)}
+              className={`w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-semibold focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none leading-relaxed ${
+                editorFont === 'serif' ? 'font-serif' : editorFont === 'monospace' ? 'font-mono' : 'font-sans'
+              } ${
+                editorFontSize === 'sm' ? 'text-xs' : editorFontSize === 'lg' ? 'text-base md:text-lg' : editorFontSize === 'xl' ? 'text-lg md:text-xl font-bold' : 'text-sm'
+              } ${
+                editorAlignment === 'center' ? 'text-center' : editorAlignment === 'right' ? 'text-right' : editorAlignment === 'justify' ? 'text-justify' : 'text-left'
+              }`}
+              style={{
+                fontWeight: editorBold ? 'bold' : 'normal',
+                fontStyle: editorItalic ? 'italic' : 'normal',
+                textDecoration: editorUnderline ? 'underline' : 'none',
+                color: editorColor,
+                borderLeft: editorIsQuote ? '4px solid #6366f1' : undefined,
+                paddingLeft: editorIsQuote ? '1rem' : undefined,
+              }}
             />
           </div>
 
-          <div className="pt-2 md:pt-4 flex flex-col md:flex-row gap-3 md:gap-4">
+          {/* List of Attached Files */}
+          {composeData.attachments && composeData.attachments.length > 0 && (
+            <div className="flex flex-wrap gap-2 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl mt-4">
+              {composeData.attachments.map((fileName, fIdx) => (
+                <div 
+                  key={fIdx} 
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-xl shadow-xs text-[11px] font-bold text-slate-700 animate-fadeIn"
+                >
+                  <FileText size={13} className="text-[#0c2340]/80 shrink-0" />
+                  <span className="truncate max-w-[160px] select-none">{fileName}</span>
+                  <span className="text-[9px] text-slate-400 font-mono select-none">(150 KB)</span>
+                  <button 
+                    type="button"
+                    onClick={() => handleFileRemove(fileName)}
+                    className="p-0.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition-colors cursor-pointer ml-1"
+                    title="Remover anexo"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="pt-2 md:pt-4 flex flex-col md:flex-row gap-3 md:gap-4 items-center">
             <button 
               onClick={handleSendMessage}
               disabled={!composeData.to || !composeData.subject || !composeData.body}
-              className="flex-[2] bg-primary text-white py-4 rounded-2xl font-black text-sm md:text-base shadow-xl shadow-primary/25 hover:bg-primary/95 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 md:gap-3"
+              className="w-full md:flex-[2] bg-primary text-white py-4 rounded-2xl font-black text-sm md:text-base shadow-xl shadow-primary/25 hover:bg-primary/95 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 md:gap-3 cursor-pointer"
             >
               <Send size={18} />
               Enviar Mensagem Oficial
             </button>
+
+            <label 
+              className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-sm rounded-2xl transition-all cursor-pointer active:scale-95 border border-slate-300 relative shadow-sm shrink-0"
+              title="Anexar múltiplos ficheiros"
+            >
+              <Paperclip size={18} className="stroke-[2.5] text-slate-500" />
+              <span>Anexar Ficheiros</span>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx"
+                className="hidden"
+                onChange={handleFileAdd}
+              />
+              {composeData.attachments && composeData.attachments.length > 0 && (
+                <span className="bg-primary text-white font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-xs ml-1 shrink-0">
+                  {composeData.attachments.length}
+                </span>
+              )}
+            </label>
+
             <button 
               onClick={() => {
                 if(confirm("Deseja descartar este rascunho?")) setIsComposing(false);
               }}
-              className="flex-1 px-8 py-3.5 md:py-4.5 rounded-2xl font-bold text-xs md:text-sm text-slate-500 hover:bg-slate-100 transition-colors"
+              className="w-full md:flex-1 py-4 px-8 rounded-2xl font-bold text-xs md:text-sm text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
             >
               Descartar
             </button>
@@ -249,29 +801,44 @@ export function MailContent({
       <div className="bg-white border border-slate-300 rounded-[32px] p-2.5 shadow-sm flex flex-col lg:flex-row gap-3">
         <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl lg:min-w-[420px]">
           {[
-            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length, color: 'text-emerald-700 font-bold', dot: 'bg-emerald-750' },
-            { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length, color: 'text-red-750 font-bold', dot: 'bg-red-750' },
-            { id: 'enviadas', label: 'Enviadas', count: sentMessages.length, color: 'text-blue-750 font-bold', dot: 'bg-blue-750' }
-          ].map(t => (
-            <button 
-              key={t.id}
-              onClick={() => setCorrespondenciaTab(t.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all ${
-                correspondenciaTab === t.id 
-                  ? `bg-white ${t.color} shadow-md shadow-slate-300 ring-2 ring-slate-200` 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              }`}
-            >
-              {t.label}
-              {t.count > 0 && (
-                <span className={`px-2 py-0.5 rounded-md text-[9.5px] font-black ${
-                  correspondenciaTab === t.id ? `${t.dot} text-white` : 'bg-slate-300 text-slate-700'
-                }`}>
-                  {t.count}
-                </span>
-              )}
-            </button>
-          ))}
+            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length },
+            { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length },
+            { id: 'enviadas', label: 'Enviadas', count: sentMessages.length }
+          ].map(t => {
+            const isActive = correspondenciaTab === t.id;
+            let activeStyle = '';
+            let badgeStyle = 'bg-slate-300 text-slate-700';
+
+            if (isActive) {
+              if (t.id === 'lidas') {
+                activeStyle = 'bg-emerald-600 text-white shadow-md shadow-emerald-200 ring-2 ring-emerald-600';
+                badgeStyle = 'bg-white text-emerald-700';
+              } else if (t.id === 'naoLidas') {
+                activeStyle = 'bg-red-600 text-white shadow-md shadow-red-200 ring-2 ring-red-600';
+                badgeStyle = 'bg-white text-red-600';
+              } else if (t.id === 'enviadas') {
+                activeStyle = 'bg-blue-600 text-white shadow-md shadow-blue-200 ring-2 ring-blue-600';
+                badgeStyle = 'bg-white text-blue-600';
+              }
+            } else {
+              activeStyle = 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50';
+            }
+
+            return (
+              <button 
+                key={t.id}
+                onClick={() => setCorrespondenciaTab(t.id)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all ${activeStyle}`}
+              >
+                {t.label}
+                {t.count > 0 && (
+                  <span className={`px-2 py-0.5 rounded-md text-[9.5px] font-black ${badgeStyle}`}>
+                    {t.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         <div className="relative flex-1">
