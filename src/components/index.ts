@@ -34,3 +34,4 @@ export * from './features/RegisterStepper';
 export * from './features/VoiceGuideAssistant';
 export * from './features/InstitutionDetail';
 export * from './features/InstQrCodeContent';
+export * from './features/InstAiAssistantContent';

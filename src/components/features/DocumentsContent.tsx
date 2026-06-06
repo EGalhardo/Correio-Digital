@@ -832,15 +832,16 @@ export function DocumentsContent({
         )}
       </div>
 
-      {/* 1. Contentor "Instituições Conectadas" */}
-      <section className="bg-white border border-slate-200 rounded-[32px] p-5 md:p-6 shadow-sm overflow-hidden relative group">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-1.5 h-6 bg-primary rounded-full" />
-            <h3 className="text-slate-950 font-black text-xs md:text-sm italic tracking-tighter uppercase">Instituições Conectadas</h3>
-          </div>
-          <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded border border-slate-100">Canais Digitais de Interoperabilidade</div>
-        </div>
+       {/* 1. Contentor "Instituições Conectadas" */}
+       <section className="bg-white border border-slate-200 rounded-[32px] p-5 md:p-6 shadow-sm overflow-hidden relative group">
+         <div className="flex flex-col md:flex-row md:items-center justify-between md:relative gap-2 mb-4 pb-2 border-b border-slate-50">
+           <div className="flex items-center gap-2.5">
+             <div className="w-1.5 h-6 bg-primary rounded-full" />
+             <h3 className="text-slate-950 font-black text-xs md:text-sm italic tracking-tighter uppercase">Instituições Conectadas</h3>
+           </div>
+           <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center mt-1 md:mt-0">Governação Electrónica</div>
+           <div className="hidden md:block" />
+         </div>
         
         <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
           {["Todas", "SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Registo Civil", "INE", "Ministérios"].map((name) => {

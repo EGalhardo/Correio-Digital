@@ -40,6 +40,7 @@ import {
   VoiceGuideAssistant,
   InstitutionDetail,
   InstQrCodeContent,
+  InstAiAssistantContent,
 } from './components';
 
 // Constants & Types
@@ -1088,7 +1089,6 @@ export default function App() {
             onCreateRequest={handleCreateRequest}
             isInst={isInstMode}
             onDoubleClickInstitution={(name) => {
-              if (isInstMode) return; // Na versão institucional, clicar 2x no Painel não deve realizar nenhuma acção
               setSelectedInstitution(name);
               setTab('instituicao');
             }}
@@ -1226,6 +1226,12 @@ export default function App() {
         return (
           <InstQrCodeContent
             documents={documents}
+            addAuditLog={addAuditLog}
+          />
+        );
+      case 'inst-ai-assistant':
+        return (
+          <InstAiAssistantContent
             addAuditLog={addAuditLog}
           />
         );
@@ -1764,7 +1770,7 @@ export default function App() {
                         {(isInstMode || isGovMode) ? "Número de Agente" : "Número de BI de Cidadão"}
                       </span>
                       <input 
-                        className="border border-slate-200 bg-slate-50/50 focus:bg-white rounded-2xl p-4 outline-none focus:border-primary transition-all font-mono font-bold tracking-wider text-slate-800"
+                        className="border border-slate-200 bg-white focus:bg-white rounded-2xl p-4 outline-none focus:border-primary transition-all font-mono font-bold tracking-wider text-slate-800"
                         value={bi}
                         onChange={(e) => setBi(e.target.value.toUpperCase())}
                         placeholder={isInstMode ? "AGT-9921-SR" : isGovMode ? "ADM-8812-OP" : "002931298LA045"}
@@ -1776,7 +1782,7 @@ export default function App() {
                       <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">Senha de Acesso</span>
                       <input 
                         type="password"
-                        className="border border-slate-200 bg-slate-50/50 focus:bg-white rounded-2xl p-4 outline-none focus:border-primary transition-all font-bold tracking-wider text-slate-800"
+                        className="border border-slate-200 bg-white focus:bg-white rounded-2xl p-4 outline-none focus:border-primary transition-all font-bold tracking-wider text-slate-800"
                         placeholder="••••••••••••"
                       />
                     </label>

@@ -523,20 +523,31 @@ export function InstitutionDetail({
             className="bg-white rounded-[28px] max-w-2xl w-full border border-slate-200 shadow-2xl flex flex-col overflow-hidden max-h-[95vh]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-xl bg-slate-100 text-slate-800 border border-slate-200/50 block">
-                  <FileText size={16} />
-                </span>
+            <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 shrink-0">
+              {previewType === 'invoice' ? (
                 <div>
-                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider leading-none">
-                    {previewType === 'invoice' ? 'Guia de Pagamento Autorizada' : 'Visualização do Documento Autenticado'}
+                  <h4 className="text-base md:text-lg font-black text-slate-900 leading-none">
+                    Doc {previewDoc.org || "BAI"}
                   </h4>
-                  <span className="text-[10px] font-bold text-slate-500 block mt-1">
-                    {institutionName} • Correio Digital de Angola
-                  </span>
+                  <p className="text-[10px] md:text-xs text-slate-500 font-extrabold mt-1 uppercase tracking-wider">
+                    Modelo de extração original
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="p-2 rounded-xl bg-slate-100 md:p-2.5 text-slate-800 border border-slate-200/60 block shrink-0">
+                    <FileText size={20} className="text-slate-700" />
+                  </span>
+                  <div>
+                    <h4 className="text-base md:text-lg font-black text-slate-900 uppercase tracking-tight leading-none">
+                      {institutionName} • Correio Digital de Angola
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-extrabold tracking-widest uppercase mt-1">
+                      Serviço oficial de chancelaria eletrónica
+                    </p>
+                  </div>
+                </div>
+              )}
               <button
                 onClick={() => {
                   setPreviewDoc(null);
@@ -550,7 +561,7 @@ export function InstitutionDetail({
             </div>
 
             {/* Content Viewport */}
-            <div className="flex-1 p-6 bg-slate-200/40 overflow-y-auto space-y-4 custom-scrollbar">
+            <div className="flex-1 p-6 md:p-8 bg-white overflow-y-auto space-y-4 custom-scrollbar">
               {downloadSuccess && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 font-bold flex items-center gap-2 animate-bounce">
                   <span className="w-5 h-5 bg-emerald-500 text-white flex items-center justify-center rounded-full text-[10px]">✓</span>
@@ -558,73 +569,166 @@ export function InstitutionDetail({
                 </div>
               )}
 
-              {/* PDF Print Page Container */}
-              <div className="bg-white rounded-2xl border-2 border-slate-350 shadow-lg p-6 md:p-8 space-y-6 relative overflow-hidden font-sans">
-                {/* Guilloché pattern simulated border or header */}
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600" />
-                
-                {/* Republic Seal */}
-                <div className="text-center space-y-1.5 pt-2">
-                  <div className="w-12 h-12 bg-amber-50/80 border border-amber-300 rounded-full mx-auto flex items-center justify-center text-amber-700 shadow-sm">
-                    <ShieldCheck size={28} />
-                  </div>
-                  <h2 className="text-xs font-black tracking-widest text-slate-930 uppercase leading-none">República de Angola</h2>
-                  <p className="text-[9px] font-bold tracking-wider text-slate-500 uppercase leading-none">Governo de Angola • Chapa Digital Unificada</p>
-                  <p className="text-[8px] font-black text-blue-600 font-mono tracking-widest uppercase mt-0.5">INTERCONEXÃO AUTENTICADA</p>
-                </div>
-
-                <div className="border-t border-b border-dashed border-slate-200 py-3 grid grid-cols-2 gap-4 text-[11px] text-slate-600">
-                  <div>
-                    <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider block">Emissor</span>
-                    <span className="font-bold text-slate-800">{meta.full}</span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider block">Destinatário Assinado</span>
-                    <span className="font-bold text-slate-800">Cidadão Correio Digital</span>
-                  </div>
-                </div>
-
-                {previewType === 'invoice' ? (
-                  /* Invoice detail */
-                  <div className="space-y-4">
-                    <div className="bg-slate-50/60 rounded-xl p-4 border border-slate-200/85 space-y-3">
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <span className="text-xs font-black uppercase text-slate-800">Guia de Cobrança</span>
-                        <span className="text-xs font-mono font-black text-slate-900">{previewDoc.invoiceNumber}</span>
+              {previewType === 'invoice' ? (
+                /* Invoice detail - BAIdirecto Authentic Layout */
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-6 md:p-10 space-y-6 relative overflow-hidden font-sans w-full max-w-xl mx-auto">
+                  
+                  {/* Logo BAIdirecto */}
+                  <div className="flex justify-end items-center mb-4">
+                    <div className="flex items-center gap-1.5 select-none">
+                      <div className="w-7 h-7 bg-[#004B8F] rounded-md flex items-center justify-center shrink-0">
+                        <span className="text-white text-[13px] font-black italic">B</span>
                       </div>
-                      
-                      <div className="space-y-1.5">
-                        <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                          <span className="font-bold text-slate-800 mr-1">Prestações Selecionadas:</span> {previewDoc.description}
-                        </p>
-                        <p className="text-xs text-slate-600 font-medium">
-                          <span className="font-bold text-slate-800 mr-1">Data de Vencimento:</span> {previewDoc.deadline}
-                        </p>
-                        <p className="text-xs text-slate-600 font-medium">
-                          <span className="font-bold text-slate-800 mr-1">Situação de Liquidação:</span> <span className="font-black text-emerald-600">{previewDoc.status}</span>
-                        </p>
-                      </div>
-
-                      <div className="border-t border-slate-200/80 pt-2 flex justify-between items-center">
-                        <span className="text-xs font-black text-slate-705 uppercase">Valor Total Liquidado</span>
-                        <span className="text-sm font-mono font-black text-emerald-600">{previewDoc.amount}</span>
-                      </div>
+                      <span className="text-[#004B8F] font-black tracking-tighter text-lg italic leading-none">BAI</span>
+                      <span className="text-slate-600 font-light text-lg tracking-tight leading-none">directo</span>
                     </div>
+                  </div>
 
-                    {/* QR Code and Barcode */}
-                    <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <div className="p-1.5 bg-white border border-slate-200 rounded-lg">
-                        <QrCode size={56} className="text-slate-800" />
+                  <p className="text-center text-slate-800 text-[11px] md:text-xs font-semibold leading-normal pb-3 select-none border-b border-slate-105 pb-4">
+                    A operação que efectuou foi registada com sucesso através do serviço <span className="font-extrabold text-[#004B8F]">BAIdirecto</span>.
+                  </p>
+
+                  {/* Dados do Ordenante */}
+                  <div className="space-y-2.5 text-left pt-2">
+                    <h4 className="text-[10px] md:text-[11px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1 select-none">
+                      Dados do Ordenante
+                    </h4>
+                    
+                    <div className="space-y-1.5">
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Nome</div>
+                        <div className="flex-1 text-left font-black text-slate-900 uppercase">EDLASIO GALHARDO</div>
                       </div>
-                      <div className="flex-1 text-center sm:text-left space-y-1 min-w-0">
-                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Identificadores de Compensação</span>
-                        <div className="font-mono text-[10px] font-bold text-slate-800">ENTIDADE: <span className="text-black font-black">{previewDoc.entity}</span></div>
-                        <div className="font-mono text-[10px] font-bold text-slate-800">REFERÊNCIA: <span className="text-black font-black">{previewDoc.reference}</span></div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Conta</div>
+                        <div className="flex-1 text-left font-black text-slate-900">050779044 10 001</div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">IBAN</div>
+                        <div className="flex-1 text-left font-black text-slate-900 font-mono">AO06 00400005077904410130</div>
                       </div>
                     </div>
                   </div>
-                ) : (
-                  /* Formal Document body from message */
+
+                  {/* Dados do Pagamento */}
+                  <div className="space-y-2.5 text-left pt-2 border-t border-slate-100 pt-4">
+                    <h4 className="text-[10px] md:text-[11px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1 select-none">
+                      Dados do Pagamento
+                    </h4>
+                    
+                    <div className="space-y-1.5">
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Número de Operação</div>
+                        <div className="flex-1 text-left font-black text-slate-900 font-mono">
+                          {352841000 + Number(previewDoc.reference || 496)}
+                        </div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Entidade</div>
+                        <div className="flex-1 text-left font-black text-slate-900 font-mono">{previewDoc.entity || "00223"}</div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Tipo de Pagamento</div>
+                        <div className="flex-1 text-left font-black text-slate-900 uppercase">{previewDoc.org || "ENDE"}</div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Produto</div>
+                        <div className="flex-1 text-left font-black text-slate-900 uppercase">
+                          {previewDoc.org === 'ENDE' ? 'PRÉ-PAGO LUANDA' : (previewDoc.org === 'EPAL' ? 'CONSUMO DOMÉSTICO' : 'TAXA RECURSOS')}
+                        </div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Serviço</div>
+                        <div className="flex-1 text-left font-black text-slate-900">N/A</div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Montante</div>
+                        <div className="flex-1 text-left font-black text-slate-900 font-mono text-[#00A859]">
+                          {String(previewDoc.amount || "5.000 Kz").replace("Kz", "").trim() + ",00 AKZ"}
+                        </div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Referência</div>
+                        <div className="flex-1 text-left font-black text-slate-900 font-mono">{previewDoc.reference || "14012150299"}</div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Data do Pagamento</div>
+                        <div className="flex-1 text-left font-black text-slate-900">
+                          {previewDoc.date === 'Ontem' ? '04/06/2026 18:55:53' : (previewDoc.date === 'Esta Semana' ? '02/06/2026 11:24:10' : `${previewDoc.date} 15:43:12`)}
+                        </div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Estado</div>
+                        <div className="flex-1 text-left font-black text-emerald-600 uppercase">Sucesso</div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Canal</div>
+                        <div className="flex-1 text-left font-black text-slate-900">Internet Banking</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dado do Recibo */}
+                  <div className="space-y-2.5 text-left pt-2 border-t border-slate-100 pt-4 font-sans">
+                    <h4 className="text-[10px] md:text-[11px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-200 pb-1 select-none">
+                      Dado do Recibo
+                    </h4>
+                    
+                    <div className="space-y-1.5">
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">REF:</div>
+                        <div className="flex-1 text-left font-bold text-slate-650 truncate font-mono select-all">
+                          {(previewDoc.reference || "352841496") + "024d"}
+                        </div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Produto</div>
+                        <div className="flex-1 text-left font-black text-slate-900 uppercase">
+                          {previewDoc.org === 'ENDE' ? 'PRÉ-PAGO LUANDA' : (previewDoc.org === 'EPAL' ? 'CONSUMO DOMÉSTICO' : 'TAXA RECURSOS')}
+                        </div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Referência</div>
+                        <div className="flex-1 text-left font-black text-slate-900 font-mono">{previewDoc.reference || "14012150299"}</div>
+                      </div>
+                      <div className="flex items-start text-[11px] md:text-xs py-0.5">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase tracking-tight select-none">Garantia</div>
+                        <div className="flex-1 text-left font-black text-slate-900 uppercase">{previewDoc.org || "ENDE"}</div>
+                      </div>
+                      <div className="flex items-start text-[9px] md:text-[10px] mt-2 pt-2 border-t border-slate-100 italic select-none">
+                        <div className="w-[140px] text-right font-black text-slate-400 pr-5 uppercase">Rede</div>
+                        <div className="flex-1 text-left font-black text-slate-500">EMIS - Empresa Interbancária de Serviços</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Formal Document body from message */
+                <div className="bg-white rounded-2xl border-2 border-slate-350 shadow-lg p-6 md:p-8 space-y-6 relative overflow-hidden font-sans">
+                  {/* Guilloché pattern simulated border or header */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600" />
+                  
+                  {/* Republic Seal */}
+                  <div className="text-center space-y-1.5 pt-2">
+                    <div className="w-12 h-12 bg-amber-50/80 border border-amber-300 rounded-full mx-auto flex items-center justify-center text-amber-700 shadow-sm">
+                      <ShieldCheck size={28} />
+                    </div>
+                    <h2 className="text-xs font-black tracking-widest text-slate-933 uppercase leading-none">República de Angola</h2>
+                    <p className="text-[9px] font-bold tracking-wider text-slate-500 uppercase leading-none">Governo de Angola • Chapa Digital Unificada</p>
+                    <p className="text-[8px] font-black text-blue-600 font-mono tracking-widest uppercase mt-0.5">INTERCONEXÃO AUTENTICADA</p>
+                  </div>
+
+                  <div className="border-t border-b border-dashed border-slate-200 py-3 grid grid-cols-2 gap-4 text-[11px] text-slate-600">
+                    <div>
+                      <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider block">Emissor</span>
+                      <span className="font-bold text-slate-800">{meta.full}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] uppercase font-black text-slate-400 tracking-wider block">Destinatário Assinado</span>
+                      <span className="font-bold text-slate-800">Cidadão Correio Digital</span>
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                       <div className="flex justify-between items-center pb-1.5 border-b border-slate-200">
@@ -652,33 +756,33 @@ export function InstitutionDetail({
                       </p>
                     </div>
                   </div>
-                )}
 
-                {/* Footer seal with stamp */}
-                <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-slate-500">
-                  <div className="space-y-0.5">
-                    <span className="uppercase text-[8px] font-black tracking-widest text-slate-400 block">Assinatura Certificada</span>
-                    <span className="font-mono font-bold select-all text-slate-800">HASH: {computedHash}</span>
-                  </div>
+                  {/* Footer seal with stamp */}
+                  <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] text-slate-500">
+                    <div className="space-y-0.5">
+                      <span className="uppercase text-[8px] font-black tracking-widest text-slate-400 block">Assinatura Certificada</span>
+                      <span className="font-mono font-bold select-all text-slate-800">HASH: {computedHash}</span>
+                    </div>
 
-                  {/* Stamp */}
-                  <div className="border-2 border-dashed border-blue-500/80 rounded-full px-4 py-1 text-center shrink-0 -rotate-3 bg-blue-50/5 pointer-events-none">
-                    <span className="text-[8px] font-black text-blue-600 uppercase tracking-wider block">CORREIO DIGITAL UNIFICADO</span>
-                    <span className="text-[7px] font-black text-blue-500 tracking-widest uppercase block">GOVERNO DE ANGOLA</span>
+                    {/* Stamp */}
+                    <div className="border-2 border-dashed border-blue-500/80 rounded-full px-4 py-1 text-center shrink-0 -rotate-3 bg-blue-50/5 pointer-events-none">
+                      <span className="text-[8px] font-black text-blue-600 uppercase tracking-wider block">CORREIO DIGITAL UNIFICADO</span>
+                      <span className="text-[7px] font-black text-blue-500 tracking-widest uppercase block">GOVERNO DE ANGOLA</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Action Bar */}
-            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between shrink-0">
+            <div className="px-8 py-5 bg-white flex items-center justify-between shrink-0">
               <button
                 onClick={() => {
                   safeCopyToClipboard(computedHash);
                   setCopiedKey(true);
                   setTimeout(() => setCopiedKey(false), 2000);
                 }}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer"
               >
                 {copiedKey ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
                 {copiedKey ? 'Chave Copiada!' : 'Copiar Hash'}
@@ -690,19 +794,20 @@ export function InstitutionDetail({
                     setDownloadSuccess(true);
                     setTimeout(() => setDownloadSuccess(false), 4500);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-black text-white bg-primary hover:bg-[#091f46] border border-primary/20 rounded-xl transition-all shadow-md cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer"
                 >
                   <Download size={14} />
                   Baixar JPG/PDF
                 </button>
                 <button
                   onClick={() => {
-                    window.print();
+                    setPreviewDoc(null);
+                    setPreviewType(null);
+                    setDownloadSuccess(false);
                   }}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all shadow-xs cursor-pointer"
+                  className="px-6 py-2.5 bg-[#00A859] hover:bg-[#00924e] text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md cursor-pointer border-0 outline-none"
                 >
-                  <Printer size={14} />
-                  Imprimir
+                  Fechar
                 </button>
               </div>
             </div>

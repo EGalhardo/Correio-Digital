@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Home, Mail, QrCode, Users, User, LogOut, Trash2, Landmark, BarChart3, Shield, Activity, Settings, Scan, Folder, Receipt, FileText } from 'lucide-react';
+import { Home, Mail, QrCode, Users, User, LogOut, Trash2, Landmark, BarChart3, Shield, Activity, Settings, Scan, Folder, Receipt, FileText, Bot } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Message, Document, AppMode } from '../../types';
 
@@ -38,6 +38,7 @@ const institutionItems: MenuItem[] = [
   { id: 'gov-contatos', label: 'Agentes', icon: Users },
   { id: 'inst-qrcode', label: 'QR Code', icon: QrCode },
   { id: 'perfil', label: 'Conta', icon: User },
+  { id: 'inst-ai-assistant', label: 'Assistência IA', icon: Bot },
 ];
 
 const adminItems: MenuItem[] = [

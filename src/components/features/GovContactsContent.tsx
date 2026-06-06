@@ -836,100 +836,118 @@ export function GovContactsContent({
         {/* MODAL / SLIDE-OVER PARA ADICIONAR/EDITAR AGENTE */}
         <AnimatePresence>
           {showAddWorkerModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
               {/* Backdrop */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setShowAddWorkerModal(false)}
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs font-sans"
+                className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
               />
 
               {/* Modal Body */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                className="relative bg-white border border-slate-150 rounded-[32px] p-6 md:p-8 w-full max-w-lg shadow-2xl z-10 text-left space-y-6"
+                initial={{ scale: 0.93, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.93, opacity: 0, y: 15 }}
+                className="relative bg-white w-full max-w-md max-h-[92vh] rounded-[40px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.18)] border border-slate-100 flex flex-col overflow-hidden mx-auto p-6 md:p-8 space-y-6 z-10"
               >
-                <div>
-                  <h3 className="text-xl md:text-2xl font-black text-slate-950 uppercase italic tracking-tight flex items-center gap-2.5">
-                    <UserPlus className="text-indigo-650" size={22} />
-                    {isPlatformAdmin 
-                      ? (isEditingWorker ? 'Editar Ficha do Agente da Plataforma' : 'Registar Novo Agente da Plataforma')
-                      : (isEditingWorker ? 'Editar Ficha do Agente' : 'Registar Novo Agente')}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-wider font-mono">
-                    {isPlatformAdmin 
-                      ? 'Introduza as credenciais operacionais autorizadas para a plataforma central'
-                      : 'Introduza as credenciais operacionais autorizadas pela instituição'}
-                  </p>
+                {/* Header Area */}
+                <div className="flex items-center gap-4 text-left relative shrink-0">
+                  <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-[20px] flex items-center justify-center shrink-0 border border-indigo-100/40 shadow-sm">
+                    <UserPlus size={24} strokeWidth={2.5} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl md:text-[22px] font-black text-[#0c2340] italic uppercase tracking-tighter leading-none mb-1">
+                      {isPlatformAdmin 
+                        ? (isEditingWorker ? 'Editar Agente Central' : 'Novo Agente Central')
+                        : (isEditingWorker ? 'Editar Ficha do Agente' : 'Registar Novo Agente')}
+                    </h3>
+                    <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest font-sans leading-none">
+                      {isPlatformAdmin 
+                        ? 'CREDENCIAL OPERACIONAL PLATAFORMA'
+                        : 'CREDENCIAIS AUTORIZADAS INSTITUIÇÃO'}
+                    </p>
+                  </div>
+                  {/* Corner close button */}
+                  <button 
+                    onClick={() => setShowAddWorkerModal(false)} 
+                    className="absolute -top-1 -right-1 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-full"
+                    type="button"
+                    title="Fechar formulário"
+                  >
+                    <Plus size={18} className="rotate-45" />
+                  </button>
                 </div>
 
-                <form onSubmit={handleCreateWorker} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Nome Completo *</label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                      placeholder="Ex: Dr. Francisco Manuel"
-                      value={newWorkerName}
-                      onChange={(e) => setNewWorkerName(e.target.value)}
-                    />
+                <form onSubmit={handleCreateWorker} className="flex-1 flex flex-col justify-between overflow-y-auto custom-scrollbar space-y-4 pr-1 text-left">
+                  <div className="space-y-4">
+                    <div className="grid gap-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo *</label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                        placeholder="Ex: Dr. Francisco Manuel"
+                        value={newWorkerName}
+                        onChange={(e) => setNewWorkerName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email *</label>
+                      <input
+                        required
+                        type="email"
+                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                        placeholder={isPlatformAdmin ? "f.manuel@mindis.gov.ao" : "f.manuel@cda.gov.ao"}
+                        value={newWorkerEmail}
+                        onChange={(e) => setNewWorkerEmail(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Telefone *</label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-mono font-bold placeholder:text-slate-350"
+                        placeholder="+244 923 000 000"
+                        value={newWorkerPhone}
+                        onChange={(e) => setNewWorkerPhone(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Função / Cargo *</label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                        placeholder={isPlatformAdmin ? "Ex: Administrador de Redes" : "Ex: Inspetor Chefe"}
+                        value={newWorkerRole}
+                        onChange={(e) => setNewWorkerRole(e.target.value)}
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Email *</label>
-                    <input
-                      required
-                      type="email"
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                      placeholder={isPlatformAdmin ? "f.manuel@mindis.gov.ao" : "f.manuel@cda.gov.ao"}
-                      value={newWorkerEmail}
-                      onChange={(e) => setNewWorkerEmail(e.target.value)}
-                    />
-                  </div>
+                  {/* Actions rows mimicking image button styles */}
+                  <div className="pt-4 shrink-0">
+                    <button
+                      type="submit"
+                      className="w-full bg-[#0c2340] hover:bg-[#152e4d] text-white py-4 rounded-[22px] font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0c2340]/15 flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer active:scale-98 font-sans border-0"
+                    >
+                      <Check size={14} className="stroke-[3]" />
+                      {isEditingWorker ? 'Guardar Ficha do Agente' : 'Submeter Cadastro'}
+                    </button>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Telefone *</label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold font-mono text-slate-800 outline-none"
-                      placeholder="+244 923 000 000"
-                      value={newWorkerPhone}
-                      onChange={(e) => setNewWorkerPhone(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Função / Cargo *</label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white text-xs font-bold text-slate-800 outline-none"
-                      placeholder={isPlatformAdmin ? "Ex: Administrador de Redes" : "Ex: Inspetor Chefe"}
-                      value={newWorkerRole}
-                      onChange={(e) => setNewWorkerRole(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Submit / Cancel row */}
-                  <div className="pt-4 border-t border-slate-150 flex items-center justify-end gap-3">
                     <button
                       type="button"
                       onClick={() => setShowAddWorkerModal(false)}
-                      className="px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-650 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all cursor-pointer"
+                      className="w-full text-slate-400 hover:text-slate-600 transition-colors bg-transparent border-0 cursor-pointer text-[10px] font-black uppercase tracking-widest font-sans py-2 block text-center mt-2"
                     >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2.5 bg-blue-900 hover:bg-blue-950 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer border-0 shadow-lg shadow-blue-900/15 font-bold"
-                    >
-                      {isEditingWorker ? 'Guardar' : 'Submeter'}
+                      Voltar ao Menu
                     </button>
                   </div>
                 </form>

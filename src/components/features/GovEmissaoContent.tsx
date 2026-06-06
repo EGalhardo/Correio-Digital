@@ -249,7 +249,7 @@ export function GovEmissaoContent({
           <div className="space-y-6">
             {/* Filters & Tabs Container */}
             <div className="bg-white border border-slate-100 rounded-[32px] p-2 shadow-sm flex flex-col lg:flex-row gap-3">
-              <div className="flex gap-1 p-1 bg-slate-50 rounded-2xl lg:min-w-[420px]">
+              <div className="flex gap-1 p-1 bg-white border border-slate-200 rounded-2xl lg:min-w-[420px]">
                 {[
                   { id: 'naoLidas', label: 'Não Lidas', count: instituicaoInbox.filter(m => m.unread).length },
                   { id: 'lidas', label: 'Lidas', count: instituicaoInbox.filter(m => !m.unread).length },

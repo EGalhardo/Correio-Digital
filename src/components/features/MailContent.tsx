@@ -322,7 +322,7 @@ export function MailContent({
                     placeholder="Introduza o N-BI"
                     value={composeData.to}
                     onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
-                    className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-mono font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                    className="w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-mono font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                   />
                 </div>
               </div>
@@ -333,7 +333,7 @@ export function MailContent({
                   placeholder="Qual o tema da sua mensagem?"
                   value={composeData.subject}
                   onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
-                  className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                  className="w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ export function MailContent({
                     <select 
                       value={composeData.to}
                       onChange={(e) => setComposeData({ ...composeData, to: e.target.value })}
-                      className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
+                      className="w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
                     >
                       <option value="">Selecione uma instituição...</option>
                       {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Registo Civil", "INE"].map(org => (
@@ -360,7 +360,7 @@ export function MailContent({
                     </div>
                   </div>
                 </div>
-
+ 
                 <div className="space-y-2">
                   <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
                     Província
@@ -376,7 +376,7 @@ export function MailContent({
                         const listM = MUNICIPIOS_OPCOES[firstCity] || MUNICIPIOS_OPCOES[val] || [];
                         setMunicipio(listM[0]?.value || '');
                       }}
-                      className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
+                      className="w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
                     >
                       {PROVINCIAS_OPCOES.map(prov => (
                         <option key={prov.value} value={prov.value}>{prov.label}</option>
@@ -387,7 +387,7 @@ export function MailContent({
                     </div>
                   </div>
                 </div>
-
+ 
                 <div className="space-y-2">
                   <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
                     Cidade
@@ -401,7 +401,7 @@ export function MailContent({
                         const listM = MUNICIPIOS_OPCOES[val] || [];
                         setMunicipio(listM[0]?.value || '');
                       }}
-                      className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
+                      className="w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
                     >
                       {(CIDADES_OPCOES[provincia] || []).map(cid => (
                         <option key={cid.value} value={cid.value}>{cid.label}</option>
@@ -412,7 +412,7 @@ export function MailContent({
                     </div>
                   </div>
                 </div>
-
+ 
                 <div className="space-y-2">
                   <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">
                     Município
@@ -421,7 +421,7 @@ export function MailContent({
                     <select 
                       value={municipio}
                       onChange={(e) => setMunicipio(e.target.value)}
-                      className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
+                      className="w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
                     >
                       {(MUNICIPIOS_OPCOES[cidade] || MUNICIPIOS_OPCOES[provincia] || []).map(mun => (
                         <option key={mun.value} value={mun.value}>{mun.label}</option>
@@ -433,7 +433,7 @@ export function MailContent({
                   </div>
                 </div>
               </div>
-
+ 
               <div className="space-y-2">
                 <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Assunto</label>
                 <input 
@@ -441,17 +441,17 @@ export function MailContent({
                   placeholder="Qual o tema da sua mensagem?"
                   value={composeData.subject}
                   onChange={(e) => setComposeData({ ...composeData, subject: e.target.value })}
-                  className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
+                  className="w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
                 />
               </div>
             </div>
           )}
-
+ 
           <div className="space-y-2">
             <label className="text-[10px] md:text-sm font-black text-slate-600 uppercase tracking-widest pl-1">Conteúdo da Mensagem</label>
             
             {/* Rich text Toolbar for composing, styled exactly like the official responder */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50 border border-slate-200 rounded-2xl mb-2 shadow-xs">
+            <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-white border border-slate-200 rounded-2xl mb-2 shadow-xs">
               {/* Undo / Redo */}
               <div className="flex items-center gap-0.5">
                 <button
@@ -677,7 +677,7 @@ export function MailContent({
               placeholder="Descreva detalhadamente o seu pedido ou informação..."
               value={composeData.body}
               onChange={(e) => updateBodyText(e.target.value)}
-              className={`w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-semibold focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none leading-relaxed ${
+              className={`w-full bg-white border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-semibold focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none leading-relaxed ${
                 editorFont === 'serif' ? 'font-serif' : editorFont === 'monospace' ? 'font-mono' : 'font-sans'
               } ${
                 editorFontSize === 'sm' ? 'text-xs' : editorFontSize === 'lg' ? 'text-base md:text-lg' : editorFontSize === 'xl' ? 'text-lg md:text-xl font-bold' : 'text-sm'
@@ -759,18 +759,6 @@ export function MailContent({
             </button>
           </div>
         </div>
-
-        <div className="flex gap-3 md:gap-4 p-4 md:p-5 bg-primary/5 rounded-[24px] border border-primary/10 items-start">
-          <div className="w-9 h-9 md:w-10 md:h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
-            <ShieldCheck size={18} />
-          </div>
-          <div>
-            <h4 className="text-primary font-black text-[10px] md:text-sm uppercase tracking-wider mb-1">Criptografia de Ponta a Ponta</h4>
-            <p className="text-[11px] md:text-sm text-slate-600 leading-relaxed">
-              Esta mensagem será assinada digitalmente com o seu BI <strong>{bi}</strong>. A comunicação é encriptada e os destinatários são obrigados a responder nos termos da Lei do Cidadão Digital.
-            </p>
-          </div>
-        </div>
       </motion.div>
     );
   }
@@ -799,7 +787,7 @@ export function MailContent({
 
       {/* Filters & Tabs Container */}
       <div className="bg-white border border-slate-300 rounded-[32px] p-2.5 shadow-sm flex flex-col lg:flex-row gap-3">
-        <div className="flex gap-1.5 p-1 bg-slate-100 rounded-2xl lg:min-w-[420px]">
+        <div className="flex gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl lg:min-w-[420px]">
           {[
             { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length },
             { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length },

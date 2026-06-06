@@ -27,6 +27,9 @@ import {
   Ban,
   Share2,
   Search,
+  Brain,
+  QrCode,
+  Bell,
 } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -707,29 +710,6 @@ export function GovDashboard({
             </motion.div>
           </AnimatePresence>
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-
-          {/* Slide Text & Actions */}
-          <div className="absolute bottom-6 left-6 right-6 md:left-10 md:right-10 flex flex-col md:flex-row md:items-center justify-between gap-4 z-10 text-left">
-            <div className="space-y-1">
-              <h3 className="text-white text-lg md:text-2xl font-black uppercase italic tracking-tight leading-tight">
-                {GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].title}
-              </h3>
-            </div>
-            {GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].btn && (
-              <button
-                type="button"
-                onClick={() => {
-                  const action = GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].action;
-                  if (action) onNavigate?.(action);
-                }}
-                className="px-5 py-2.5 bg-red-650 hover:bg-red-750 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shrink-0 cursor-pointer border-0 outline-none"
-              >
-                {GOV_HIGHLIGHT_SLIDES[activeSlide % GOV_HIGHLIGHT_SLIDES.length].btn}
-              </button>
-            )}
-          </div>
-
           {/* Slide Indicators */}
           <div className="absolute top-6 right-6 flex gap-1.5 z-10">
             {GOV_HIGHLIGHT_SLIDES.map((_, i) => (
@@ -781,14 +761,17 @@ export function GovDashboard({
 
         {/* Instituições Conectadas Horizontal Panel */}
         <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-5 shadow-xs overflow-hidden relative text-left">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-slate-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between md:relative gap-2 mb-4 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-               <div className="w-1.5 h-6 bg-red-600 rounded-full" />
+               <div className="w-1.5 h-6 bg-red-650 rounded-full" />
                <div className="min-w-0">
                  <h3 className="text-slate-950 font-black text-xs md:text-base italic tracking-tighter uppercase leading-none">Instituições Conectadas</h3>
                </div>
             </div>
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest self-baseline sm:self-auto">Modo Gestão de Redes</div>
+            <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center mt-1 md:mt-0">
+              Governação Electrónica
+            </div>
+            <div className="hidden md:block" />
           </div>
           <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
             {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras", "INE"].map((name) => (
@@ -798,7 +781,7 @@ export function GovDashboard({
                 onClick={() => {
                   onNavigate?.('gov-interoperabilidade');
                 }}
-                className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-slate-950 text-white border border-slate-900 whitespace-nowrap hover:bg-slate-900 transition-all cursor-pointer shrink-0 shadow-xs hover:shadow-sm"
+                className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-[#0c2340] hover:bg-[#152e4d] text-white border border-[#1c3c66] whitespace-nowrap transition-all cursor-pointer shrink-0 shadow-xs hover:shadow-sm"
                 title="Visualizar status de interoperabilidade"
               >
                 {name}
@@ -807,169 +790,121 @@ export function GovDashboard({
           </div>
         </section>
 
-        {/* Resumo Geral - KPI panel */}
-        <section
-          id="resumo-geral-section"
-          className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm"
-        >
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-6 bg-red-600 rounded-full" />
-              <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
-                Resumo Geral
-              </h2>
-            </div>
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-              Consolidado de Emissão e Fluxo de Correspondências no Território
-              Nacional
-            </div>
+        {/* SECÇÃO 1 — RESUMO GERAL */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-red-650 rounded-full" />
+            <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
+              Resumo Geral
+            </h2>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {/* KPI 1: Enviadas */}
-            <div
-              id="kpi-enviadas"
-              className="space-y-2 lg:border-r border-slate-50 pr-4"
-            >
-              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">
-                {kpis[0].label}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            {/* Cartão 1 */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-105 flex items-center justify-center">
+                  <Mail size={20} />
+                </div>
               </div>
-              <div className="text-3xl md:text-4xl font-black text-slate-950 italic tracking-tighter leading-none">
-                {kpis[0].value}
+              <div className="mt-4 space-y-1">
+                <div className="text-3xl font-black text-slate-950 italic tracking-tighter leading-none">
+                  1.248.752
+                </div>
+                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                  Correspondências Enviadas
+                </div>
               </div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1.5">
-                <TrendingUp size={12} /> {kpis[0].change}
+              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-emerald-650 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                <TrendingUp size={12} /> ↑ 12,5% vs mês anterior
               </div>
             </div>
 
-            {/* KPI 2: Entregues */}
-            <div
-              id="kpi-entregues"
-              className="space-y-2 lg:border-r border-slate-50 pr-4"
-            >
-              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">
-                {kpis[1].label}
+            {/* Cartão 2 */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-105 flex items-center justify-center">
+                  <Send size={20} className="text-emerald-600" />
+                </div>
               </div>
-              <div className="text-3xl md:text-4xl font-black text-slate-950 italic tracking-tighter leading-none">
-                {kpis[1].value}
+              <div className="mt-4 space-y-1">
+                <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
+                  932.540
+                </div>
+                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                  Correspondências Entregues
+                </div>
               </div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1.5">
-                <TrendingUp size={12} /> {kpis[1].change}
+              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-emerald-650 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                <TrendingUp size={12} /> ↑ 9,8% vs mês anterior
               </div>
             </div>
 
-            {/* KPI 3: Pendentes */}
-            <div
-              id="kpi-pendentes"
-              className="space-y-2 lg:border-r border-slate-50 pr-4"
-            >
-              <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">
-                {kpis[2].label}
+            {/* Cartão 3 */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-105 flex items-center justify-center">
+                  <Clock size={20} />
+                </div>
               </div>
-              <div className="text-3xl md:text-4xl font-black text-slate-950 italic tracking-tighter leading-none">
-                {kpis[2].value}
+              <div className="mt-4 space-y-1">
+                <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
+                  316.212
+                </div>
+                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                  Pendentes
+                </div>
               </div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 w-fit px-2.5 py-1 rounded-lg border border-red-100/50 flex items-center gap-1.5">
-                <TrendingDown size={12} /> {kpis[2].change}
+              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-rose-650 bg-rose-50 w-fit px-2.5 py-1 rounded-lg border border-rose-100 flex items-center gap-1">
+                <TrendingDown size={12} /> ↓ 5,3% vs mês anterior
               </div>
             </div>
 
-            {/* KPI 4: Taxa de Sucesso (with animated gauge) */}
-            <div
-              id="kpi-taxas"
-              className="flex items-center justify-between gap-4"
-            >
-              <div className="space-y-2">
-                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">
-                  {kpis[3].label}
+            {/* Cartão 4 */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left relative overflow-hidden">
+              <div className="flex justify-between items-start">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-105 flex items-center justify-center">
+                  <Bell size={20} />
                 </div>
-                <div className="text-3xl md:text-4xl font-black text-slate-950 italic tracking-tighter leading-none">
-                  {kpis[3].value}
-                </div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1.5">
-                  <TrendingUp size={12} /> {kpis[3].change}
+                {/* Gauge Circle on Top-Right */}
+                <div className="w-12 h-12 relative flex items-center justify-center shrink-0">
+                  <svg className="w-full h-full transform -rotate-90">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      className="stroke-slate-100 fill-none"
+                      strokeWidth="3.5"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      className="stroke-emerald-500 fill-none"
+                      strokeWidth="3.5"
+                      strokeDasharray="113"
+                      strokeDashoffset={113 - (113 * 92.4) / 100}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[10px] font-black font-mono text-emerald-600">5%</span>
+                  </div>
                 </div>
               </div>
-
-              <div className="w-12 h-12 relative shrink-0">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="21"
-                    className="stroke-slate-100 fill-none"
-                    strokeWidth="4"
-                  />
-                  <circle
-                    cx="24"
-                    cy="24"
-                    r="21"
-                    className="stroke-emerald-500 fill-none"
-                    strokeWidth="4"
-                    strokeDasharray="131.9"
-                    strokeDashoffset="10.0"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="mt-4 space-y-1">
+                <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
+                  92,4%
                 </div>
+                <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                  Taxa de Sucesso
+                </div>
+              </div>
+              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-emerald-650 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
+                <TrendingUp size={12} /> ↑ 7,6% vs mês anterior
               </div>
             </div>
           </div>
         </section>
-
-        {/* Indicadores Estratégicos Adicionais */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
-            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Processados Hoje</span>
-            <div className="mt-2">
-              <span className="text-xl font-black text-slate-900 italic font-mono leading-none">1.240</span>
-              <span className="text-[7.5px] text-emerald-600 font-bold block mt-1 uppercase tracking-wider">&bull; +14.2% HoH</span>
-            </div>
-          </div>
-          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
-            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Tempo de Resposta</span>
-            <div className="mt-2">
-              <span className="text-xl font-black text-indigo-600 italic font-mono leading-none">4.2h</span>
-              <span className="text-[7.5px] text-indigo-500 font-bold block mt-1 uppercase tracking-wider">&bull; 98% no SLA</span>
-            </div>
-          </div>
-          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
-            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Insts. Activas</span>
-            <div className="mt-2">
-              <span className="text-xl font-black text-slate-900 italic font-mono leading-none">156</span>
-              <span className="text-[7.5px] text-slate-400 font-bold block mt-1 uppercase tracking-wider">&bull; 100% On-line</span>
-            </div>
-          </div>
-          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
-            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Novos Cidadãos</span>
-            <div className="mt-2">
-              <span className="text-xl font-black text-emerald-600 italic font-mono leading-none">+350</span>
-              <span className="text-[7.5px] text-emerald-500 font-bold block mt-1 uppercase tracking-wider">&bull; Biometria OK</span>
-            </div>
-          </div>
-          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
-            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Docs Emitidos</span>
-            <div className="mt-2">
-              <span className="text-xl font-black text-slate-900 italic font-mono leading-none">725.109</span>
-              <span className="text-[7.5px] text-slate-400 font-bold block mt-1 uppercase tracking-wider">&bull; Selados digital</span>
-            </div>
-          </div>
-          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
-            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Uso de I.A.</span>
-            <div className="mt-2">
-              <span className="text-xl font-black text-slate-950 italic font-mono leading-none">87.5%</span>
-              <span className="text-[7.5px] text-indigo-500 font-bold block mt-1 uppercase tracking-wider">&bull; Automação</span>
-            </div>
-          </div>
-          <div className="bg-white border border-slate-100 rounded-[22px] p-4 shadow-sm flex flex-col justify-between">
-            <span className="font-mono text-[8px] font-black uppercase text-slate-400 tracking-wider block leading-none">Agentes Activos</span>
-            <div className="mt-2">
-              <span className="text-xl font-black text-indigo-600 italic font-mono leading-none">45</span>
-              <span className="text-[7.5px] text-slate-400 font-bold block mt-1 uppercase tracking-wider">&bull; Painel Admin</span>
-            </div>
-          </div>
-        </div>
 
         {/* Anti-Fraud Registry Updates - Exclusive for Operators */}
         {activeRole === 'operador' && (
@@ -1321,367 +1256,469 @@ export function GovDashboard({
           )}
         </AnimatePresence>
 
-        {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-          {/* Category Donut Card */}
-          <section
-            id="categoria-card"
-            className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm min-h-[480px] flex flex-col justify-between"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-1 h-5 bg-red-600 rounded-full" />
-              <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
-                Correspondências por Categoria
-              </h3>
-            </div>
+        {/* SECÇÃO 2 — PAINEL ANALÍTICO */}
+        <div className="space-y-6 mt-8">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-red-650 rounded-full" />
+            <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
+              Painel Analítico
+            </h2>
+          </div>
 
-            <div className="flex flex-col md:flex-row items-center gap-6 flex-1 min-h-0">
-              <div className="w-full md:w-[45%] h-[200px] md:h-full relative flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={75}
-                      paddingAngle={2}
-                      dataKey="value"
-                      nameKey="name"
-                      stroke="#ffffff"
-                      strokeWidth={2}
-                    >
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        border: "none",
-                        color: "#ffffff",
-                        borderRadius: "12px",
-                        boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-                        fontSize: "10px",
-                        fontFamily: 'monospace'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold">
-                    Fluxo
-                  </span>
-                  <span className="text-xl font-black text-slate-900 italic tracking-tighter leading-none mt-1">
-                    100%
-                  </span>
-                </div>
-              </div>
-
-              <div className="w-full md:w-[55%] overflow-y-auto max-h-[300px] pr-1 custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {categoryData.map((cat) => (
-                  <div
-                    key={cat.name}
-                    className="flex items-center justify-between text-[11px] p-2 hover:bg-slate-50 rounded-xl transition-colors border border-slate-50"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      <span className="font-bold text-slate-650 uppercase tracking-widest text-[9px] truncate">
-                        {cat.name}
-                      </span>
-                    </div>
-                    <span className="font-black text-slate-950 font-mono text-[10px] shrink-0 ml-1">
-                      {cat.value}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Outline Map container */}
-          <section
-            id="provincia-card"
-            className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8 shadow-sm min-h-[480px] flex flex-col justify-between"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-1 h-5 bg-red-600 rounded-full" />
-              <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
-                Distribuição por Província
-              </h3>
-            </div>
-
-            <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-0 items-center justify-center">
-              {/* Visual Maps Representation: Angola Provinces Map */}
-              <div className="w-full md:w-[50%] h-[240px] md:h-full flex flex-col items-center justify-center relative bg-slate-50/50 p-4 rounded-2xl border border-slate-200 overflow-hidden group/map select-none">
-                
-                {/* Sized aspect ratio wrapper ensuring perfect coordinate synchronization */}
-                <div className="relative w-[190px] h-[220px]">
-                  <img
-                    src="https://i.postimg.cc/J008DY8G/Mapa-de-Angola-Provincias.gif"
-                    alt="Mapa de Angola Províncias"
-                    className="absolute w-full h-full object-contain transition-all duration-300 group-hover/map:brightness-[0.98]"
-                    referrerPolicy="no-referrer"
-                  />
-
-                  {/* Pins Overlays */}
-                  {mapPins.map((pin) => {
-                    const isSelected = selectedProvince === pin.id;
-                    return (
-                      <div
-                        key={pin.id}
-                        className="absolute transition-all duration-300 cursor-pointer z-20"
-                        style={{
-                          top: pin.top,
-                          left: pin.left,
-                          transform: "translate(-50%, -50%)"
-                        }}
-                        onClick={() => {
-                          setSelectedProvince(selectedProvince === pin.id ? null : pin.id);
-                        }}
-                      >
-                        {/* Interactive Highlight Pulse Wave */}
-                        <div 
-                          className={`absolute w-8 h-8 -top-3 -left-3 rounded-full border transition-all duration-500 ${
-                            isSelected
-                              ? "border-red-600 bg-red-600/15 scale-110"
-                              : "border-transparent"
-                          }`}
-                        />
-
-                        {/* Secondary Pin Glow */}
-                        <span className={`absolute inline-flex rounded-full opacity-75 animate-ping -top-1.5 -left-1.5 ${
-                          isSelected
-                            ? "h-4 w-4 bg-red-700"
-                            : "h-3 w-3 bg-red-400/20"
-                        }`} />
-
-                        {/* Core Dot Indicator */}
-                        <div 
-                          className={`w-2.5 h-2.5 rounded-full shadow-md transition-all duration-300 ${
-                            isSelected
-                              ? "bg-red-700 scale-115 ring-4 ring-red-200"
-                              : "bg-red-500 hover:scale-110 ring-2 ring-white"
-                          }`}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="absolute bottom-1.5 left-2.5 flex items-center gap-1.5 font-mono text-[7px] font-black text-slate-400 tracking-wider uppercase">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-                  MAPA DE PROVÍNCIAS &bull; CDA RESUMO
-                </div>
-              </div>
-
-              {/* Province listings matching layout exact specifications */}
-              <div className="w-full md:w-[50%] flex flex-col justify-between h-full min-h-[220px]">
-                <div className="space-y-1.5 overflow-y-auto max-h-[280px] pr-1 custom-scrollbar">
-                  {provinceData.map((prov) => {
-                    const isSelected = selectedProvince === prov.id;
-                    return (
-                      <div
-                        key={prov.name}
-                        onClick={() => {
-                          setSelectedProvince(selectedProvince === prov.id ? null : prov.id);
-                        }}
-                        className={`flex justify-between items-center text-[10px] p-2.5 rounded-xl border transition-all cursor-pointer group ${
-                          isSelected
-                            ? "bg-red-50/70 border-red-300 text-red-950 scale-[1.01] shadow-sm"
-                            : "bg-slate-50/30 border-transparent hover:bg-slate-50 hover:border-slate-100 text-slate-600"
-                        }`}
-                      >
-                        <span className="font-bold uppercase tracking-widest group-hover:text-slate-900 transition-colors flex items-center gap-1.5 font-sans">
-                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />}
-                          {prov.name}
-                        </span>
-                        <span
-                          className={`font-mono font-black tracking-tighter ${
-                            isSelected
-                              ? "text-red-700"
-                              : "text-slate-950"
-                          }`}
-                        >
-                          {prov.count.toLocaleString()}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Sub regional interactive diagnostic card */}
-                {(() => {
-                  const activeProv = selectedProvince 
-                    ? provinceData.find(p => p.id === selectedProvince) 
-                    : null;
-                  return (
-                    <div className={`mt-3 p-3.5 border rounded-2xl min-h-[70px] flex items-center justify-between text-[10.5px] transition-all duration-300 ${
-                      activeProv 
-                        ? "bg-red-50/95 border-red-200 text-red-950 shadow-md ring-2 ring-red-500/20" 
-                        : "bg-slate-50/90 border-slate-100/80 text-slate-500"
-                    }`}>
-                      {activeProv ? (
-                        <div className="w-full flex justify-between items-center transition-all animate-fadeIn">
-                          <div>
-                            <span className="font-mono text-[9px] font-black uppercase text-red-600 block leading-none mb-1 tracking-wider">
-                              Província Ativa: {activeProv.name}
-                            </span>
-                            <p className="text-[11px] text-slate-850 font-bold font-sans">
-                              Canal seguro CDA estabelecido e operando com {activeProv.count.toLocaleString()} registros ativos.
-                            </p>
-                          </div>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedProvince(null);
-                            }}
-                            className="p-1.5 px-3 bg-white border border-red-300 hover:border-red-400 text-red-700 hover:bg-red-50 rounded-xl text-[8.5px] font-mono uppercase font-black tracking-wider shadow-sm transition-all shrink-0 cursor-pointer"
-                          >
-                            Limpar
-                          </button>
-                        </div>
-                      ) : (
-                        <p className="italic text-[9.5px] text-slate-400 mx-auto text-center font-medium leading-relaxed max-w-[220px] font-sans">
-                          Selecione uma província no mapa ou na lista acima para ver os dados exibidos.
-                        </p>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Additional Strategic Widgets for Angola Admin Restructure */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mt-6">
-          
-          {/* Widget 1: Top 10 Instituições */}
-          <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-1 h-5 bg-indigo-600 rounded-full" />
-                <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
-                  Top 10 Instituições (Volume)
-                </h3>
-              </div>
-              <div className="space-y-3.5 mt-2">
-                {topInstitutions.map((inst, index) => {
-                  const percentage = Math.round((inst.volume / 350000) * 100);
-                  return (
-                    <div key={inst.name} className="space-y-1">
-                      <div className="flex justify-between text-[10px] font-bold">
-                        <span className="text-slate-700 truncate max-w-[200px]">{index + 1}. {inst.name}</span>
-                        <span className="font-mono text-slate-950 shrink-0">{inst.volume.toLocaleString()}</span>
-                      </div>
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div className={`h-full ${inst.color} rounded-full`} style={{ width: `${percentage}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
-          {/* Widget 2: Crescimento Mensal */}
-          <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col justify-between">
-            <div className="flex-1 flex flex-col justify-between">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-1 h-5 bg-indigo-600 rounded-full" />
-                <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
-                  Crescimento Geral CDA
-                </h3>
-              </div>
-              <div className="h-[250px] w-full flex-1 mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorCorr" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorDoc" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: 'none', color: '#ffffff', borderRadius: '12px', fontSize: '10px' }} />
-                    <Area type="monotone" dataKey="correspondencias" stroke="#4f46e5" strokeWidth={2} fillOpacity={1} fill="url(#colorCorr)" name="Correios" />
-                    <Area type="monotone" dataKey="documentos" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorDoc)" name="Documentos" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex items-center justify-center gap-6 text-[10px] font-bold text-slate-500 mt-4 pt-4 border-t border-slate-100">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-xs bg-indigo-600" />
-                  <span>Correspondências</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
-                  <span>Documentos</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Widget 3: Actividade em Tempo Real */}
-          <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm flex flex-col justify-between">
-            <div className="flex-1 flex flex-col">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-650"></span>
-                  </span>
-                  <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.2em] italic">
-                    Actividade em Tempo Real
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            {/* Card Fiscais / Categoria */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[420px] text-left">
+              <div>
+                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-950 uppercase tracking-[0.15em] italic">
+                    Correspondências por Categoria
                   </h3>
                 </div>
-                <span className="text-[8px] font-mono font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 uppercase">Operando</span>
-              </div>
-              
-              <div className="space-y-4 mt-2 overflow-y-auto max-h-[300px] flex-1 pr-1 custom-scrollbar">
-                {[
-                  { desc: "AGT notificou cidadão Carlos Santos sobre folha fiscal", time: "Há 1 min", status: "success", info: "NIF 241098..." },
-                  { desc: "SME efetuou validação biométrica com êxito", time: "Há 4 mins", status: "success", info: "BI 009874..." },
-                  { desc: "Tribunal Supremo emitiu Certidão Digital de Não Devedor", time: "Há 8 mins", status: "info", info: "Proc #219" },
-                  { desc: "Tentativa de login de agente IP bloqueado temporariamente", time: "Há 12 mins", status: "warning", info: "IP: 197.80.3.5" },
-                  { desc: "ENDE publicou contrato multilateral unificado", time: "Há 18 mins", status: "success", info: "Contador #3A" },
-                  { desc: "Erro de handshake SSL no barramento da EPAL resoluto", time: "Há 22 mins", status: "success", info: "EPAL_GATE" },
-                  { desc: "MINJUS registrou novo agente de verificação física", time: "Há 25 mins", status: "info", info: "MINJUS_PROD" }
-                ].map((act, index) => (
-                  <div key={index} className="flex gap-3 justify-between items-start text-[10px] p-2.5 hover:bg-slate-50 rounded-2xl transition-colors border border-slate-50">
-                    <div className="space-y-1">
-                      <p className="font-bold text-slate-800 leading-normal">{act.desc}</p>
-                      <div className="flex items-center gap-2 font-mono text-[8.5px] text-slate-400">
-                        <span className="font-bold text-[8.5px] text-indigo-600 uppercase">{act.info}</span>
-                        <span>&bull;</span>
-                        <span>{act.time}</span>
-                      </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-6 justify-center">
+                  {/* Donut Chart */}
+                  <div className="w-full sm:w-[50%] h-[160px] relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Fiscais", value: 35.6, color: "#2563eb" },
+                            { name: "Educação", value: 25.8, color: "#ef4444" },
+                            { name: "Saúde", value: 15.6, color: "#10b981" },
+                            { name: "Justiça", value: 12.4, color: "#8b5cf6" },
+                            { name: "Outros", value: 10.6, color: "#f97316" }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={65}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {[
+                            { color: "#2563eb" },
+                            { color: "#ef4444" },
+                            { color: "#10b981" },
+                            { color: "#8b5cf6" },
+                            { color: "#f97316" }
+                          ].map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-[9px] uppercase font-mono tracking-widest text-slate-400 font-bold">
+                        Fluxo
+                      </span>
+                      <span className="text-lg font-black text-slate-950 italic tracking-tighter leading-none mt-0.5">
+                        100%
+                      </span>
                     </div>
-                    <span className={`text-[8px] uppercase font-mono font-black border px-2 py-0.5 rounded-md ${
-                      act.status === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
-                      act.status === 'warning' ? 'bg-amber-50 border-amber-100 text-amber-700' :
-                      'bg-indigo-50 border-indigo-100 text-indigo-700'
-                    }`}>
-                      {act.status}
-                    </span>
                   </div>
-                ))}
+
+                  {/* Legendas coloridas */}
+                  <div className="w-full sm:w-[50%] space-y-2">
+                    {[
+                      { name: "Fiscais", value: "35,6%", color: "#2563eb" },
+                      { name: "Educação", value: "25,8%", color: "#ef4444" },
+                      { name: "Saúde", value: "15,6%", color: "#10b981" },
+                      { name: "Justiça", value: "12,4%", color: "#8b5cf6" },
+                      { name: "Outros", value: "10,6%", color: "#f97316" }
+                    ].map((cat) => (
+                      <div
+                        key={cat.name}
+                        className="flex items-center justify-between text-[11px] p-1.5 hover:bg-slate-50 rounded-xl transition-colors border border-transparent"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span className="font-bold text-slate-650 uppercase tracking-wider text-[10px] truncate">
+                            {cat.name}
+                          </span>
+                        </div>
+                        <span className="font-black text-slate-955 font-mono text-[10px] shrink-0 ml-1">
+                          {cat.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </section>
+
+            {/* Card Província */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[420px] text-left">
+              <div>
+                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
+                    Distribuição por Província
+                  </h3>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  {/* Visual Map Representation */}
+                  <div className="w-full sm:w-[45%] h-[180px] bg-sky-50/50 border border-sky-100 rounded-2xl flex items-center justify-center relative overflow-hidden p-2">
+                    <img
+                      src="https://i.postimg.cc/J008DY8G/Mapa-de-Angola-Provincias.gif"
+                      alt="Mapa de Angola Províncias"
+                      className="w-full h-full object-contain filter hue-rotate-[190deg] brightness-[1.0] contrast-[0.95] opacity-80 animate-fadeIn"
+                      referrerPolicy="no-referrer"
+                    />
+                    {/* Subtle pulsing nodes */}
+                    <span className="absolute top-[40%] left-[45%] w-2 h-2 rounded-full bg-blue-600 animate-ping" />
+                    <span className="absolute top-[40%] left-[45%] w-1.5 h-1.5 rounded-full bg-blue-600 shadow-sm" />
+                    <span className="absolute top-[60%] left-[55%] w-1.5 h-1.5 rounded-full bg-blue-500 shadow-sm opacity-60" />
+                    
+                    <div className="absolute bottom-1 right-2 text-[7px] font-mono uppercase font-black text-blue-500 tracking-wider">
+                      CDA Node Map
+                    </div>
+                  </div>
+
+                  {/* Província list */}
+                  <div className="w-full sm:w-[55%] space-y-1.5">
+                    {[
+                      { name: "Luanda", count: "412.540", color: "bg-blue-600" },
+                      { name: "Benguela", count: "125.450", color: "bg-purple-600" },
+                      { name: "Huíla", count: "98.234", color: "bg-amber-600" },
+                      { name: "Lubango", count: "86.732", color: "bg-indigo-600" },
+                      { name: "Namibe", count: "62.540", color: "bg-emerald-600" },
+                      { name: "Outras", count: "463.276", color: "bg-slate-400" }
+                    ].map((prov) => (
+                      <div
+                        key={prov.name}
+                        className="flex justify-between items-center text-[11px] p-1 border-b border-slate-50"
+                      >
+                        <span className="font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${prov.color}`} />
+                          {prov.name}
+                        </span>
+                        <span className="font-mono font-black text-slate-900">
+                          {prov.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card Notificações Ativa */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[420px] text-left">
+              <div>
+                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
+                    Notificações Ativas
+                  </h3>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { name: "Fiscais", count: "128.752", trend: "↑ 11,3%" },
+                    { name: "Educação", count: "96.540", trend: "↑ 8,7%" },
+                    { name: "Saúde", count: "72.318", trend: "↑ 6,1%" },
+                    { name: "Justiça", count: "45.897", trend: "↑ 9,4%" }
+                  ].map((notif) => (
+                    <div
+                      key={notif.name}
+                      className="flex justify-between items-center p-2.5 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-slate-205 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">
+                          Categoria
+                        </span>
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                          {notif.name}
+                        </span>
+                      </div>
+                      <div className="text-right flex items-center gap-3">
+                        <span className="font-mono font-black text-slate-900">
+                          {notif.count}
+                        </span>
+                        <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-md border text-emerald-600 bg-emerald-50 border-emerald-100 flex items-center gap-0.5 shrink-0">
+                          {notif.trend}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onNavigate?.('gov-relatorio')}
+                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-4"
+              >
+                Ver todas
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* SECÇÃO 3 — SERVIÇOS INTELIGENTES */}
+        <div className="space-y-6 mt-8">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-red-650 rounded-full" />
+            <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
+              Serviços Inteligentes
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+            {/* Card QR CODE */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs min-h-[352px] flex flex-col justify-between text-center">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center gap-2 mb-6 pb-2 border-b border-slate-100 w-full">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
+                    Validações por QR Code
+                  </h3>
+                </div>
+
+                {/* QR Code SVG Vector with scanning corner brackets - Centered & Enlarged */}
+                <div className="relative p-4 bg-white border border-slate-100 rounded-2xl shadow-sm mb-5 shrink-0 flex items-center justify-center">
+                  {/* Scanner Brackets */}
+                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-emerald-500 rounded-tl-sm" />
+                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-emerald-500 rounded-tr-sm" />
+                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-emerald-500 rounded-bl-sm" />
+                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-emerald-500 rounded-br-sm" />
+
+                  <svg viewBox="0 0 100 100" className="w-24 h-24 text-slate-900">
+                    <rect x="0" y="0" width="22" height="22" fill="currentColor" rx="2" />
+                    <rect x="4" y="4" width="14" height="14" fill="white" rx="1" />
+                    <rect x="7" y="7" width="8" height="8" fill="currentColor" rx="0.5" />
+
+                    <rect x="78" y="0" width="22" height="22" fill="currentColor" rx="2" />
+                    <rect x="82" y="4" width="14" height="14" fill="white" rx="1" />
+                    <rect x="85" y="7" width="8" height="8" fill="currentColor" rx="0.5" />
+
+                    <rect x="0" y="78" width="22" height="22" fill="currentColor" rx="2" />
+                    <rect x="4" y="82" width="14" height="14" fill="white" rx="1" />
+                    <rect x="7" y="85" width="8" height="8" fill="currentColor" rx="0.5" />
+
+                    <rect x="30" y="5" width="6" height="6" fill="currentColor" />
+                    <rect x="42" y="10" width="10" height="6" fill="currentColor" />
+                    <rect x="58" y="3" width="6" height="10" fill="currentColor" />
+                    <rect x="30" y="20" width="10" height="6" fill="currentColor" />
+                    
+                    <rect x="5" y="30" width="6" height="6" fill="currentColor" />
+                    <rect x="18" y="42" width="10" height="6" fill="currentColor" />
+                    <rect x="3" y="58" width="6" height="10" fill="currentColor" />
+                    <rect x="22" y="30" width="10" height="6" fill="currentColor" />
+
+                    <rect x="42" y="42" width="10" height="10" fill="currentColor" />
+                    <rect x="58" y="42" width="6" height="14" fill="currentColor" />
+                    <rect x="42" y="58" width="14" height="6" fill="currentColor" />
+
+                    <rect x="78" y="30" width="14" height="6" fill="currentColor" />
+                    <rect x="85" y="45" width="6" height="10" fill="currentColor" />
+                    <rect x="70" y="58" width="10" height="6" fill="currentColor" />
+
+                    <rect x="30" y="78" width="6" height="14" fill="currentColor" />
+                    <rect x="48" y="85" width="10" height="6" fill="currentColor" />
+                    <rect x="62" y="70" width="6" height="10" fill="currentColor" />
+
+                    <rect x="85" y="85" width="10" height="10" fill="currentColor" />
+                  </svg>
+                </div>
+
+                <div className="space-y-2 flex flex-col items-center">
+                  <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
+                    1.108.732
+                  </div>
+                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    Validações Realizadas
+                  </div>
+                  <div className="text-[10px] font-black uppercase tracking-wider text-[#10b981] bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center justify-center gap-1.5">
+                    <TrendingUp size={12} /> ↑ 14,2% vs mês anterior
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onNavigate?.('gov-correspondencias')}
+                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+              >
+                Verificar Documento
+              </button>
+            </div>
+
+            {/* Card ASSISTENTE IA */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs min-h-[352px] flex flex-col justify-between text-center">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center gap-2 mb-6 pb-2 border-b border-slate-100 w-full">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
+                    Sobre Assistência IA
+                  </h3>
+                </div>
+
+                {/* Styled enlarge centered Brain Container */}
+                <div className="w-24 h-24 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mb-5 shrink-0 shadow-sm relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-indigo-100/30 scale-75 rounded-full animate-pulse" />
+                  <Brain size={42} className="text-indigo-600 relative z-10" />
+                </div>
+
+                <div className="space-y-[6px] flex flex-col items-center">
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest leading-none">
+                    Assistência Inteligente
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-extrabold uppercase leading-relaxed text-center max-w-[240px]">
+                    O sistema analisa, classifica e sugere ações para otimizar o fluxo de trabalho institucional.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onNavigate?.('gov-correspondencias');
+                }}
+                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+              >
+                Abrir Assistente IA
+              </button>
+            </div>
+
+            {/* Card SEGURANÇA */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs min-h-[352px] flex flex-col justify-between text-center">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center gap-2 mb-6 pb-2 border-b border-slate-100 w-full">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
+                    Segurança e Integridade
+                  </h3>
+                </div>
+
+                {/* Styled enlarge centered Shield Container */}
+                <div className="w-24 h-24 rounded-2xl bg-emerald-50 border border-emerald-100 text-[#10b981] flex items-center justify-center mb-5 shrink-0 shadow-sm relative overflow-hidden">
+                  <div className="absolute inset-0 bg-emerald-100/30 scale-75 rounded-full animate-pulse" />
+                  <Shield size={42} className="text-emerald-600 relative z-10" />
+                </div>
+
+                <div className="space-y-2 flex flex-col items-center">
+                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                    Estatísticas Ativas
+                  </div>
+                  <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none flex items-center justify-center gap-2">
+                    100%
+                    <span className="text-xs font-black uppercase text-emerald-600 tracking-wider">
+                      Sistema Seguro
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mt-1">
+                    Integridade dos Dados
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-emerald-50/60 border border-emerald-100 rounded-2xl mt-6 flex items-center justify-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[9px] font-mono uppercase font-black text-emerald-800 tracking-wider">
+                  Monitoramento Ativo &bull; CDA-SHIELD
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SECÇÃO 4 — ATIVIDADE RECENTE E STATUS */}
+        <div className="space-y-6 mt-8">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-6 bg-red-650 rounded-full" />
+            <h2 className="text-base md:text-lg font-black italic tracking-tighter text-slate-900 uppercase">
+              Atividade Recente e Status
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            {/* Card Atividade Recente */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 md:p-8 shadow-xs flex flex-col justify-between text-left">
+              <div>
+                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
+                    Atividade Recente
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  {[
+                    { desc: "Correspondência Fiscal enviada", time: "20/05/2025 10:42" },
+                    { desc: "Notificação de Educação entregue", time: "20/05/2025 10:35" },
+                    { desc: "Documento Oficial validado por QR Code", time: "20/05/2025 10:28" },
+                    { desc: "Validação por QR Code realizada", time: "20/05/2025 10:15" },
+                    { desc: "Correspondência de Justiça entregue", time: "20/05/2025 10:05" }
+                  ].map((act, index) => (
+                    <div key={index} className="flex justify-between items-center text-[11px] p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="font-bold text-slate-850 uppercase tracking-wide">
+                          {act.desc}
+                        </span>
+                      </div>
+                      <span className="font-mono text-slate-400 font-bold shrink-0 ml-2">
+                        {act.time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onNavigate?.('gov-relatorio')}
+                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+              >
+                Ver todas as atividades
+              </button>
+            </div>
+
+            {/* Card Status do Sistema */}
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 md:p-8 shadow-xs flex flex-col justify-between text-left min-h-[350px]">
+              <div>
+                <div className="flex items-center gap-3 mb-6 pb-2 border-b border-slate-100">
+                  <div className="w-1 h-5 bg-red-650 rounded-full" />
+                  <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
+                    Status do Sistema
+                  </h3>
+                </div>
+
+                <div className="flex items-center justify-center gap-6 py-10">
+                  <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center relative shadow-xs shrink-0">
+                    <span className="absolute inset-0 rounded-full border border-emerald-400 animate-ping opacity-25" />
+                    <CheckCircle2 size={36} className="text-emerald-500" />
+                  </div>
+                  
+                  <div className="space-y-0.5">
+                    <h4 className="text-lg font-black text-emerald-600 uppercase tracking-widest leading-none">
+                      Operacional
+                    </h4>
+                    <p className="text-xs text-slate-500 font-extrabold uppercase mt-1">
+                      Todos os serviços ativos
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onNavigate?.('gov-seguranca')}
+                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+              >
+                Ver Detalhes
+              </button>
+            </div>
+          </div>
+        </div>
 
         </div>
       </div>
-    </div>
   );
 }

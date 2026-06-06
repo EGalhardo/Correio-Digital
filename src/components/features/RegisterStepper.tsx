@@ -587,7 +587,7 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
                       type="text"
                       value={biNumber}
                       onChange={(e) => handleBiChange(e.target.value)}
-                      className="w-full bg-[#f8fafc] border border-slate-200 focus:border-[#2563eb]/60 rounded-xl px-4 py-2.5 pl-10 text-xs text-slate-800 outline-none transition-all font-bold tracking-widest placeholder:text-slate-350"
+                      className="w-full bg-white border border-slate-200 focus:border-[#2563eb]/60 rounded-xl px-4 py-2.5 pl-10 text-xs text-slate-800 outline-none transition-all font-bold tracking-widest placeholder:text-slate-350"
                       placeholder="002931298LA045"
                       maxLength={14}
                     />
@@ -619,7 +619,7 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
                         ? 'border-emerald-500 bg-emerald-50/10' 
                         : isUploadingFrente 
                         ? 'border-[#2563eb] bg-blue-50/15 animate-pulse' 
-                        : 'border-[#bfdbfe] bg-[#f8fafc] hover:bg-[#eff6ff]/30 hover:border-[#2563eb]'
+                        : 'border-[#bfdbfe] bg-white hover:bg-[#eff6ff]/30 hover:border-[#2563eb]'
                     }`}>
                       <input 
                         type="file" 
@@ -676,7 +676,7 @@ export function RegisterStepper({ onCancel, onSuccess, addAuditLog }: RegisterSt
                         ? 'border-emerald-500 bg-emerald-50/10' 
                         : isUploadingVerso 
                         ? 'border-[#2563eb] bg-blue-50/15 animate-pulse' 
-                        : 'border-[#bfdbfe] bg-[#f8fafc] hover:bg-[#eff6ff]/30 hover:border-[#2563eb]'
+                        : 'border-[#bfdbfe] bg-white hover:bg-[#eff6ff]/30 hover:border-[#2563eb]'
                     }`}>
                       <input 
                         type="file" 

@@ -29,7 +29,8 @@ import {
   Sparkles,
   Volume2,
   VolumeX,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 import { Document, DigitalProtocol } from '../../types';
 
@@ -55,6 +56,7 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
   const [manualCode, setManualCode] = useState<string>('');
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [scanStep, setScanStep] = useState<string>('');
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   
   // Scanned results
   const [scannedDoc, setScannedDoc] = useState<Document | null>(null);
@@ -64,11 +66,38 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
     return saved ? JSON.parse(saved) : [
       {
         id: 'SCAN-8012',
+        documentName: 'Passaporte Digital',
+        holder: 'Edlasio Galhardo',
+        code: 'AO-PAS-7649',
+        number: 'P-AO398102',
+        scannedAt: '05/06/2026 22:01',
+        status: 'VÁLIDO'
+      },
+      {
+        id: 'SCAN-7945',
+        documentName: 'Certidão de Nascimento',
+        holder: 'Manuel Silva',
+        code: 'AO-CERT-1192',
+        number: 'REG-9912.4410',
+        scannedAt: '05/06/2026 19:50',
+        status: 'VÁLIDO'
+      },
+      {
+        id: 'SCAN-7881',
+        documentName: 'Certidão de Não Devedor',
+        holder: 'Manuel Silva',
+        code: 'AO-DEB-0812',
+        number: '77654312',
+        scannedAt: '05/06/2026 19:41',
+        status: 'VÁLIDO'
+      },
+      {
+        id: 'SCAN-7798',
         documentName: 'BI Digital',
         holder: 'Edlasio Galhardo',
         code: 'AO-BI-9281',
         number: '009874562LA041',
-        scannedAt: '05/06/2026 10:14',
+        scannedAt: '05/06/2026 18:30',
         status: 'VÁLIDO'
       },
       {
@@ -78,6 +107,15 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
         code: 'AO-NIF-4412',
         number: '5412889210',
         scannedAt: '05/06/2026 09:41',
+        status: 'VÁLIDO'
+      },
+      {
+        id: 'SCAN-7688',
+        documentName: 'Passaporte Digital',
+        holder: 'Manuel Silva',
+        code: 'AO-PAS-2210',
+        number: 'P-AO092811',
+        scannedAt: '04/06/2026 21:15',
         status: 'VÁLIDO'
       }
     ];
@@ -113,13 +151,13 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
 
   // Turn on actual webcam stream if possible
   useEffect(() => {
-    if (activeTab === 'camera' && cameraActive) {
+    if (activeTab === 'camera' && cameraActive && isModalOpen) {
       startCamera();
     } else {
       stopCamera();
     }
     return () => stopCamera();
-  }, [activeTab, cameraActive]);
+  }, [activeTab, cameraActive, isModalOpen]);
 
   const startCamera = async () => {
     try {
@@ -227,42 +265,282 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
     }
   };
 
+  const getMockDocDetail = (item: ScanHistoryItem): Document => {
+    if (item.code === 'AO-PAS-7649') {
+      return {
+        name: "Passaporte Digital",
+        holder: "Edlasio Galhardo",
+        code: "AO-PAS-7649",
+        number: "P-AO398102",
+        issuer: "SME - Direção",
+        issuedAt: "18 de Junho de 2024",
+        validity: "Valido ate 2030"
+      };
+    }
+    if (item.code === 'AO-CERT-1192') {
+      return {
+        name: "Certidão de Nascimento",
+        holder: "Manuel Silva",
+        code: "AO-CERT-1192",
+        number: "REG-9912.4410",
+        issuer: "Ministério da Justiça e dos Direitos Humanos",
+        issuedAt: "12 de Outubro de 2021",
+        validity: "Vitalícia"
+      };
+    }
+    if (item.code === 'AO-DEB-0812') {
+      return {
+        name: "Certidão de Não Devedor",
+        holder: "Manuel Silva",
+        code: "AO-DEB-0812",
+        number: "77654312",
+        issuer: "AGT",
+        issuedAt: "01 de Junho de 2026",
+        validity: "Ativo"
+      };
+    }
+    if (item.code === 'AO-BI-9281') {
+      return {
+        name: "BI Digital",
+        holder: "Edlasio Galhardo",
+        code: "AO-BI-9281",
+        number: "009874562LA041",
+        issuer: "SME",
+        issuedAt: "10 de Abril de 2022",
+        validity: "Valido ate 2032"
+      };
+    }
+    if (item.code === 'AO-NIF-4412') {
+      return {
+        name: "NIF (Número de Identificação Fiscal)",
+        holder: "Edlasio Galhardo",
+        code: "AO-NIF-4412",
+        number: "5412889210",
+        issuer: "AGT",
+        issuedAt: "15 de Maio de 2018",
+        validity: "Vitalício"
+      };
+    }
+    if (item.code === 'AO-PAS-2210') {
+      return {
+        name: "Passaporte Digital",
+        holder: "Manuel Silva",
+        code: "AO-PAS-2210",
+        number: "P-AO092811",
+        issuer: "SME - Direção",
+        issuedAt: "04 de Fevereiro de 2025",
+        validity: "Valido ate 2031"
+      };
+    }
+    const docFromProps = documents.find(d => d.code === item.code);
+    return docFromProps || {
+      name: item.documentName,
+      holder: item.holder,
+      code: item.code,
+      number: item.number,
+      issuer: "SME / AGT",
+      issuedAt: "01/01/2026",
+      validity: "Válido"
+    };
+  };
+
+  const openScanner = () => {
+    setActiveTab('camera');
+    setIsModalOpen(true);
+    setScannedDoc(null);
+    setIsValidated(null);
+    setIsScanning(true);
+    setScanStep('DETECTANDO PONTOS DE ANCORAGEM...');
+    
+    // Simulate real high tech scanning sequence and beep
+    setTimeout(() => {
+      setScanStep('LENDO MATRIZ DE QR CODE...');
+      setTimeout(() => {
+        setScanStep('VALIDANDO JUNTO AO CENTRAL DE INTEROPERABILIDADE...');
+        setTimeout(() => {
+          const chosenDoc: Document = {
+            name: "BI Digital",
+            holder: "Edlasio Galhardo",
+            code: "AO-BI-9281",
+            number: "009874562LA041",
+            issuer: "SME",
+            issuedAt: "10 de Abril de 2022",
+            validity: "Valido ate 2032"
+          };
+          playBeep();
+          setScannedDoc(chosenDoc);
+          setIsValidated(true);
+          setIsScanning(false);
+          setScanStep('');
+          setIsModalOpen(false); // Close scanning modal automatically
+          addHistoryItem(chosenDoc, 'VÁLIDO');
+          addAuditLog?.(`Auditoria: Escaneamento executado com sucesso para Edlasio Galhardo.`, 'success');
+        }, 1200);
+      }, 1000);
+    }, 800);
+  };
+
+  const renderScannerCard = () => (
+    <div className="bg-white rounded-[32px] border border-slate-105 shadow-3xs p-6 md:p-8" id="scanner-card-container">
+      <div>
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100/70">
+          <div className="flex items-center gap-2">
+            <span className={`w-2 h-2 rounded-full ${activeTab === 'camera' ? 'bg-slate-350' : 'bg-emerald-500 animate-pulse'}`} />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              {activeTab === 'camera' ? 'Leitor Inativo' : 'Pesquisa de Código Oficial / Chave CADA'}
+            </span>
+          </div>
+        </div>
+
+        {activeTab === 'camera' ? (
+          /* INACTIVE SCANNER PORTRAYAL: Centered beautiful layout */
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            
+            {/* QR Code Illustration with Corner Brackets */}
+            <div className="relative w-32 h-32 bg-blue-50/50 hover:bg-blue-50 rounded-all flex items-center justify-center border border-blue-105/30 mb-6 transition-all duration-300">
+              {/* Glowing blue laser reticles */}
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-3 border-l-3 border-blue-600 rounded-tl-lg" />
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-3 border-r-3 border-blue-600 rounded-tr-lg" />
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-3 border-l-3 border-blue-600 rounded-bl-lg" />
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-3 border-r-3 border-blue-600 rounded-br-lg" />
+              
+              <QrCode size={56} className="text-blue-600 animate-pulse" />
+            </div>
+
+            <h2 className="text-lg md:text-xl font-extrabold text-slate-900 mb-2 uppercase tracking-tight">Validação de Documento</h2>
+            <p className="text-slate-500 text-xs font-semibold uppercase tracking-tight max-w-sm mb-6 leading-relaxed">
+              Verifique passaportes, certidões, NIF e outros documentos oficiais emitidos pelos órgãos governamentais.
+            </p>
+
+            <button
+              onClick={openScanner}
+              type="button"
+              className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white flex items-center justify-center gap-2 py-3 px-8 rounded-xl font-bold font-sans text-xs uppercase tracking-widest shadow-md transition-all cursor-pointer border-0"
+              id="start-read-btn"
+            >
+              <Camera size={14} />
+              Iniciar Leitura
+            </button>
+          </div>
+        ) : (
+          /* Manual Form Input - High Fidelity Form */
+          <div className="bg-slate-50 border border-slate-150 rounded-2xl p-6">
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label htmlFor="doc_code_input" className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Código Único do Documento ou nº</label>
+                <div className="relative">
+                  <input
+                    id="doc_code_input"
+                    type="text"
+                    value={manualCode}
+                    onChange={(e) => setManualCode(e.target.value)}
+                    placeholder="Ex: AO-BI-9281 ou 009874562LA041"
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 placeholder-slate-400 uppercase tracking-wide focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                  <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                </div>
+                <p className="text-[9.5px] font-medium text-slate-405 uppercase">Introdução direta de metadados de registo criptográfico nacional.</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isScanning || !manualCode.trim()}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all border-0 cursor-pointer"
+              >
+                {isScanning ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    Processando Validação...
+                  </>
+                ) : (
+                  <>
+                    <FileText size={14} />
+                    Decodificar e Pesquisar Documento
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderRecentScans = () => (
+    <div className="space-y-4" id="recent-scans-block">
+      <div className="flex justify-between items-center px-1">
+        <h3 className="text-xs md:text-sm font-black text-slate-800 uppercase tracking-wider">Leituras Recentes</h3>
+        <span className="text-[9px] font-bold text-blue-600 uppercase cursor-pointer hover:underline tracking-wider">Ver todas</span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {scanHistory.map((item) => (
+          <div 
+            key={item.id} 
+            onClick={() => {
+              const doc = getMockDocDetail(item);
+              setScannedDoc(doc);
+              setIsValidated(true);
+            }}
+            className="bg-white border border-slate-100 hover:border-blue-200 rounded-[20px] p-4 flex items-center justify-between shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-3 truncate">
+              {/* Document Badge container with type-safe styling */}
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                item.documentName.toLowerCase().includes('passaporte') 
+                  ? 'bg-blue-50 text-blue-600' 
+                  : item.documentName.toLowerCase().includes('certid') 
+                    ? 'bg-emerald-50 text-emerald-600' 
+                    : item.documentName.toLowerCase().includes('nif') 
+                      ? 'bg-amber-50 text-amber-600' 
+                      : 'bg-indigo-50 text-indigo-600'
+              }`}>
+                <FileText size={16} />
+              </div>
+              <div className="truncate text-left">
+                <p className="font-extrabold text-slate-900 text-[11px] group-hover:text-blue-600 transition-colors uppercase truncate tracking-tight">{item.documentName}</p>
+                <p className="text-[10px] text-slate-500 font-bold truncate leading-tight mt-0.5">{item.holder}</p>
+                <p className="text-[8px] text-slate-400 font-mono tracking-wider mt-0.5">{item.scannedAt}</p>
+              </div>
+            </div>
+            
+            <span className="flex items-center gap-1 text-[8.5px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 shrink-0">
+              ✓ Válido
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-fade-in" id="inst-qrcode-view">
-      {/* Header */}
+      {/* Header matching the government style and user request */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 md:p-8 rounded-[32px] border border-slate-100 shadow-2xs">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
-            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Área Institucional / Validador</span>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+            <span className="text-[10px] font-bold text-blue-650 uppercase tracking-widest">ÁREA INSTITUCIONAL / VALIDADOR</span>
           </div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2 uppercase">
-            <QrCode size={24} className="text-indigo-600" />
-            Scanner de QR Code Oficial
+          <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase flex items-center gap-2">
+            SCANNER DE QR CODE OFICIAL
           </h1>
           <p className="text-xs text-slate-450 mt-1 uppercase font-bold tracking-tight">
-            Validação instantânea e handshacking com os serviços de migração (SME), AGT e registo civil de Angola.
+            Validação instantânea de documentos do SME, AGT e Registo Civil de Angola.
           </p>
         </div>
 
-        {/* Action controls */}
-        <div className="flex bg-slate-100 p-1 rounded-2xl gap-1 self-start md:self-center border border-slate-200">
+        {/* Action controls designed exactly as shown in the mockup */}
+        <div className="flex gap-2.5 self-start md:self-center">
           <button
             type="button"
-            onClick={() => {
-              setActiveTab('camera');
-              setScannedDoc(null);
-              setIsValidated(null);
-            }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border-0 ${
-              activeTab === 'camera' 
-                ? 'bg-indigo-950 text-white shadow-xs' 
-                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-200 cursor-pointer font-bold'
-            }`}
+            onClick={openScanner}
+            className="flex items-center gap-2 px-5 py-3 text-[10px] bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-black uppercase tracking-wider rounded-xl transition-all border-0 shadow-sm cursor-pointer"
           >
             <Camera size={14} />
-            Câmara Live
+            Iniciar Leitura
           </button>
+          
           <button
             type="button"
             onClick={() => {
@@ -270,10 +548,8 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
               setScannedDoc(null);
               setIsValidated(null);
             }}
-            className={`flex items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all border-0 ${
-              activeTab === 'manual' 
-                ? 'bg-indigo-950 text-white shadow-xs' 
-                : 'text-slate-600 hover:text-slate-950 hover:bg-slate-200 cursor-pointer font-bold'
+            className={`flex items-center gap-2 px-5 py-3 text-[10px] bg-white text-slate-705 border border-slate-200 hover:bg-slate-50 font-black uppercase tracking-wider rounded-xl transition-all shadow-3xs cursor-pointer ${
+              activeTab === 'manual' ? 'border-blue-600 ring-2 ring-blue-500/10' : ''
             }`}
           >
             <Search size={14} />
@@ -282,207 +558,22 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Column: Camera Feed or Manual Input */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-[32px] border border-slate-100 shadow-2xs p-5 md:p-6 flex flex-col justify-between min-h-[460px]">
-            <div>
-              <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-100/70">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${cameraActive ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`} />
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    {activeTab === 'camera' ? (cameraActive ? 'Vídeo Feed Prontidão' : 'Vídeo Inativo') : 'Pesquisa de Código Físico'}
-                  </span>
-                </div>
-                {activeTab === 'camera' && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSoundEnabled(!soundEnabled)}
-                      className="p-1.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-all border-0 cursor-pointer"
-                      title={soundEnabled ? 'Silenciar Beep' : 'Ativar Som Beep'}
-                    >
-                      {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCameraActive(!cameraActive)}
-                      className="px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 text-[8.5px] font-black rounded-lg uppercase tracking-wider transition-all border-0 cursor-pointer"
-                    >
-                      {cameraActive ? 'Desligar Câm.' : 'Ativar Câm.'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {activeTab === 'camera' ? (
-                /* Camera UI */
-                <div className="relative rounded-2xl overflow-hidden bg-slate-950 h-[320px] shadow-inner border border-slate-850 flex items-center justify-center select-none">
-                  {/* Real video if available, styled simulation backdrop if not */}
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
-                    muted 
-                    className="absolute inset-0 w-full h-full object-cover opacity-30 transform scale-x-[-1]"
-                  />
-
-                  {/* High Quality Scan HUD overlay */}
-                  <div className="absolute inset-x-0 top-0 p-4 flex justify-between items-start pointer-events-none text-white/55 font-mono text-[7px] tracking-widest z-10">
-                    <span>CDA-MATRIX v2.4</span>
-                    <span>FPS: 60 // BRIGHT: AUTO</span>
-                  </div>
-
-                  {/* Target scanner bounding box */}
-                  <div className="relative w-44 h-44 border-2 border-indigo-400/50 rounded-2xl flex items-center justify-center z-10 shadow-[0_0_80px_rgba(79,70,229,0.15)] bg-slate-900/40">
-                    {/* Corner Reticles */}
-                    <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-indigo-500 rounded-tl-[8px] -translate-x-1.5 -translate-y-1.5" />
-                    <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-indigo-500 rounded-tr-[8px] translate-x-1.5 -translate-y-1.5" />
-                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-indigo-500 rounded-bl-[8px] -translate-x-1.5 translate-y-1.5" />
-                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-indigo-500 rounded-br-[8px] translate-x-1.5 translate-y-1.5" />
-                    
-                    {/* Simulated laser scan line */}
-                    {cameraActive && !isScanning && (
-                      <motion.div 
-                        initial={{ top: '10%' }}
-                        animate={{ top: '90%' }}
-                        transition={{ duration: 2.2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-                        className="absolute left-0 right-0 h-[2.5px] bg-indigo-400 shadow-[0_0_8px_#818cf8] z-20 pointer-events-none"
-                      />
-                    )}
-
-                    {isScanning ? (
-                      <div className="flex flex-col items-center justify-center space-y-3 p-4">
-                        <RefreshCw size={24} className="text-indigo-400 animate-spin" />
-                        <span className="text-white text-[7.5px] font-black tracking-widest uppercase text-center animate-pulse leading-normal">
-                          {scanStep}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="text-slate-500 flex flex-col items-center space-y-2 text-center p-3 pointer-events-none select-none">
-                        <Scan size={24} className="text-slate-400 opacity-60 animate-pulse" />
-                        <span className="text-[7.5px] font-black uppercase tracking-wider text-slate-400 leading-normal">Apontar QR Code ou usar atalhos rápidos</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Success flashing overlay */}
-                  <AnimatePresence>
-                    {isValidated === true && (
-                      <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }} 
-                        className="absolute inset-0 bg-emerald-950/80 z-20 flex flex-col items-center justify-center text-white space-y-2"
-                      >
-                        <CheckCircle2 size={40} className="text-emerald-400 animate-bounce" />
-                        <span className="font-black text-xs uppercase tracking-widest">Leitura Homologada</span>
-                        <p className="text-[9px] text-emerald-300 font-medium uppercase font-mono">{scannedDoc?.code}</p>
-                      </motion.div>
-                    )}
-                    {isValidated === false && (
-                      <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }} 
-                        exit={{ opacity: 0 }} 
-                        className="absolute inset-0 bg-rose-950/85 z-20 flex flex-col items-center justify-center text-white space-y-2"
-                      >
-                        <XCircle size={40} className="text-rose-500 animate-pulse" />
-                        <span className="font-black text-xs uppercase tracking-widest">Código Não Identificado</span>
-                        <p className="text-[9px] text-rose-300 font-medium font-mono">DOCUMENTO INVÁLIDO OU CODIFICAÇÃO INDISPONÍVEL</p>
-                        <button
-                          type="button"
-                          onClick={() => setIsValidated(null)}
-                          className="mt-2 px-3 py-1 bg-white/10 hover:bg-white/20 text-[8px] font-black rounded-lg uppercase tracking-wider transition-all border-0 cursor-pointer text-white"
-                        >
-                          Tentar Novamente
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Grid Lines background */}
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.1)_0%,rgba(15,23,42,0.8)_100%)] pointer-events-none" />
-                </div>
-              ) : (
-                /* Manual Form Input */
-                <div className="bg-slate-50 border border-slate-150 rounded-2xl p-6">
-                  <form onSubmit={handleManualSubmit} className="space-y-4">
-                    <div className="space-y-1.5">
-                      <label htmlFor="doc_code_input" className="block text-[9px] font-black text-slate-500 uppercase tracking-widest">Código Único do Documento ou nº</label>
-                      <div className="relative">
-                        <input
-                          id="doc_code_input"
-                          type="text"
-                          value={manualCode}
-                          onChange={(e) => setManualCode(e.target.value)}
-                          placeholder="Ex: AO-BI-9281 ou 009874562LA041"
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 placeholder-slate-400 uppercase tracking-wide focus:outline-hidden focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                        />
-                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                      <p className="text-[9.5px] font-medium text-slate-400 uppercase">Introdução direta de metadados de registo criptográfico nacional.</p>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isScanning || !manualCode.trim()}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-950 hover:bg-indigo-900 disabled:opacity-40 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all border-0 cursor-pointer"
-                    >
-                      {isScanning ? (
-                        <>
-                          <RefreshCw size={14} className="animate-spin" />
-                          Processando Validação...
-                        </>
-                      ) : (
-                        <>
-                          <FileText size={14} />
-                          Decodificar e Pesquisar Documento
-                        </>
-                      )}
-                    </button>
-                  </form>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Simulation Shortcuts */}
-            <div className="mt-6 pt-5 border-t border-slate-100/70">
-              <span className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Atalhos de Simulação de Scan (Banco Governamental)</span>
-              
-              <div className="grid grid-cols-2 gap-2">
-                {documents.slice(0, 4).map((doc) => (
-                  <button
-                    key={doc.code}
-                    type="button"
-                    onClick={() => handleSimulateScan(doc)}
-                    disabled={isScanning}
-                    className="flex items-center gap-2.5 p-2 bg-slate-50 hover:bg-indigo-50/60 hover:border-indigo-200 border border-slate-200 rounded-xl transition-all text-left text-[10px] cursor-pointer disabled:opacity-50"
-                  >
-                    <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0">
-                      <QrCode size={13} className="text-indigo-600" />
-                    </div>
-                    <div className="truncate">
-                      <p className="font-extrabold text-slate-800 truncate uppercase tracking-tight">{doc.name}</p>
-                      <p className="text-[8px] text-slate-400 font-mono tracking-tight leading-none truncate">{doc.code}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+      {scannedDoc ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Reusable Scanner and Recent reads */}
+          <div className="lg:col-span-7 space-y-6">
+            {renderScannerCard()}
+            {renderRecentScans()}
           </div>
-        </div>
 
-        {/* Right Column: Scanned Document Information Shield */}
-        <div className="lg:col-span-5 h-full">
-          <AnimatePresence mode="wait">
-            {scannedDoc ? (
+          {/* Right Column: Scanned Document Information Shield */}
+          <div className="lg:col-span-5 h-full">
+            <AnimatePresence mode="wait">
               <motion.div 
                 key="doc-profile"
-                initial={{ opacity: 0, y: 15 }} 
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
+                initial={{ opacity: 0, scale: 0.98 }} 
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
                 className="bg-slate-900 text-white rounded-[32px] overflow-hidden shadow-xl border border-slate-800 p-6 flex flex-col justify-between h-full min-h-[460px]"
               >
                 {/* Header Verification Block */}
@@ -501,7 +592,7 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
                     </div>
                     <div className="text-right font-mono text-[7.5px] text-slate-400 leading-tight uppercase">
                       <span>Validação #</span>
-                      <span className="block font-bold text-white">{Math.floor(100000 + Math.random() * 900000)}</span>
+                      <span className="block font-bold text-white">{scannedDoc.code.split('-')[2] || 'CDA802'}</span>
                     </div>
                   </div>
 
@@ -549,7 +640,7 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
                         <div>
                           <span className="text-[6.5px] text-indigo-200/60 uppercase block font-bold leading-none">Estado Legal:</span>
                           <span className="font-extrabold text-emerald-400 uppercase flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Ativo &amp; Válido
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> Ativo &amp; Válido
                           </span>
                         </div>
                       </div>
@@ -611,105 +702,107 @@ export function InstQrCodeContent({ documents, addAuditLog }: InstQrCodeContentP
                       setScannedDoc(null);
                       setIsValidated(null);
                     }}
-                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-450 text-slate-950 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all border-0 cursor-pointer text-center"
+                    className="w-full py-3 bg-emerald-555 hover:bg-emerald-500 text-slate-950 font-black text-[10px] uppercase tracking-widest rounded-xl transition-all border-0 cursor-pointer text-center"
                   >
                     Efectuar Nova Leitura (Limpar)
                   </button>
                 </div>
               </motion.div>
-            ) : (
-              <motion.div 
-                key="empty-state"
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="bg-white rounded-[32px] border border-slate-100 shadow-2xs p-6 md:p-8 flex flex-col justify-center items-center text-center h-full min-h-[460px] space-y-6"
-              >
-                <div className="w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-3xl flex items-center justify-center text-indigo-650 animate-pulse">
-                  <Scan size={30} />
-                </div>
-                
-                <div className="max-w-xs space-y-2">
-                  <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-tight">Aguardando Leitura de Código</h3>
-                  <p className="text-[11px] text-slate-450 leading-relaxed uppercase">
-                    Aponte a câmara governamental para o QR Code de autoconsulta impresso ou exibido na carteira móvel do cidadão para iniciar o handshake e decodificar os metadados de autenticação federada.
-                  </p>
-                </div>
-
-                <div className="w-full bg-slate-50 border border-slate-150 p-4 rounded-2xl text-[9px] font-sans text-left space-y-1.5 uppercase tracking-wide">
-                  <span className="font-black text-slate-500 block tracking-wider">Protocolo Técnico CADA</span>
-                  <div className="flex items-center gap-2 text-slate-450 font-semibold">
-                    <Lock size={12} className="text-slate-405" />
-                    <span>Encriptação RSA-4096 / TLS 1.3 Seguro</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-450 font-semibold">
-                    <Database size={12} className="text-slate-405" />
-                    <span>Conexão em Tempo Real com MINJUSDH</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* History Log of Scans */}
-      <div className="bg-white rounded-[32px] border border-slate-100 shadow-2xs p-6 md:p-8">
-        <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100/70">
-          <h2 className="text-xs md:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <History size={16} className="text-slate-505" />
-            Histórico das Leituras Recentes (Sessão Atual)
-          </h2>
-          <span className="text-[8.5px] font-mono bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full uppercase tracking-wider font-extrabold text-indigo-600">
-            {scanHistory.length} Leituras Activas
-          </span>
-        </div>
-
-        {scanHistory.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-[11px] uppercase">
-              <thead>
-                <tr className="border-b border-slate-100 text-[9px] font-black text-slate-400 tracking-wider">
-                  <th className="pb-3 pl-2">ID_LEITURA</th>
-                  <th className="pb-3">DOCUMENTO</th>
-                  <th className="pb-3">CIDADÃO BENEFICIÁRIO</th>
-                  <th className="pb-3">CHAVE CADA</th>
-                  <th className="pb-3 font-mono">REGISTO / NÚMERO</th>
-                  <th className="pb-3">TIMESTAMP</th>
-                  <th className="pb-3 text-right pr-2">ESTADO</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50/70 font-semibold text-slate-700">
-                {scanHistory.map((history) => (
-                  <tr key={history.id} className="hover:bg-slate-55/40 transition-colors">
-                    <td className="py-2.5 pl-2 font-mono text-[9px] font-bold text-indigo-600">{history.id}</td>
-                    <td className="py-2.5 font-extrabold text-slate-800">{history.documentName}</td>
-                    <td className="py-2.5 text-slate-900 inline-flex items-center gap-1.5">
-                      <div className="w-5 h-5 bg-slate-100 rounded-full flex items-center justify-center text-[8px] font-bold">
-                        {history.holder.split(' ').map((n) => n[0]).join('').substring(0, 2)}
-                      </div>
-                      <span className="font-extrabold">{history.holder}</span>
-                    </td>
-                    <td className="py-2.5 font-mono text-slate-500 font-bold">{history.code}</td>
-                    <td className="py-2.5 font-mono text-slate-500">{history.number}</td>
-                    <td className="py-2.5 text-slate-450">{history.scannedAt}</td>
-                    <td className="py-2.5 text-right pr-2">
-                      <span className="bg-emerald-50 text-emerald-650 border border-emerald-100 text-[7.5px] font-black px-2 py-0.5 rounded-md uppercase">
-                        {history.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            </AnimatePresence>
           </div>
-        ) : (
-          <div className="text-center py-8 text-slate-400 uppercase font-black text-[10px]">
-            Nenhuma consulta realizada na sessão activa.
+        </div>
+      ) : (
+        /* Standby/Centered View: High alignment, perfect centered structure as requested */
+        <div className="max-w-2xl mx-auto space-y-6">
+          {renderScannerCard()}
+          {renderRecentScans()}
+        </div>
+      )}
+
+      {/* ACTIVE SCANNER MODAL OVERLAY: EXACT replication of the right mockup image */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0b0f19] text-white rounded-[28px] p-6 max-w-md w-full shadow-2xl relative border border-slate-800 flex flex-col items-center"
+            >
+              {/* Close X Button top-right */}
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-5 right-5 text-slate-400 hover:text-white transition-colors cursor-pointer border-0 bg-transparent p-1"
+                aria-label="Cerrar"
+              >
+                <X size={20} />
+              </button>
+
+              <h3 className="text-sm font-semibold tracking-wide uppercase text-slate-200 mb-6 mt-2">Ler QR Code Oficial</h3>
+
+              {/* Viewfinder scanner area */}
+              <div className="relative w-72 h-72 rounded-2xl overflow-hidden bg-slate-950 border border-slate-850 flex items-center justify-center select-none shadow-inner mb-6">
+                
+                {/* Genuine Camera Live Stream Feed if Active */}
+                {cameraActive && (
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    muted 
+                    className="absolute inset-0 w-full h-full object-cover opacity-45 transform scale-x-[-1]"
+                  />
+                )}
+
+                {/* Neon corners precisely positioned */}
+                <div className="absolute top-4 left-4 w-8 h-8 border-t-3 border-l-3 border-[#32b5f8] rounded-tl-[10px]" />
+                <div className="absolute top-4 right-4 w-8 h-8 border-t-3 border-r-3 border-[#32b5f8] rounded-tr-[10px]" />
+                <div className="absolute bottom-4 left-4 w-8 h-8 border-b-3 border-l-3 border-[#32b5f8] rounded-bl-[10px]" />
+                <div className="absolute bottom-4 right-4 w-8 h-8 border-b-3 border-r-3 border-[#32b5f8] rounded-br-[10px]" />
+
+                {/* Scanning laser line */}
+                <motion.div 
+                  animate={{ y: [-110, 110, -110] }} 
+                  transition={{ repeat: Infinity, ease: 'easeInOut', duration: 2.2 }} 
+                  className="absolute left-6 right-6 h-[2px] bg-cyan-400 shadow-[0_0_12px_#38bdf8] rounded-full z-20 pointer-events-none" 
+                />
+
+                {/* Guidelines focus grid */}
+                <div className="absolute inset-4 border border-dashed border-slate-800/60 rounded-lg opacity-40" />
+
+                {/* Real-time status tracker */}
+                <div className="flex flex-col items-center justify-center text-center p-4 z-10 space-y-3 bg-slate-900/60 backdrop-blur-xs rounded-xl border border-slate-800/50 max-w-[200px]">
+                  <RefreshCw size={22} className="text-cyan-400 animate-spin" />
+                  <span className="text-cyan-300 text-[8.5px] font-black tracking-widest uppercase leading-normal animate-pulse">
+                    {scanStep}
+                  </span>
+                </div>
+
+                {/* Ambient backdrop */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.1)_0%,rgba(15,23,42,0.85)_100%)] pointer-events-none" />
+              </div>
+
+              {/* Informative Status Badge bar exactly matching mockup */}
+              <div className="flex items-center gap-3 w-full bg-slate-900 border border-slate-800/80 p-3.5 rounded-2xl mb-6">
+                <div className="w-9 h-9 rounded-full border border-slate-700 flex items-center justify-center text-slate-350 shrink-0">
+                  <Camera size={15} />
+                </div>
+                <p className="text-[10.5px] text-slate-400 font-medium font-sans text-left leading-snug">
+                  Posicione o código dentro da área de leitura para iniciar.
+                </p>
+              </div>
+
+              {/* Bottom Fechar button */}
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="border border-slate-850 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white px-8 py-2.5 rounded-full transition-all font-sans text-xs font-bold uppercase tracking-wider cursor-pointer"
+              >
+                Fechar
+              </button>
+            </motion.div>
           </div>
         )}
-      </div>
-
+      </AnimatePresence>
     </div>
   );
 }
