@@ -73,7 +73,7 @@ export function ContactsContent({
             placeholder="Pesquisar no círculo de confiança..."
             value={searchContact}
             onChange={(e) => setSearchContact(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3 md:py-3.5 text-xs md:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-primary/5 focus:bg-white focus:border-primary/20 transition-all outline-none placeholder:text-slate-500"
+            className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 md:py-3.5 text-xs md:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-primary/5 focus:bg-white focus:border-primary/20 transition-all outline-none placeholder:text-slate-500"
           />
         </div>
         <div className="hidden lg:flex items-center gap-2 px-4 py-1 border-l border-slate-200 text-slate-600">
@@ -95,7 +95,7 @@ export function ContactsContent({
           </div>
 
           {/* Tabbar para filtro de classificação */}
-          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/50 self-start lg:self-center shrink-0">
+          <div className="flex bg-white p-1 rounded-2xl border border-slate-250 self-start lg:self-center shrink-0 shadow-3xs">
             {(['Todos', 'Emergência', 'Normal'] as const).map((tab) => (
               <button
                 key={tab}
@@ -275,7 +275,7 @@ export function ContactsContent({
 
               {/* General Contact Info */}
               <div className="space-y-4">
-                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-150">
+                <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200">
                   <div className="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 font-black flex items-center justify-center text-lg uppercase tracking-wider shadow-3xs shrink-0">
                     {editingContact.name?.substring(0, 2) || 'C'}
                   </div>
@@ -290,11 +290,11 @@ export function ContactsContent({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-150/50">
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200">
                     <small className="block text-[8px] font-black text-slate-400 uppercase tracking-wider mb-1">Cédula / Identidade BI</small>
                     <span className="font-mono text-xs font-bold text-slate-800 tracking-wider block">{editingContact.bi}</span>
                   </div>
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-150/50">
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200">
                     <small className="block text-[8px] font-black text-slate-400 uppercase tracking-wider mb-1">Estado do Vínculo</small>
                     <span className={`text-[10px] font-black block uppercase tracking-wide ${editingContact.status === 'Confirmado' ? 'text-emerald-600' : 'text-orange-700'}`}>
                       {editingContact.status}
@@ -318,13 +318,11 @@ export function ContactsContent({
                           onClick={() => handleUpdateProtocol(t)}
                           className={`flex flex-col items-center justify-center p-3 rounded-2xl border gap-1.5 transition-all cursor-pointer ${
                             isCurrent
-                              ? t === 'Emergência'
-                                ? 'bg-red-50 text-red-700 border-red-300 ring-4 ring-red-100 font-black'
-                                : 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-4 ring-emerald-50 font-black'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-4 ring-emerald-50 font-black'
                               : 'bg-white text-slate-500 border-slate-200 hover:text-slate-800 hover:bg-slate-50'
                           }`}
                         >
-                          <ShieldCheck size={16} className={isCurrent ? (t === 'Emergência' ? 'text-red-500' : 'text-emerald-500') : 'text-slate-300'} />
+                          <ShieldCheck size={16} className={isCurrent ? 'text-emerald-500' : 'text-slate-300'} />
                           <span className="text-[10px] uppercase font-black tracking-widest">{t}</span>
                         </button>
                       );
@@ -341,7 +339,7 @@ export function ContactsContent({
                 <button
                   type="button"
                   onClick={() => setEditingContact(null)}
-                  className="w-full bg-slate-900 hover:bg-slate-850 active:scale-98 transition-all text-white font-black text-xs md:text-sm py-3.5 rounded-2xl shadow-lg border-0 cursor-pointer text-center uppercase tracking-wider"
+                  className="w-full bg-blue-950 hover:bg-blue-900 active:scale-98 transition-all text-white font-black text-xs md:text-sm py-3.5 rounded-2xl shadow-lg border-0 cursor-pointer text-center uppercase tracking-wider"
                 >
                   Confirmar e Fechar
                 </button>

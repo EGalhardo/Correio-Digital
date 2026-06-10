@@ -115,7 +115,13 @@ export function ProfileContent({
   // Dynamic arrays for Sessions and Devices that can be removed/updated
   const [activeSessions, setActiveSessions] = useState(() => {
     const cached = localStorage.getItem('gov_pref_sessions');
-    if (cached) return JSON.parse(cached);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Failed to parse gov_pref_sessions:', e);
+      }
+    }
     return [
       { id: 'sess-1', device: 'iPhone 15 Pro Max', location: 'Luanda, AO', ip: '197.231.42.10', date: 'Ativo agora', isCurrent: true },
       { id: 'sess-2', device: 'Chrome / Windows 11', location: 'Talatona, AO', ip: '102.219.16.42', date: 'Hoje às 08:14', isCurrent: false },
@@ -125,7 +131,13 @@ export function ProfileContent({
 
   const [connectedDevices, setConnectedDevices] = useState(() => {
     const cached = localStorage.getItem('gov_pref_devices');
-    if (cached) return JSON.parse(cached);
+    if (cached) {
+      try {
+        return JSON.parse(cached);
+      } catch (e) {
+        console.error('Failed to parse gov_pref_devices:', e);
+      }
+    }
     return [
       { id: 'dev-1', name: 'iPhone de Edlasio (Telemóvel Principal)', icon: 'smartphone', date: 'Autorizado em 12/03/2026', authorized: true },
       { id: 'dev-2', name: 'ThinkPad Lenovo X1 (Computador Fisco)', icon: 'laptop', date: 'Autorizado em 05/04/2026', authorized: true },

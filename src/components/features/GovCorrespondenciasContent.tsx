@@ -196,7 +196,7 @@ export function GovCorrespondenciasContent({
           </button>
 
           {/* Tab switcher mirroring Gov platform design system */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-[22px] border border-slate-200">
+          <div className="flex items-center bg-white p-1 rounded-[22px] border border-slate-300">
           {(['Todas', 'Não Lida', 'Lida', 'Enviada'] as const).map((tabName) => {
             const count = tabName === 'Todas' ? correspondences.length : countForStatus(tabName as any);
             return (
@@ -206,10 +206,10 @@ export function GovCorrespondenciasContent({
                   setActiveTab(tabName);
                   setCurrentPage(1);
                 }}
-                className={`px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                className={`px-4 py-2.5 rounded-xl text-[9.5px] font-black uppercase tracking-widest transition-all flex items-center gap-2 border ${
                   activeTab === tabName 
-                    ? 'bg-white text-indigo-600 shadow-md border-0' 
-                    : 'text-slate-400 hover:text-slate-600'
+                    ? 'bg-white text-indigo-600 border-slate-300 shadow-none' 
+                    : 'text-slate-500 hover:text-slate-700 border-transparent'
                 }`}
               >
                 {tabName === 'Todas' ? 'Todos' : tabName + 's'}
@@ -226,7 +226,7 @@ export function GovCorrespondenciasContent({
     </div>
 
       {/* Advanced Search Area */}
-      <div className="bg-white border border-slate-200 rounded-[24px] p-6 mb-8 shadow-xs">
+      <div className="bg-white border border-slate-200 rounded-[24px] p-6 mb-8">
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
           <div className="flex items-center gap-2">
             <SlidersHorizontal size={14} className="text-indigo-600" />
@@ -252,7 +252,7 @@ export function GovCorrespondenciasContent({
                 value={searchSender} 
                 onChange={(e) => setSearchSender(e.target.value)} 
                 placeholder="Ex: AGT, SME..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-800 focus:bg-white"
+                className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-800"
               />
               <Building2 size={13} className="text-slate-400 absolute left-3 top-3.5" />
             </div>
@@ -266,7 +266,7 @@ export function GovCorrespondenciasContent({
                 value={searchRecipient} 
                 onChange={(e) => setSearchRecipient(e.target.value)} 
                 placeholder="Ex: Manuel de Vasconcelos..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-800 focus:bg-white"
+                className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-800"
               />
               <Search size={13} className="text-slate-400 absolute left-3 top-3.5" />
             </div>
@@ -280,7 +280,7 @@ export function GovCorrespondenciasContent({
                 value={searchSubject} 
                 onChange={(e) => setSearchSubject(e.target.value)} 
                 placeholder="Ex: Isenção fiscal, Passaporte..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-800 focus:bg-white"
+                className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-800"
               />
               <Mail size={13} className="text-slate-400 absolute left-3 top-3.5" />
             </div>

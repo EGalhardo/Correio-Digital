@@ -31,6 +31,9 @@ interface Institution {
   totalAgents: number;
   lastActivity: string;
   responseRate: string;
+  typeInst?: string;
+  cidade?: string;
+  comuna?: string;
 }
 
 const INITIAL_INSTITUTIONS: Institution[] = [
@@ -137,6 +140,59 @@ const MUNICIPALITIES_BY_PROVINCE: { [key: string]: string[] } = {
   'Huambo': ['Todos', 'Huambo', 'Bailundo']
 };
 
+const CITIES_BY_PROVINCE: { [key: string]: string[] } = {
+  'Luanda': ['Luanda (Capital)', 'Talatona', 'Belas', 'Cacuaco', 'Viana'],
+  'Benguela': ['Benguela (Capital)', 'Lobito', 'Catumbela', 'Baía Farta'],
+  'Huíla': ['Lubango (Capital)', 'Chibia', 'Humpata'],
+  'Cabinda': ['Cabinda (Capital)', 'Lândana', 'Buco-Zau'],
+  'Bengo': ['Caxito (Capital)', 'Ambriz'],
+  'Huambo': ['Huambo (Capital)', 'Bailundo']
+};
+
+const COMMUNES_BY_MUNICIPALITY: { [key: string]: string[] } = {
+  'Viana': ['Viana Sede', 'Calumbo', 'Estalagem', 'Baia'],
+  'Belas': ['Quenguela', 'Barra do Kwanza', 'Cabolombo'],
+  'Cazenga': ['Cazenga Sede', 'Hoji ya Henda', 'Tala Hadi'],
+  'Cacuaco': ['Cacuaco Sede', 'Kicolo', 'Funda'],
+  'Talatona': ['Talatona Sede', 'Benfica', 'Lar do Patriota'],
+  'Ingombota': ['Ingombota Sede', 'Patrice Lumumba', 'Maculusso', 'Ilha do Cabo'],
+  'Maianga': ['Maianga Sede', 'Cassequel', 'Prenda', 'Rocha Pinto'],
+  'Benguela': ['Benguela Sede', 'Zona Comercial'],
+  'Lobito': ['Lobito Sede', 'Canata', 'Egito Praia'],
+  'Catumbela': ['Catumbela Sede', 'Biópio', 'Gama'],
+  'Baía Farta': ['Baía Farta Sede', 'Dombe Grande'],
+  'Lubango': ['Lubango Sede', 'Arimba', 'Hoque'],
+  'Chibia': ['Chibia Sede', 'Capunda Cavilongo'],
+  'Humpata': ['Humpata Sede', 'Neves'],
+  'Cabinda': ['Cabinda Sede', 'Malembo', 'Tanto-Zinze'],
+  'Cacongo': ['Lândana Sede', 'Massabi'],
+  'Buco-Zau': ['Buco-Zau Sede', 'Inhuca'],
+  'Dande': ['Caxito Sede', 'Barra do Dande', 'Mabubas'],
+  'Ambriz': ['Ambriz Sede', 'Tabi', 'Bela Vista'],
+  'Huambo': ['Huambo Sede', 'Calima', 'Chipipa'],
+  'Bailundo': ['Bailundo Sede', 'Hengue', 'Lunge']
+};
+
+const INSTITUTION_TYPES = [
+  'Ministério',
+  'Instituto Público',
+  'Administração Geral',
+  'Serviço de Migração/Segurança',
+  'Empresa Pública',
+  'Gabinete Provincial',
+  'Administração Municipal',
+  'Administração Comunal'
+];
+
+const mapTypeToCategory = (type: string): 'Finanças' | 'Infraestrutura' | 'Serviços' | 'Segurança' | 'Saúde' | 'Justiça' => {
+  if (type === 'Administração Geral') return 'Finanças';
+  if (type === 'Empresa Pública') return 'Infraestrutura';
+  if (type === 'Serviço de Migração/Segurança') return 'Segurança';
+  if (type === 'Ministério') return 'Justiça';
+  if (type === 'Instituto Público') return 'Saúde';
+  return 'Serviços';
+};
+
 interface GovInteroperabilidadeContentProps {
   onLog?: (action: string, type: 'info' | 'warning' | 'critical' | 'success') => void;
 }
@@ -160,8 +216,11 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
   const [formName, setFormName] = useState('');
   const [formFullName, setFormFullName] = useState('');
   const [formCategory, setFormCategory] = useState<'Finanças' | 'Infraestrutura' | 'Serviços' | 'Segurança' | 'Saúde' | 'Justiça'>('Finanças');
+  const [formTypeInst, setFormTypeInst] = useState('Ministério');
   const [formProvince, setFormProvince] = useState('Luanda');
+  const [formCidade, setFormCidade] = useState('Luanda (Capital)');
   const [formMunicipio, setFormMunicipio] = useState('Ingombota');
+  const [formComuna, setFormComuna] = useState('Ingombota Sede');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -176,13 +235,24 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
     return MUNICIPALITIES_BY_PROVINCE[formProvince]?.filter(m => m !== 'Todos') || ['Viana'];
   }, [formProvince]);
 
+  const formCities = useMemo(() => {
+    return CITIES_BY_PROVINCE[formProvince] || ['Sede'];
+  }, [formProvince]);
+
+  const formCommunes = useMemo(() => {
+    return COMMUNES_BY_MUNICIPALITY[formMunicipio] || ['Sede'];
+  }, [formMunicipio]);
+
   // Handle open create modal
   const openCreateModal = () => {
     setFormName('');
     setFormFullName('');
     setFormCategory('Finanças');
+    setFormTypeInst('Ministério');
     setFormProvince('Luanda');
+    setFormCidade('Luanda (Capital)');
     setFormMunicipio('Ingombota');
+    setFormComuna('Ingombota Sede');
     setIsCreateModalOpen(true);
   };
 
@@ -192,8 +262,11 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
     setFormName(inst.name);
     setFormFullName(inst.fullName);
     setFormCategory(inst.category);
+    setFormTypeInst(inst.typeInst || 'Ministério');
     setFormProvince(inst.province);
+    setFormCidade(inst.cidade || (CITIES_BY_PROVINCE[inst.province] ? CITIES_BY_PROVINCE[inst.province][0] : 'Sede'));
     setFormMunicipio(inst.municipio);
+    setFormComuna(inst.comuna || (COMMUNES_BY_MUNICIPALITY[inst.municipio] ? COMMUNES_BY_MUNICIPALITY[inst.municipio][0] : 'Sede'));
   };
 
   // Save new institution
@@ -201,18 +274,23 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
     e.preventDefault();
     if (!formName || !formFullName) return;
 
+    const assignedCategory = mapTypeToCategory(formTypeInst);
+
     const newInst: Institution = {
       id: `inst-${formName.toLowerCase()}-${Math.floor(Math.random() * 900) + 100}`,
       name: formName.toUpperCase(),
       fullName: formFullName,
-      category: formCategory,
+      category: assignedCategory,
       province: formProvince,
       municipio: formMunicipio,
       status: 'Ativa',
       totalCorrespondence: 0,
       totalAgents: 1,
       lastActivity: "Criado agora",
-      responseRate: "100%"
+      responseRate: "100%",
+      typeInst: formTypeInst,
+      cidade: formCidade,
+      comuna: formComuna
     };
 
     setInstitutions([newInst, ...institutions]);
@@ -225,15 +303,20 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
     e.preventDefault();
     if (!editingInstitution) return;
 
+    const assignedCategory = mapTypeToCategory(formTypeInst);
+
     setInstitutions(institutions.map(inst => {
       if (inst.id === editingInstitution.id) {
         return {
           ...inst,
           name: formName.toUpperCase(),
           fullName: formFullName,
-          category: formCategory,
+          category: assignedCategory,
           province: formProvince,
-          municipio: formMunicipio
+          municipio: formMunicipio,
+          typeInst: formTypeInst,
+          cidade: formCidade,
+          comuna: formComuna
         };
       }
       return inst;
@@ -322,7 +405,7 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
       </div>
 
       {/* Advanced Filter Box */}
-      <div className="bg-white border border-slate-200 rounded-[24px] p-6 mb-8 shadow-xs">
+      <div className="bg-white border border-slate-200 rounded-[24px] p-6 mb-8">
         <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-4">
           <SlidersHorizontal size={14} className="text-indigo-600" />
           <h3 className="text-[11px] font-black uppercase text-slate-900 tracking-wider">
@@ -338,7 +421,7 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
               <select
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-850 cursor-pointer appearance-none"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-850 cursor-pointer appearance-none"
               >
                 <option value="">Todas as Instituições</option>
                 {institutions.map(inst => (
@@ -361,7 +444,7 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
                 setFilterMunicipio('Todos');
                 setCurrentPage(1);
               }}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-slate-850 cursor-pointer"
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-slate-850 cursor-pointer"
             >
               {Object.keys(MUNICIPALITIES_BY_PROVINCE).map(prov => (
                 <option key={prov} value={prov}>{prov === 'Todas' ? 'Todas' : prov}</option>
@@ -375,7 +458,7 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
             <select
               value={filterMunicipio}
               onChange={(e) => { setFilterMunicipio(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-slate-850 cursor-pointer"
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-slate-850 cursor-pointer"
               disabled={filterProvince === 'Todas'}
             >
               {currentMunicipalities.map(mun => (
@@ -390,7 +473,7 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
             <select
               value={filterCategory}
               onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-slate-850 cursor-pointer"
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-[11px] font-bold text-slate-700 outline-none focus:border-slate-850 cursor-pointer"
             >
               <option value="Todas">Todas as Categorias</option>
               <option value="Finanças">Finanças / Tributos</option>
@@ -457,7 +540,7 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
                       </div>
                     </td>
                     <td className="py-2 px-3">
-                      <span className="bg-slate-100 border border-slate-200 text-slate-800 px-2 py-0.5 rounded-full text-[8.5px] uppercase tracking-wider font-extrabold font-display">
+                      <span className="bg-white border border-slate-300 text-slate-800 px-2 py-0.5 rounded-full text-[8.5px] uppercase tracking-wider font-extrabold font-display">
                         {inst.category}
                       </span>
                     </td>
@@ -615,32 +698,39 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
                   />
                 </div>
 
-                {/* Grid categories / Province / Municipio */}
+                {/* Tipo de Instituição Dropdown */}
                 <div className="space-y-1.5">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Categoria Económica / Governamental</label>
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Tipo de Instituição *</label>
                   <select
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value as any)}
+                    value={formTypeInst}
+                    onChange={(e) => setFormTypeInst(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-slate-800 cursor-pointer"
                   >
-                    <option value="Finanças">Finanças</option>
-                    <option value="Infraestrutura">Infraestrutura</option>
-                    <option value="Serviços">Serviços</option>
-                    <option value="Segurança">Segurança</option>
-                    <option value="Saúde">Saúde</option>
-                    <option value="Justiça">Justiça</option>
+                    {INSTITUTION_TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
                   </select>
                 </div>
 
+                {/* Província Sede & Cidade */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Província Sede</label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Província *</label>
                     <select
                       value={formProvince}
                       onChange={(e) => {
-                        setFormProvince(e.target.value);
-                        const list = MUNICIPALITIES_BY_PROVINCE[e.target.value] || [];
-                        setFormMunicipio(list[1] || list[0] || '');
+                        const nextProvince = e.target.value;
+                        setFormProvince(nextProvince);
+                        
+                        const list = MUNICIPALITIES_BY_PROVINCE[nextProvince] || [];
+                        const nextMuni = list[1] || list[0] || '';
+                        setFormMunicipio(nextMuni);
+
+                        const cities = CITIES_BY_PROVINCE[nextProvince] || ['Sede'];
+                        setFormCidade(cities[0] || 'Sede');
+
+                        const communes = COMMUNES_BY_MUNICIPALITY[nextMuni] || ['Sede'];
+                        setFormComuna(communes[0] || 'Sede');
                       }}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-slate-800 cursor-pointer"
                     >
@@ -651,14 +741,49 @@ export function GovInteroperabilidadeContent({ onLog }: GovInteroperabilidadeCon
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Município</label>
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Cidade *</label>
+                    <select
+                      value={formCidade}
+                      onChange={(e) => setFormCidade(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-slate-800 cursor-pointer"
+                    >
+                      {formCities.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Município & Comuna */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Município *</label>
                     <select
                       value={formMunicipio}
-                      onChange={(e) => setFormMunicipio(e.target.value)}
+                      onChange={(e) => {
+                        const nextMuni = e.target.value;
+                        setFormMunicipio(nextMuni);
+                        
+                        const communes = COMMUNES_BY_MUNICIPALITY[nextMuni] || ['Sede'];
+                        setFormComuna(communes[0] || 'Sede');
+                      }}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-slate-800 cursor-pointer text-slate-800"
                     >
                       {formMunicipalities.map(m => (
                         <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Comuna *</label>
+                    <select
+                      value={formComuna}
+                      onChange={(e) => setFormComuna(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 outline-none focus:border-slate-800 cursor-pointer text-slate-800"
+                    >
+                      {formCommunes.map(c => (
+                        <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
                   </div>

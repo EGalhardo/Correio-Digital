@@ -140,7 +140,7 @@ export function GovDocsContent({ documents, requests, onUpdateStatus }: GovDocsC
           </div>
         </div>
         
-        <div className="flex items-center bg-slate-100 p-1 rounded-[22px] border border-slate-200">
+        <div className="flex items-center bg-white p-1 rounded-[22px] border border-slate-200 shadow-sm">
           {(['Todos', 'Emitidos', 'Pendentes', 'Rejeitados'] as const).map((tab) => {
             let count = unifiedList.length;
             if (tab === 'Emitidos') count = unifiedList.filter(t => t.status === 'Aprovado').length;
@@ -243,7 +243,7 @@ export function GovDocsContent({ documents, requests, onUpdateStatus }: GovDocsC
             placeholder="Procurar por cidadão, número de bilhete ou tipo de documento..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-13 pr-5 py-3.5 font-bold text-slate-900 focus:border-slate-800 focus:bg-white outline-none transition-all text-xs"
+            className="w-full bg-white border border-slate-205 rounded-2xl pl-13 pr-5 py-3.5 font-bold text-slate-900 focus:border-slate-800 focus:bg-white outline-none transition-all text-xs"
           />
         </div>
         <div className="hidden md:flex items-center gap-3 px-6 italic border-l border-slate-100">
@@ -310,7 +310,7 @@ export function GovDocsContent({ documents, requests, onUpdateStatus }: GovDocsC
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 text-[9.5px] font-mono font-black uppercase text-slate-350 italic tracking-wider bg-slate-50/50 px-4 py-2.5 rounded-xl border border-slate-200 border-dashed">
+                <div className="flex items-center gap-3 text-[9.5px] font-mono font-black uppercase text-slate-350 italic tracking-wider bg-white px-4 py-2.5 rounded-xl border border-slate-200 border-dashed">
                   Acto Sincronizado <ShieldCheck size={14} className="text-emerald-500 ml-1.5" />
                 </div>
               )}

@@ -142,29 +142,29 @@ export function GovSegurancaContent({
       {/* SOC-AN-2026 Emergency Protocol Card */}
       <div className={`mb-8 p-6 rounded-[32px] border ${
         emergencyMode 
-          ? 'bg-red-500/10 border-red-500/20 shadow-lg shadow-red-500/5' 
-          : 'bg-slate-50 border-slate-300'
+          ? 'bg-red-500/10 border-red-500/20 text-slate-800' 
+          : 'bg-[#0c2340] border-[#0c2340]/20 text-white'
       } transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-6`}>
         <div className="flex items-start gap-4">
-          <div className={`p-4 rounded-2xl ${
-            emergencyMode ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'
-          } shrink-0`}>
+          <div className={`p-4 rounded-2xl shrink-0 ${
+            emergencyMode ? 'bg-red-600 text-white animate-pulse' : 'bg-[#091b31] text-white'
+          }`}>
             <AlertTriangle size={24} />
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-widest uppercase ${
-                emergencyMode ? 'bg-red-200 text-red-800 animate-pulse' : 'bg-slate-300 text-slate-700'
+                emergencyMode ? 'bg-red-200 text-red-800 animate-pulse' : 'bg-white/25 text-white'
               }`}>
                 PROTOCOL SOC-AN-2026
               </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-450" />
-              <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">Sovereignty Shield</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${emergencyMode ? 'bg-slate-450' : 'bg-white/30'}`} />
+              <span className={`text-[10px] font-mono font-bold uppercase ${emergencyMode ? 'text-slate-500' : 'text-slate-300'}`}>Sovereignty Shield</span>
             </div>
-            <h3 className="text-base font-black uppercase text-slate-900 tracking-tight leading-none italic font-sans mt-1">
+            <h3 className={`text-base font-black uppercase tracking-tight leading-none italic font-sans mt-1 ${emergencyMode ? 'text-slate-900' : 'text-white'}`}>
               Interrupção de Emergência Cibernética
             </h3>
-            <p className="text-slate-500 text-[11px] leading-relaxed max-w-xl mt-1">
+            <p className={`text-[11px] leading-relaxed max-w-xl mt-1 ${emergencyMode ? 'text-slate-500' : 'text-slate-300'}`}>
               Quando ativado, suspende imediatamente a biometria de "Edlasio Galhardo", assinala bloqueio identitário temporário para salvaguarda de soberania digital, propaga notificações nos canais governamentais e encripta as chaves criptográficas.
             </p>
           </div>
@@ -177,10 +177,10 @@ export function GovSegurancaContent({
               onToggleEmergencyMode(!emergencyMode);
             }
           }}
-          className={`shrink-0 w-full md:w-auto px-6 py-4.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-95 shadow-lg select-none border-0 cursor-pointer ${
+          className={`shrink-0 w-full md:w-auto px-6 py-4.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.01] active:scale-95 select-none border-0 cursor-pointer ${
             emergencyMode 
-              ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20' 
-              : 'bg-blue-950 hover:bg-blue-900 text-white shadow-blue-950/10'
+              ? 'bg-red-600 hover:bg-red-700 text-white' 
+              : 'bg-blue-900 hover:bg-blue-800 text-white'
           }`}
         >
           {emergencyMode ? 'DESATIVAR PROTOCOLO SOC' : 'ATIVAR PROTOCOLO SOC-AN-2026'}
@@ -188,7 +188,7 @@ export function GovSegurancaContent({
       </div>
 
       {/* Interactive Navigation/Categories TabBar */}
-      <div className="flex flex-wrap md:flex-nowrap bg-slate-100/80 p-1.5 rounded-[22px] max-w-3xl mb-8 border border-slate-200/60 shadow-xs">
+      <div className="flex flex-wrap md:flex-nowrap bg-white p-1.5 rounded-[22px] max-w-3xl mb-8 border border-slate-200">
         {[
           { id: 'metrics', label: 'Métricas e Tráfego', icon: TrendingUp },
           { id: 'users', label: 'Modelos de Utilizadores', icon: UserSquare, count: filteredUsers.length },
@@ -200,10 +200,10 @@ export function GovSegurancaContent({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer border-0 select-none ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer border select-none ${
                 isActive 
-                  ? 'bg-white text-indigo-950 shadow-xs font-black' 
-                  : 'text-slate-500 hover:text-slate-800 bg-transparent hover:bg-slate-200/40'
+                  ? 'bg-white text-indigo-950 font-black border-slate-300' 
+                  : 'text-slate-500 hover:text-slate-800 bg-transparent hover:bg-slate-200/40 border-transparent'
               }`}
             >
               <Icon size={14} className={isActive ? 'text-indigo-950' : 'text-slate-400'} />
@@ -232,7 +232,7 @@ export function GovSegurancaContent({
           {/* Top Quick Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Total Faces */}
-            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Modelos Faciais Registados</p>
@@ -248,11 +248,11 @@ export function GovSegurancaContent({
             </div>
 
             {/* Accuracy Rate */}
-            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Acurácia Média de Match</p>
-                  <h3 className="text-2xl font-black mt-2 text-indigo-650">98.67%</h3>
+                  <h3 className="text-2xl font-black mt-2 text-indigo-655">98.67%</h3>
                   <span className="text-[10px] font-mono text-slate-450 mt-1 block font-bold">
                     Falsa Aceitação: 0.001%
                   </span>
@@ -264,11 +264,11 @@ export function GovSegurancaContent({
             </div>
 
             {/* Failed Attempts Blocked */}
-            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Fraudes de Spoofing Bloqueadas</p>
-                  <h3 className="text-2xl font-black mt-2 text-red-650">48</h3>
+                  <h3 className="text-2xl font-black mt-2 text-red-655">48</h3>
                   <span className="text-[10px] font-bold text-red-600 flex items-center gap-0.5 mt-1 animate-pulse">
                     <AlertTriangle size={11} /> 2 tentativas hoje
                   </span>
@@ -280,7 +280,7 @@ export function GovSegurancaContent({
             </div>
 
             {/* Threshold Status */}
-            <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white border border-slate-200 p-6 rounded-3xl">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Limiar de Validade Face ID</p>
@@ -297,7 +297,7 @@ export function GovSegurancaContent({
           </div>
 
           {/* Graphical Trends Section mimicking General User style - also full width */}
-          <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8">
             <div className="flex justify-between items-start mb-6">
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
@@ -347,7 +347,7 @@ export function GovSegurancaContent({
           transition={{ duration: 0.25 }}
         >
           {/* Users table / list with filters - now taking full width */}
-          <div className="bg-white border border-slate-100 rounded-[32px] p-6 md:p-8 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-[32px] p-6 md:p-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-50">
               <div>
                 <h3 className="text-base font-black tracking-tighter text-slate-900 uppercase">Utilizadores Cadastrados</h3>
@@ -507,7 +507,7 @@ export function GovSegurancaContent({
                 </table>
               </div>
             ) : (
-              <div className="py-12 text-center bg-white border border-slate-200 rounded-[32px] text-slate-400 text-xs font-semibold uppercase tracking-wider shadow-3xs">
+              <div className="py-12 text-center bg-white border border-slate-200 rounded-[32px] text-slate-400 text-xs font-semibold uppercase tracking-wider">
                 Nenhum utilizador encontrado com os filtros atuais.
               </div>
             )}
@@ -525,7 +525,7 @@ export function GovSegurancaContent({
           {/* Top Configuration & Simulation grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Configurations Card */}
-            <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-[32px] p-6">
               <h3 className="text-sm font-black tracking-widest text-slate-800 uppercase mb-4 flex items-center gap-2">
                 <Sliders size={16} className="text-indigo-600" />
                 Parâmetros Ativos
@@ -583,7 +583,7 @@ export function GovSegurancaContent({
             </div>
 
             {/* Real-time simulation playground */}
-            <div className="bg-white text-slate-800 border border-slate-200 rounded-[32px] p-6 shadow-sm relative overflow-hidden">
+            <div className="bg-white text-slate-800 border border-slate-200 rounded-[32px] p-6 relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-5 text-slate-400">
                 <Scan size={180} />
               </div>
@@ -612,7 +612,7 @@ export function GovSegurancaContent({
               <button 
                 disabled={!selectedUser || isScanning}
                 onClick={() => selectedUser && startAnalysisSimulation(selectedUser)}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer border-0"
+                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer border-0"
               >
                 {isScanning ? (
                   <>

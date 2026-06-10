@@ -75,6 +75,7 @@ export interface Contact {
   relation: string;
   status: string;
   type?: 'Normal' | 'Emergência';
+  phone?: string;
 }
 
 export interface Slide {

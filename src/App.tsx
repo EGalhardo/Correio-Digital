@@ -56,7 +56,7 @@ import {
 import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocRequest, Correspondence } from './types';
 import { ensureProtocolOnMessage, ensureProtocolOnDocument, generateProtocol } from './utils/protocolGenerator';
 import { OfflineManager, OfflineAction } from './utils/offlineManager';
-import { supabaseService } from './services/supabaseService';
+import { supabaseService, hasValidSupabaseKeys } from './services/supabaseService';
 
 export default function App() {
   const [stage, setStage] = useState('splash');
@@ -69,7 +69,13 @@ export default function App() {
   // Persisted States
   const [userRequests, setUserRequests] = useState<UserRequest[]>(() => {
     const saved = localStorage.getItem('gov_user_requests');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse gov_user_requests:', e);
+      }
+    }
     return [
       { id: 1, user: 'Edlasio Galhardo', type: 'IPU', priority: 'Média', time: '12m atrás', status: 'pendente', bi: '009874562LA041' },
       { id: 2, user: 'Maria Antónia', type: 'NIF', priority: 'Alta', time: '5m atrás', status: 'urgente', bi: '008812342LA011' },
@@ -151,35 +157,103 @@ export default function App() {
   
   const [sentMessages, setSentMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('correio_digital_sent');
-    const items = saved ? JSON.parse(saved) : [...SENT_MESSAGES];
+    let items = [...SENT_MESSAGES];
+    if (saved) {
+      try {
+        items = JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse correio_digital_sent:', e);
+      }
+    }
     return items.map(ensureProtocolOnMessage);
   });
 
   const [docSentMessages, setDocSentMessages] = useState<Message[]>(() => {
     const saved = localStorage.getItem('documentos_digital_sent');
-    const items = saved ? JSON.parse(saved) : [...SENT_MESSAGES].map(m => ({ ...m, id: m.id + 10000 }));
+    let items = [...SENT_MESSAGES].map(m => ({ ...m, id: m.id + 10000 }));
+    if (saved) {
+      try {
+        items = JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse documentos_digital_sent:', e);
+      }
+    }
     return items.map(ensureProtocolOnMessage);
   });
 
+  const [deletedMessageIds, setDeletedMessageIds] = useState<number[]>(() => {
+    const saved = localStorage.getItem('correio_digital_deleted_message_ids');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse correio_digital_deleted_message_ids:', e);
+      }
+    }
+    return [12];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('correio_digital_deleted_message_ids', JSON.stringify(deletedMessageIds));
+  }, [deletedMessageIds]);
+
+  const handleDeleteMessage = (id: number) => {
+    if (!deletedMessageIds.includes(id)) {
+      setDeletedMessageIds([...deletedMessageIds, id]);
+    }
+  };
+
+  const handleRestoreMessage = (id: number) => {
+    setDeletedMessageIds(deletedMessageIds.filter(mid => mid !== id));
+  };
+
   const [contacts, setContacts] = useState<Contact[]>(() => {
     const saved = localStorage.getItem('correio_digital_contacts');
-    return saved ? JSON.parse(saved) : [...INITIAL_CONTACTS];
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse correio_digital_contacts:', e);
+      }
+    }
+    return [...INITIAL_CONTACTS];
   });
 
   const [documents, setDocuments] = useState<Document[]>(() => {
     const saved = localStorage.getItem('correio_digital_documents');
-    const items = saved ? JSON.parse(saved) : [...DOCUMENTS];
+    let items = [...DOCUMENTS];
+    if (saved) {
+      try {
+        items = JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse correio_digital_documents:', e);
+      }
+    }
     return items.map(ensureProtocolOnDocument);
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
     const saved = localStorage.getItem('correio_digital_notifications');
-    return saved ? JSON.parse(saved) : [...NOTIFICATIONS];
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse correio_digital_notifications:', e);
+      }
+    }
+    return [...NOTIFICATIONS];
   });
 
   const [auditLogs, setAuditLogs] = useState<any[]>(() => {
     const saved = localStorage.getItem('gov_audit_logs');
-    return saved ? JSON.parse(saved) : [
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse gov_audit_logs:', e);
+      }
+    }
+    return [
       { id: '1', action: 'Sistema Inicializado', user: 'SYSTEM', timestamp: '17/05/2026 08:00', type: 'info' },
       { id: '2', action: 'Login Administrador SME', user: 'Admin SME', timestamp: '17/05/2026 08:30', type: 'success' }
     ];
@@ -187,7 +261,13 @@ export default function App() {
 
   const [correspondences, setCorrespondences] = useState<Correspondence[]>(() => {
     const saved = localStorage.getItem('gov_correspondences');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse gov_correspondences:', e);
+      }
+    }
     return [
       {
         id: "CDA-90118",
@@ -262,7 +342,13 @@ export default function App() {
 
   const [docRequests, setDocRequests] = useState<DocRequest[]>(() => {
     const saved = localStorage.getItem('gov_doc_requests');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse gov_doc_requests:', e);
+      }
+    }
     return [
       { id: 1, userName: 'Edlasio Galhardo', userBi: '009874562LA041', docType: 'BI Digital', institution: 'AGT', date: '20/05/2026', status: 'Pendente', aiStatus: 'pre-approved' },
       { id: 2, userName: 'Maria Antónia', userBi: '008812342LA011', docType: 'Certidão de Nascimento', institution: 'SME', date: '19/05/2026', status: 'Aprovado' },
@@ -415,7 +501,7 @@ export default function App() {
   const [isDocComposing, setIsDocComposing] = useState(false);
   const [docComposeData, setDocComposeData] = useState({ to: '', subject: '', body: '' });
 
-  const [contactForm, setContactForm] = useState({ name: '', bi: '', relation: '', type: 'Normal' as 'Normal' | 'Emergência' });
+  const [contactForm, setContactForm] = useState({ name: '', bi: '', relation: '', phone: '', type: 'Normal' as 'Normal' | 'Emergência' });
   const [activeSlide, setActiveSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [showInviteConfirm, setShowInviteConfirm] = useState(false);
@@ -485,6 +571,13 @@ export default function App() {
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [tab, stage]);
+
+  // Safe redirect if tab is 'instituicao' but no institution is selected (avoids setState during render)
+  useEffect(() => {
+    if (tab === 'instituicao' && !selectedInstitution) {
+      setTab('home');
+    }
+  }, [tab, selectedInstitution]);
 
   // Persistence Effects
   useEffect(() => {
@@ -619,6 +712,93 @@ export default function App() {
     localStorage.setItem('gov_app_mode', appMode);
   }, [appMode]);
 
+  // Automatic Supabase state background loading & synchronization
+  useEffect(() => {
+    if (stage !== 'app' || !isOnline || !hasValidSupabaseKeys()) return;
+
+    let isSubscribed = true;
+
+    async function loadSupabaseData() {
+      try {
+        console.log('CADA: Carregando dados integrados do Supabase...');
+        
+        // 1. Fetch Profile
+        const dbProfile = await supabaseService.getProfile(bi);
+        if (dbProfile && isSubscribed) {
+          if (dbProfile.name) setProfileName(dbProfile.name);
+          if (dbProfile.phone) setPhone(dbProfile.phone);
+          if (dbProfile.nif) setNif(dbProfile.nif);
+          if (dbProfile.passport) setPassport(dbProfile.passport);
+          if (dbProfile.birth_date) {
+            // Convert yyyy-mm-dd to dd/mm/yyyy for state compatibility
+            const parts = dbProfile.birth_date.split('-');
+            if (parts.length === 3) {
+              setUserBirthDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+            }
+          }
+          if (dbProfile.filiation) setUserFiliation(dbProfile.filiation);
+          if (dbProfile.marital_status) setUserMaritalStatus(dbProfile.marital_status);
+        }
+
+        // 2. Fetch Messages
+        const dbMessages = await supabaseService.getMessages(bi);
+        if (dbMessages && dbMessages.length > 0 && isSubscribed) {
+          const incoming = dbMessages.filter(m => m.id < 10000);
+          const docs = dbMessages.filter(m => m.id >= 10000);
+
+          if (incoming.length > 0) setInbox(incoming);
+          if (docs.length > 0) setDocInbox(docs);
+        }
+
+        // 3. Fetch Documents
+        const dbDocs = await supabaseService.getDocuments(bi);
+        if (dbDocs && dbDocs.length > 0 && isSubscribed) {
+          setDocuments(dbDocs);
+        }
+
+        // 4. Fetch Contacts
+        const dbContacts = await supabaseService.getContacts(bi);
+        if (dbContacts && dbContacts.length > 0 && isSubscribed) {
+          setContacts(dbContacts);
+        }
+
+        // 5. Fetch User requests
+        const dbUserRequests = await supabaseService.getUserRequests(bi);
+        if (dbUserRequests && dbUserRequests.length > 0 && isSubscribed) {
+          setUserRequests(dbUserRequests);
+        }
+
+        // 6. Fetch Doc Requests
+        const dbDocRequests = await supabaseService.getDocRequests(bi);
+        if (dbDocRequests && dbDocRequests.length > 0 && isSubscribed) {
+          setDocRequests(dbDocRequests);
+        }
+
+        // 7. Fetch Notifications
+        const dbNotifs = await supabaseService.getNotifications(bi);
+        if (dbNotifs && dbNotifs.length > 0 && isSubscribed) {
+          setNotifications(dbNotifs);
+        }
+
+        // 8. Fetch Audit Logs
+        const dbLogs = await supabaseService.getAuditLogs();
+        if (dbLogs && dbLogs.length > 0 && isSubscribed) {
+          setAuditLogs(dbLogs);
+        }
+
+        console.log('CADA: Sincronização e carregamento do Supabase efectuados com sucesso!');
+      } catch (err) {
+        console.error('Erro na sincronização em segundo plano do Supabase:', err);
+      }
+    }
+
+    loadSupabaseData();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [stage, bi, isOnline]);
+
   // Lifecycle Effects
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -651,16 +831,25 @@ export default function App() {
 
   // Derived Memos
   const currentInbox = isInstMode ? instInbox : inbox;
-  const unreadTotal = useMemo(() => currentInbox.reduce((sum, msg) => sum + (msg.unread || 0), 0), [currentInbox]);
+  const unreadTotal = useMemo(() => currentInbox.filter(msg => !deletedMessageIds.includes(msg.id)).reduce((sum, msg) => sum + (msg.unread || 0), 0), [currentInbox, deletedMessageIds]);
 
   const currentDocInbox = isInstMode ? instDocInbox : docInbox;
   const unreadDocTotal = useMemo(() => currentDocInbox.reduce((sum, msg) => sum + (msg.unread || 0), 0), [currentDocInbox]);
 
   const filteredMessages = useMemo(() => {
     let base: Message[] = [];
-    if (correspondenciaTab === "enviadas") base = sentMessages;
-    else if (correspondenciaTab === "lidas") base = currentInbox.filter((item) => !item.unread);
-    else base = currentInbox.filter((item) => item.unread);
+    if (correspondenciaTab === "excluidas") {
+      const allMsgs = [...currentInbox, ...sentMessages];
+      base = allMsgs.filter(item => deletedMessageIds.includes(item.id));
+    } else {
+      if (correspondenciaTab === "enviadas") {
+        base = sentMessages.filter(item => !deletedMessageIds.includes(item.id));
+      } else if (correspondenciaTab === "lidas") {
+        base = currentInbox.filter(item => !deletedMessageIds.includes(item.id) && !item.unread);
+      } else {
+        base = currentInbox.filter(item => !deletedMessageIds.includes(item.id) && item.unread);
+      }
+    }
 
     if (!searchMail.trim()) return base;
     
@@ -670,7 +859,7 @@ export default function App() {
       (m.preview?.toLowerCase().includes(term) ?? false) ||
       (m.details?.subject?.toLowerCase().includes(term) ?? false)
     );
-  }, [correspondenciaTab, currentInbox, sentMessages, searchMail]);
+  }, [correspondenciaTab, currentInbox, sentMessages, searchMail, deletedMessageIds]);
 
   const filteredDocMessages = useMemo(() => {
     let base: Message[] = [];
@@ -891,8 +1080,9 @@ export default function App() {
       name: contactForm.name,
       bi: contactForm.bi,
       relation: contactForm.relation || "Contato",
-      status: "Pendente",
+      status: "Confirmado",
       type: contactForm.type || "Normal",
+      phone: contactForm.phone || "",
     };
 
     setContacts(prev => [newContact, ...prev]);
@@ -911,7 +1101,7 @@ export default function App() {
     }
 
     setIsAddingContact(false);
-    setContactForm({ name: '', bi: '', relation: '', type: 'Normal' });
+    setContactForm({ name: '', bi: '', relation: '', phone: '', type: 'Normal' });
   };
 
   const handleUpdateContactType = (id: number, newType: 'Normal' | 'Emergência') => {
@@ -1003,6 +1193,64 @@ export default function App() {
     }
   };
 
+  const getPageContentDescription = (currentTab: string) => {
+    switch (currentTab) {
+      case 'home':
+        return `Você está no Painel Principal do Correio Digital de Angola.
+O utilizador logado é ${profileName} com Bilhete de Identidade ${bi}.
+Neste painel, há um alerta oficial sobre emergência civil e um painel lateral onde se listam as Instituições Conectadas como a AGT, SME, ENDE, EPAL e INE.
+Status de verificação da conta: ${verificationStatus}.
+Serviços ativos: Notificações em tempo real e interconexão garantida.`;
+      
+      case 'correspondencias':
+        const unreadCount = inbox.filter(m => m.status === 'Não Lida').length;
+        const messagesSummary = inbox.slice(0, 3).map(m => `- De: ${m.sender || m.org}, Assunto: ${m.subject || m.preview}, Status: ${m.status}`).join('\n');
+        return `Você está na aba de Correspondência Oficial (Recebidas).
+Total de correspondências na caixa de entrada: ${inbox.length} mensagens, das quais ${unreadCount} não foram lidas.
+Aqui estão algumas correspondências em destaque no ecrã:
+${messagesSummary || 'Nenhuma mensagem recente.'}`;
+      
+      case 'documentos':
+        const docUnreadCount = docInbox.filter(m => m.status === 'Não Lida').length;
+        const docMessagesSummary = docInbox.slice(0, 3).map(m => `- Serviço: ${m.sender || m.org}, Assunto: ${m.subject || m.preview}, Status: ${m.status}`).join('\n');
+        return `Você está na aba de Documentos e Tramitações Oficiais (Facturas e Certidões).
+Nesta secção, consulte as faturas de serviços básicos ou recibos eletrónicos emitidos de Angola.
+Você tem ${docInbox.length} itens recebidos nas suas tramitações, sendo ${docUnreadCount} não abertos. 
+Últimas tramitações na tela:
+${docMessagesSummary || 'Nenhum documento de trâmite pendente.'}`;
+      
+      case 'carteira':
+        const docsSummary = documents.map(d => `- ${d.name} (Número: ${d.number || 'Não Aplicável'}, Status: ${d.status})`).join('\n');
+        return `Você está na Carteira Digital Offline e Segura.
+Nela estão armazenados eletronicamente os seguintes documentos civis do cidadão ${profileName}:
+${docsSummary || 'Nenhum documento adicionado.'}
+As credenciais têm assinatura criptográfica ativa e um código QR de integridade visualizado para validação por fiscais de estado.`;
+      
+      case 'contactos':
+        const contactsSummary = contacts.map(c => `- Nome: ${c.name}, Grau: ${c.relation}, Telefone: ${c.phone || 'Sem telefone'}, Tipo: ${c.type || 'Normal'}, Estado: ${c.status}`).join('\n');
+        return `Você está nos Contactos de Emergência e Conexões Familiares.
+Aqui estão cadastrados familiares e vizinhos confiáveis que o governo de Angola pode avisar de forma automatizada em cenários de contingência nacional.
+Contactos guardados no seu perfil:
+${contactsSummary || 'Nenhum contacto cadastrado.'}`;
+      
+      case 'perfil':
+        return `Você está na secção do Meu Perfil de Cidadão do Correio Digital de Angola.
+Ficha civil do titular:
+- Nome Completo: ${profileName}
+- Número de Bilhete de Identidade (BI): ${bi}
+- Telemóvel Registado: ${phone}
+- Número de Identificação Fiscal (NIF): ${nif}
+- Passaporte Diplomático/Regular: ${passport}
+- Filiação: ${userFiliation}
+- Data de Nascimento: ${userBirthDate}
+- Estado Civil: ${userMaritalStatus}
+- Nível de Verificação: ${verificationStatus}`;
+        
+      default:
+        return 'Página informativa geral do utilizador no Correio Digital de Angola.';
+    }
+  };
+
   const logSecurityEvent = (action: string, type: 'info' | 'warning' | 'critical' | 'success' = 'info') => {
     addAuditLog(action, type);
   };
@@ -1088,7 +1336,7 @@ export default function App() {
             handleSelectMessage={handleSelectMessage}
             onCreateRequest={handleCreateRequest}
             isInst={isInstMode}
-            onDoubleClickInstitution={(name) => {
+            onDoubleClickInstitution={isGovMode ? undefined : (name) => {
               setSelectedInstitution(name);
               setTab('instituicao');
             }}
@@ -1096,7 +1344,6 @@ export default function App() {
         );
       case 'instituicao':
         if (!selectedInstitution) {
-          setTab('home');
           return null;
         }
         return (
@@ -1131,6 +1378,9 @@ export default function App() {
             handleSelectMessage={handleSelectMessage}
             bi={bi}
             isInst={isInstMode}
+            onDeleteMessage={handleDeleteMessage}
+            onRestoreMessage={handleRestoreMessage}
+            deletedMessageIds={deletedMessageIds}
           />
         );
       case 'documentos':
@@ -1163,6 +1413,9 @@ export default function App() {
             setTab={setTab}
             handleReply={handleReply}
             onUpdateMessage={handleUpdateMessage}
+            onDeleteMessage={handleDeleteMessage}
+            onRestoreMessage={handleRestoreMessage}
+            isDeleted={deletedMessageIds.includes(selectedMessage.id)}
           />
         );
       case 'carteira':
@@ -1226,6 +1479,8 @@ export default function App() {
         return (
           <InstQrCodeContent
             documents={documents}
+            messages={[...inbox, ...instInbox]}
+            onSelectMessage={handleSelectMessage}
             addAuditLog={addAuditLog}
           />
         );
@@ -2005,39 +2260,13 @@ export default function App() {
                         <div className="absolute bottom-4 left-4 w-3.5 h-3.5 border-b border-l border-white rounded-bl-xs opacity-80 pointer-events-none" />
                         <div className="absolute bottom-4 right-4 w-3.5 h-3.5 border-b border-r border-white rounded-br-xs opacity-80 pointer-events-none" />
 
-                        {/* Beautiful Face Wireframe SVG */}
-                        <svg className="w-18 h-18 text-blue-400/30 filter drop-shadow-[0_0_8px_rgba(59,130,246,0.4)] pointer-events-none z-10" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8">
-                          {/* Outer Face Grid Oval */}
-                          <path d="M50,15 C28,15 28,65 50,85 C72,65 72,15 50,15 Z" strokeDasharray="2 2" className="opacity-40" />
-                          <path d="M50,15 L50,85" strokeDasharray="1 3" className="opacity-30" />
-                          <path d="M22,50 L78,50" strokeDasharray="1 3" className="opacity-30" />
-                          
-                          {/* Face Geodesics */}
-                          <path d="M34,30 Q50,40 66,30" />
-                          <path d="M30,45 Q50,57 70,45" />
-                          <path d="M32,60 Q50,72 68,60" />
-                          <path d="M38,72 Q50,81 62,72" />
-                          <path d="M38,18 Q44,45 38,72" />
-                          <path d="M62,18 Q56,45 62,72" />
-                          
-                          {/* Eyes & nose indicators */}
-                          <circle cx="42" cy="42" r="1" className="fill-blue-300" />
-                          <circle cx="58" cy="42" r="1" className="fill-blue-300" />
-                          <polygon points="50,45 47,55 53,55" strokeWidth="0.6" />
-                          
-                          {/* Glowing blue vertices */}
-                          <circle cx="50" cy="15" r="1.5" className="fill-blue-400 animate-pulse" />
-                          <circle cx="50" cy="30" r="1" className="fill-blue-400" />
-                          <circle cx="50" cy="45" r="1" className="fill-blue-400" />
-                          <circle cx="50" cy="60" r="1" className="fill-blue-400" />
-                          <circle cx="50" cy="85" r="1.5" className="fill-blue-400 animate-pulse" />
-                          <circle cx="34" cy="30" r="1" className="fill-blue-400" />
-                          <circle cx="66" cy="30" r="1" className="fill-blue-400" />
-                          <circle cx="30" cy="45" r="1" className="fill-blue-400" />
-                          <circle cx="70" cy="45" r="1" className="fill-blue-400" />
-                          <circle cx="38" cy="72" r="1" className="fill-blue-400" />
-                          <circle cx="62" cy="72" r="1" className="fill-blue-400" />
-                        </svg>
+                        {/* Beautiful Face Wireframe Image */}
+                        <img 
+                          src="/src/assets/images/login_facial_1780856940336.png" 
+                          alt="Vetor Facial Biométrico" 
+                          className="w-[105%] h-[105%] object-cover absolute inset-0 opacity-90 pointer-events-none z-10 scale-95" 
+                          referrerPolicy="no-referrer"
+                        />
 
                         {/* Overlapping Camera button indicator */}
                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-slate-950/70 border border-white/20 flex items-center justify-center text-white z-20 shadow-lg">
@@ -2304,6 +2533,9 @@ export default function App() {
         stopIaVoice={stopIaVoice}
         appMode={appMode}
         onCreateRequest={handleCreateRequest}
+        onNavigate={setTab}
+        activeTab={tab}
+        pageContextHint={getPageContentDescription(tab)}
       />
 
       <AddContactModal 
@@ -2311,7 +2543,7 @@ export default function App() {
         setIsAddingContact={setIsAddingContact} 
         contactForm={contactForm} 
         setContactForm={setContactForm} 
-        setShowInviteConfirm={setShowInviteConfirm} 
+        onAddContact={handleAddContact} 
       />
 
       <InviteConfirmModal 

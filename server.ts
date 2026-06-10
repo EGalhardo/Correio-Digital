@@ -139,7 +139,7 @@ async function startServer() {
   // Groq Chat Endpoint
   app.post("/api/chat", async (req, res) => {
     try {
-      const { messages, isGovMode } = req.body;
+      const { messages, isGovMode, currentPage, pageContext } = req.body;
       
       if (!groqApiKey) {
         return res.status(500).json({ error: "Groq API Key not configured." });
@@ -150,13 +150,25 @@ O Correio Digital de Angola representa a espinha dorsal da modernização admini
 O principal problema que resolvemos é a dificuldade de comunicação oficial num país com muitos endereços não mapeados, o que causa atrasos e forças as pessoas a deslocarem-se constantemente às instituições. 
 A solução que oferecemos é transformar o Bilhete de Identidade no endereço digital oficial de cada cidadão, criando um canal direto e seguro no telemóvel. 
 Os benefícios são claros: rapidez na receção de documentos, redução de custos logísticos para o Estado e uma inclusão digital real para todos, incluindo idosos ou cidadãos com baixa escolaridade através de auxílio por voz. 
+A plataforma integra de forma inteligente e direta os canais de atendimento das principais instituições, tais como a AGT (Administração Geral Tributária), o SME (Serviço de Migração e Estrangeiros), a ENDE e a EPAL. Cada instituição tem a capacidade de configurar as diretrizes e regras operacionais do seu próprio assistente de IA. No papel de assistente central do Correio Digital de Angola, caso o cidadão pergunte sobre qualquer uma destas instituições (ex: tirar NIF na AGT ou obter vistos no SME), você deve agir de acordo com o tom, diretrizes de IA e conhecimentos integrados da instituição correspondente.
 A plataforma baseia-se em cinco pilares fundamentais. O painel principal atua como um centro de comando pessoal para alertas críticos. A área de correspondência funciona como um diálogo direto com as instituições, com conversas organizadas por órgãos como o Serviço de Migração e Estrangeiros ou a Administração Geral Tributária. O Assistente de Inteligência Artificial simplifica a linguagem jurídica e atua como conselheiro de voz. A Carteira Digital permite o armazenamento seguro e offline de documentos com validação por código QR. Por fim, a Segurança é garantida por autenticação biométrica e transparência total. 
 O nosso objetivo final é a transição para um Estado proativo que serve o povo na palma da mão.
 `;
 
-      const systemPrompt = isGovMode 
+      let systemPrompt = isGovMode 
         ? `Você é o Consultor de Segurança e Legislação do SOC do Governo de Angola. Sua função é auxiliar administradores na gestão de protocolos de emergência, interoperabilidade e redação de normas. ${CDA_PROJECT_INFO} Inicie sempre saudando e perguntando como pode ser útil. Responda de forma eficiente, clara e profissional. Não utilize asteriscos ou símbolos de formatação na sua fala. Utilize sempre o nome completo Correio Digital de Angola. Se a explicação for muito longa, apresente primeiro o essencial e interrompa para perguntar se o usuário deseja que você continue detalhando ou prefere focar em algo específico.`
         : `Você é o assistente oficial do Correio Digital de Angola. ${CDA_PROJECT_INFO} Inicie sempre saudando e perguntando como pode ser útil. Ajude o usuário com informações sobre seus documentos e correspondências de forma eficiente. Seja cordial, humano e acolhedor. Utilize sempre o nome completo Correio Digital de Angola. Não utilize asteriscos ou símbolos de formatação para garantir uma fala limpa e natural. Caso sua resposta seja longa, apresente primeiro os pontos essenciais e interrompa para perguntar se o usuário gostaria que continuasse detalhando ou se prefere focar em algo específico. Responda em Português de Angola.`;
+
+      // Inject active page context if available
+      if (currentPage && pageContext) {
+        systemPrompt += `\n\n[CONTEXTO DO ECRÃ ATUAL DO UTILIZADOR]:
+O usuário está visualizando a página "${currentPage}" no momento. 
+O conteúdo e dados visíveis no ecrã dele são:
+"""
+${pageContext}
+"""
+Se o utilizador pedir para explicar o que está aberto, resumir a página, ou fizer perguntas sobre o conteúdo atual do ecrã, utilize os dados acima de forma natural para responder de maneira precisa e informativa.`;
+      }
 
       const completion = await groq.chat.completions.create({
         messages: [
@@ -214,6 +226,7 @@ O nosso objetivo final é a transição para um Estado proativo que serve o povo
 O Correio Digital de Angola moderniza a administração ao tornar o Bilhete de Identidade o endereço oficial dos cidadãos. 
 Resolvemos o problema da entrega física de correspondência e a necessidade de deslocações constantes às instituições. 
 A nossa solução utiliza a identidade digital para garantir que as notificações e documentos cheguem diretamente ao telemóvel com segurança total. 
+A plataforma integra os canais de atendimento e os assistentes de IA personalizados de cada instituição (como a AGT - Administração Geral Tributária e o SME - Serviço de Migração e Estrangeiros). Se o cidadão fizer perguntas de voz específicas sobre essas instituições (ex: Como tirar o NIF com a AGT ou agendar no SME), responda simulando a atuação oficial da respetiva instituição e suas diretrizes específicas integradas de IA.
 Os benefícios incluem maior agilidade, economia para o cidadão e para o Estado, e uma interface acessível para todos os níveis de literacia digital. 
 A estrutura conta com o Painel Principal, Correspondência oficial com as instituições, Assistente de Inteligência Artificial para simplificar a linguagem, Carteira Digital Offline e Segurança Biométrica. 
 A nossa inteligência artificial ajuda a traduzir termos jurídicos complexos e atua de forma proativa com os prazos e avisos oficiais.

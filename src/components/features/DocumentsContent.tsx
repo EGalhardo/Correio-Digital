@@ -133,7 +133,14 @@ export function DocumentsContent({
 
   const [invoices, setInvoices] = useState<any[]>(() => {
     const saved = localStorage.getItem('correio_digital_faturas');
-    return saved ? JSON.parse(saved) : [
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse correio_digital_faturas:', e);
+      }
+    }
+    return [
       {
         id: 'inv-1',
         org: 'ENDE',
@@ -387,11 +394,11 @@ export function DocumentsContent({
         <div className="flex items-center gap-4 mb-2">
           <button 
             onClick={() => setIsComposing(false)}
-            className="flex items-center gap-2.5 px-6 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs md:text-sm text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-10 h-10 bg-white border-2 border-[#d1dbe5] rounded-full text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95 shrink-0"
             aria-label="Voltar"
+            title="Voltar aos Documentos"
           >
             <ArrowLeft size={16} className="text-[#384e6e]" />
-            <span>Voltar aos Documentos</span>
           </button>
           <div>
             <h3 className="text-base md:text-xl font-black text-primary leading-none">Novo Documento Oficial</h3>
@@ -563,10 +570,10 @@ export function DocumentsContent({
           <button 
             type="button"
             onClick={() => setSelectedInvoiceForDetail(null)}
-            className="flex items-center gap-2.5 px-5 py-2.5 bg-white border border-[#d1dbe5] rounded-full font-black text-xs text-[#384e6e] hover:bg-slate-50 transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-10 h-10 bg-white border border-[#d1dbe5] rounded-full text-[#384e6e] hover:bg-slate-50 transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-95 shrink-0"
+            title="Voltar às Facturas"
           >
             <ArrowLeft size={16} />
-            <span>Voltar às Facturas</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -851,16 +858,16 @@ export function DocumentsContent({
               <button 
                 key={name}
                 onClick={() => setSelectedInst(name)}
-                className={`px-5 py-3 rounded-2xl text-[11px] md:text-xs font-black uppercase transition-all cursor-pointer shrink-0 shadow-sm text-left flex items-center gap-2.5 border ${
+                className={`px-5 py-3 rounded-2xl text-[11px] md:text-xs font-black uppercase transition-all cursor-pointer shrink-0 text-left flex items-center gap-2.5 border ${
                   isActive 
                     ? 'bg-primary border-primary text-white shadow-lg' 
-                    : 'bg-slate-50 border-slate-100 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                    : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-350 shadow-none'
                 }`}
               >
                 <Building2 size={13} className={isActive ? 'text-white/80' : 'text-slate-400'} />
                 <span>{name}</span>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
-                  isActive ? 'bg-indigo-950 text-white' : 'bg-slate-200 text-slate-500'
+                  isActive ? 'bg-indigo-950 text-white' : 'bg-red-600 text-white'
                 }`}>
                   {countForInst}
                 </span>
@@ -1068,7 +1075,7 @@ export function DocumentsContent({
                             <div className="flex items-center gap-2">
                               <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                                 item.unread 
-                                  ? 'bg-[#fff5f5] text-[#e05252] border border-[#fdd8d8]' 
+                                  ? 'bg-red-600 text-white border border-red-600' 
                                   : 'bg-slate-100 text-slate-500 border border-slate-200'
                               }`}>
                                 {item.unread ? 'Não Lido' : 'Consultado'}

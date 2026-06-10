@@ -9,9 +9,9 @@ import { Plus, UserPlus, ShieldCheck, Send } from 'lucide-react';
 interface AddContactModalProps {
   isAddingContact: boolean;
   setIsAddingContact: (isAdding: boolean) => void;
-  contactForm: { name: string; bi: string; relation: string; type?: 'Normal' | 'Emergência' };
+  contactForm: { name: string; bi: string; relation: string; phone?: string; type?: 'Normal' | 'Emergência' };
   setContactForm: (form: any) => void;
-  setShowInviteConfirm: (show: boolean) => void;
+  onAddContact: () => void;
 }
 
 export function AddContactModal({ 
@@ -19,7 +19,7 @@ export function AddContactModal({
   setIsAddingContact, 
   contactForm, 
   setContactForm, 
-  setShowInviteConfirm 
+  onAddContact 
 }: AddContactModalProps) {
   return (
     <AnimatePresence>
@@ -62,7 +62,7 @@ export function AddContactModal({
             </div>
 
             {/* Classification Tabs mimicking the image design */}
-            <div className="bg-[#f1f5f9]/60 p-1 rounded-[20px] flex w-full border border-slate-200/40 shrink-0">
+            <div className="bg-white p-1 rounded-[20px] flex w-full border border-slate-200 shrink-0">
               <button 
                 type="button"
                 onClick={() => setContactForm((prev: any) => ({ ...prev, type: 'Normal' }))}
@@ -98,7 +98,7 @@ export function AddContactModal({
                     placeholder="Ex: Edlasio Galhardo" 
                     value={contactForm.name}
                     onChange={e => setContactForm((prev: any) => ({ ...prev, name: e.target.value }))}
-                    className="w-full bg-slate-50/50 focus:bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                    className="w-full bg-white focus:bg-white border-2 border-slate-200 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
                     id="contact-name-input"
                   />
                 </div>
@@ -108,7 +108,7 @@ export function AddContactModal({
                     placeholder="000000000LA000" 
                     value={contactForm.bi}
                     onChange={e => setContactForm((prev: any) => ({ ...prev, bi: e.target.value }))}
-                    className="w-full bg-slate-50/50 focus:bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-mono font-bold tracking-wider placeholder:text-slate-350"
+                    className="w-full bg-white focus:bg-white border-2 border-slate-200 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-mono font-bold tracking-wider placeholder:text-slate-350"
                     maxLength={14}
                     id="contact-bi-input"
                   />
@@ -119,14 +119,24 @@ export function AddContactModal({
                     placeholder="Ex: Mãe, Irmão, Advogado" 
                     value={contactForm.relation}
                     onChange={e => setContactForm((prev: any) => ({ ...prev, relation: e.target.value }))}
-                    className="w-full bg-slate-50/50 focus:bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                    className="w-full bg-white focus:bg-white border-2 border-slate-200 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
                     id="contact-relation-input"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Contacto / Telefone</label>
+                  <input 
+                    placeholder="Ex: +244 923 000 000" 
+                    value={contactForm.phone || ''}
+                    onChange={e => setContactForm((prev: any) => ({ ...prev, phone: e.target.value }))}
+                    className="w-full bg-white focus:bg-white border-2 border-slate-200 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                    id="contact-phone-input"
                   />
                 </div>
               </div>
 
               {/* Warning/Info Box in premium card style */}
-              <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex gap-3 mt-4 items-start select-none">
+              <div className="bg-white border border-slate-250 p-4 rounded-2xl flex gap-3 mt-4 items-start select-none">
                 <ShieldCheck size={18} className="text-[#0c2340] shrink-0 mt-0.5" />
                 <p className="text-slate-500 text-[10px] font-semibold leading-relaxed italic">
                   "Ao adicionar este contacto, você autoriza o acesso limitado a informações de elegibilidade em canais de interoperabilidade em casos imperativos de emergência nacional."
@@ -140,7 +150,7 @@ export function AddContactModal({
                 type="button"
                 onClick={() => {
                   if (!contactForm.name || !contactForm.bi) return;
-                  setShowInviteConfirm(true);
+                  onAddContact();
                   setIsAddingContact(false);
                 }}
                 disabled={!contactForm.name || !contactForm.bi}

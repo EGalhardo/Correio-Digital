@@ -77,7 +77,29 @@ interface ToolIntegration {
 
 export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
   // Navigation Sub Tab State
-  const [activeSubTab, setActiveSubTab] = useState<'config' | 'instructions' | 'knowledge' | 'tools' | 'history' | 'test'>('config');
+  const [activeSubTab, setActiveSubTab] = useState<'config' | 'instructions' | 'knowledge' | 'tools' | 'history'>('config');
+
+  useEffect(() => {
+    const scrollParent = () => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      // Find the scrollable content container (e.g., class with overflow-y-auto)
+      const contentAreas = document.querySelectorAll('.overflow-y-auto');
+      contentAreas.forEach(el => {
+        el.scrollTo({ top: 0, behavior: 'instant' });
+      });
+      // Also scroll parent elements
+      let parent = document.getElementById('inst-ai-assistant-root');
+      while (parent) {
+        parent.scrollTo?.({ top: 0, behavior: 'instant' });
+        parent = parent.parentElement;
+      }
+    };
+    
+    // Run immediately and after a short timeout to ensure layout/mounting is complete
+    scrollParent();
+    const timer = setTimeout(scrollParent, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Configuration States
   const [assistantName, setAssistantName] = useState<string>('Assistente AGT');
@@ -269,15 +291,21 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
 
   // Action: Toggle custom API tools
   const handleToggleTool = (id: string) => {
+    const targetTool = tools.find(t => t.id === id);
+    if (!targetTool) return;
+
+    const nextState = !targetTool.active;
+    
     setTools(current => current.map(t => {
       if (t.id === id) {
-        const nextState = !t.active;
-        triggerToast(`Ferramenta "${t.name}" ${nextState ? 'ativada' : 'desativada'}.`, nextState ? 'success' : 'info');
-        addAuditLog?.(`Integração de ferramenta de IA alterada: ${t.name} (${nextState ? 'Ativa' : 'Inativa'})`, 'info');
         return { ...t, active: nextState };
       }
       return t;
     }));
+
+    // Trigger toast and audit log outside the pure updater function
+    triggerToast(`Ferramenta "${targetTool.name}" ${nextState ? 'ativada' : 'desativada'}.`, nextState ? 'success' : 'info');
+    addAuditLog?.(`Integração de ferramenta de IA alterada: ${targetTool.name} (${nextState ? 'Ativa' : 'Inativa'})`, 'info');
   };
 
   // BOT SIMULATION LOGIC
@@ -355,7 +383,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className={`fixed top-5 right-5 z-[200] max-w-sm px-4 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 border text-xs font-bold leading-tight ${
+            className={`fixed top-5 right-5 z-[200] max-w-sm px-4 py-3.5 rounded-2xl shadow-none flex items-center gap-3 border text-xs font-bold leading-tight ${
               toast.type === 'success' 
                 ? 'bg-[#0c2340] border-[#1e3a60] text-[#10b981]' 
                 : toast.type === 'warning'
@@ -376,7 +404,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 px-1">
         <div className="text-left">
           <h1 className="text-2xl md:text-[28px] font-black text-[#0c2340] tracking-tight m-0 leading-tight">
-            Assistência IA
+            IA
           </h1>
           <p className="text-xs md:text-sm text-slate-700 font-bold mt-1.5">
             Configure e gerencie o assistente virtual da sua instituição.
@@ -386,7 +414,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
         {/* State and Preview Trigger */}
         <div className="flex items-center gap-3">
           {/* Badge de Estado: Active status blinker */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-black text-emerald-800 select-none tracking-wider shadow-2xs">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-black text-emerald-800 select-none tracking-wider shadow-none">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             ● ATIVO
           </div>
@@ -394,7 +422,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
           <button
             type="button"
             onClick={() => setIsPreviewOpen(true)}
-            className="bg-[#0c2340] hover:bg-indigo-950 text-white py-2 px-5 rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-md shadow-[#0c2340]/25 border-none"
+            className="bg-[#0c2340] hover:bg-indigo-950 text-white py-2 px-5 rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-none border-none"
             id="preview-assistant-btn"
           >
             <Eye size={14} className="stroke-[2.5]" />
@@ -407,9 +435,9 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* CARTÃO 1: INFORMAÇÕES DO ASSISTENTE (Left) */}
-        <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs flex flex-col md:flex-row items-center md:items-start gap-6">
+        <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none flex flex-col md:flex-row items-center md:items-start gap-6">
           {/* Circular logo: Institutional circular avatar */}
-          <div className="w-20 h-20 md:w-[84px] md:h-[84px] bg-[#0c2340] text-white rounded-full flex flex-col items-center justify-center shrink-0 border border-indigo-950/25 shadow-sm select-none">
+          <div className="w-20 h-20 md:w-[84px] md:h-[84px] bg-[#0c2340] text-white rounded-full flex flex-col items-center justify-center shrink-0 border border-indigo-950/25 shadow-none select-none">
             <span className="font-serif font-black text-2xl tracking-tighter">AGT</span>
             <span className="text-[5.5px] font-black uppercase tracking-widest text-[#94a3b8] mt-1 text-center leading-none">
               Tributária
@@ -505,7 +533,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
         </div>
 
         {/* CARTÃO 2: ESTATÍSTICAS (Right) */}
-        <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs flex flex-col justify-between">
+        <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none flex flex-col justify-between">
           <div className="flex justify-between items-center mb-4 pb-1">
             <span className="text-xs font-black text-[#0c2340] tracking-widest uppercase">
               ESTATÍSTICAS
@@ -527,8 +555,8 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
           {/* 4 Internal statistics cards with custom distinct themes and details matching design */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             {/* Conversations stats card (Lilac/Violet block) */}
-            <div className="bg-[#FAF9FF] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-2xs transition-shadow">
-              <div className="w-8 h-8 bg-purple-100 text-[#534980] rounded-lg flex items-center justify-center mb-2 shadow-2xs">
+            <div className="bg-[#FAF9FF] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-none transition-shadow">
+              <div className="w-8 h-8 bg-purple-100 text-[#534980] rounded-lg flex items-center justify-center mb-2 shadow-none">
                 <MessageSquare size={16} className="stroke-[2.5]" />
               </div>
               <span className="block font-black text-xl text-[#0c2340] tracking-tight leading-none">1.248</span>
@@ -536,8 +564,8 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
             </div>
 
             {/* Users stats card (Blue/Sky block) */}
-            <div className="bg-[#F8FAFF] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-2xs transition-shadow">
-              <div className="w-8 h-8 bg-sky-100 text-[#284a7a] rounded-lg flex items-center justify-center mb-2 shadow-2xs">
+            <div className="bg-[#F8FAFF] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-none transition-shadow">
+              <div className="w-8 h-8 bg-sky-100 text-[#284a7a] rounded-lg flex items-center justify-center mb-2 shadow-none">
                 <Users size={16} className="stroke-[2.5]" />
               </div>
               <span className="block font-black text-xl text-[#0c2340] tracking-tight leading-none">865</span>
@@ -545,8 +573,8 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
             </div>
 
             {/* Resolutions stats card (Green/Emerald block) */}
-            <div className="bg-[#F5FDF8] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-2xs transition-shadow">
-              <div className="w-8 h-8 bg-emerald-100 text-[#1e6136] rounded-lg flex items-center justify-center mb-2 shadow-2xs">
+            <div className="bg-[#F5FDF8] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-none transition-shadow">
+              <div className="w-8 h-8 bg-emerald-100 text-[#1e6136] rounded-lg flex items-center justify-center mb-2 shadow-none">
                 <CheckCircle2 size={16} className="stroke-[2.5]" />
               </div>
               <span className="block font-black text-xl text-[#0c2340] tracking-tight leading-none">92%</span>
@@ -554,8 +582,8 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
             </div>
 
             {/* Average time stats card (Orange/Amber block) */}
-            <div className="bg-[#FFFDF9] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-2xs transition-shadow">
-              <div className="w-8 h-8 bg-amber-100 text-[#7c542c] rounded-lg flex items-center justify-center mb-2 shadow-2xs">
+            <div className="bg-[#FFFDF9] border border-[#0c2340]/15 rounded-xl p-3.5 text-left hover:shadow-none transition-shadow">
+              <div className="w-8 h-8 bg-amber-100 text-[#7c542c] rounded-lg flex items-center justify-center mb-2 shadow-none">
                 <Clock size={16} className="stroke-[2.5]" />
               </div>
               <span className="block font-black text-xl text-[#0c2340] tracking-tight leading-none">2m 34s</span>
@@ -573,7 +601,6 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
           { id: 'knowledge', label: 'Base de Conhecimento', icon: BookOpen, color: '#4f46e5' },
           { id: 'tools', label: 'Ferramentas Autorizadas', icon: Activity, color: '#4f46e5' },
           { id: 'history', label: 'Histórico de Conversas', icon: MessageSquare, color: '#4f46e5' },
-          { id: 'test', label: 'Testar Assistente', icon: Bot, color: '#4f46e5' },
         ].map(tab => {
           const IconComponent = tab.icon;
           const isActive = activeSubTab === tab.id;
@@ -609,10 +636,10 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
         >
           {/* SUB-VIEW 1: Configuração Geral */}
           {activeSubTab === 'config' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
               
               {/* COLUNA 1 - CONFIGURAÇÃO GERAL */}
-              <div className="lg:col-span-1 flex flex-col justify-between bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs gap-5">
+              <div className="lg:col-span-1 flex flex-col justify-between bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none gap-5">
                 <div className="space-y-4">
                   <div className="pb-3 border-b border-slate-100">
                     <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase">
@@ -627,7 +654,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                     </label>
                     <input
                       type="text"
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-semibold text-[#0c2340] outline-none transition-all shadow-sm"
+                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-semibold text-[#0c2340] outline-none transition-all shadow-none"
                       placeholder="Ex: Assistente AGT"
                       value={tempName}
                       onChange={(e) => setTempName(e.target.value)}
@@ -641,7 +668,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                     </label>
                     <textarea
                       rows={4}
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 outline-none transition-all leading-relaxed resize-none shadow-sm"
+                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 outline-none transition-all leading-relaxed resize-none shadow-none"
                       placeholder="Descreva a função operativa..."
                       value={tempDescription}
                       onChange={(e) => setTempDescription(e.target.value)}
@@ -655,7 +682,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                         Modelo de IA
                       </label>
                       <select
-                        className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-3 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-sm"
+                        className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-3 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-none"
                         value={tempModel}
                         onChange={(e) => setTempModel(e.target.value)}
                       >
@@ -670,7 +697,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                         Temperatura
                       </label>
                       <select
-                        className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-3 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-sm"
+                        className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-3 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-none"
                         value={tempTemperature}
                         onChange={(e) => setTempTemperature(e.target.value)}
                       >
@@ -687,7 +714,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                       Idioma de Resposta
                     </label>
                     <select
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-sm"
+                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-none"
                       value={tempLanguage}
                       onChange={(e) => setTempLanguage(e.target.value)}
                     >
@@ -703,7 +730,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                   <button
                     type="button"
                     onClick={handleSaveGeneralConfig}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer border-none shadow-md shadow-indigo-650/15"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer border-none shadow-none"
                   >
                     Guardar Alterações
                   </button>
@@ -714,7 +741,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
               <div className="lg:col-span-1 flex flex-col justify-between gap-6">
                 
                 {/* CARD 1: INSTRUÇÕES DA IA */}
-                <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs flex flex-col justify-between flex-1 gap-4">
+                <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none flex flex-col justify-between flex-1 gap-4">
                   <div className="space-y-4 flex-1">
                     <div className="pb-2 border-b border-slate-100">
                       <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase">
@@ -724,7 +751,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
 
                     <textarea
                       rows={6}
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl p-3.5 text-xs font-mono font-bold text-slate-800 outline-none tracking-tight leading-relaxed resize-none flex-1 min-h-[140px] shadow-sm"
+                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl p-3.5 text-xs font-mono font-bold text-slate-800 outline-none tracking-tight leading-relaxed resize-none flex-1 min-h-[140px] shadow-none"
                       value={tempInstructions}
                       onChange={(e) => setTempInstructions(e.target.value)}
                     />
@@ -739,7 +766,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                     <button
                       type="button"
                       onClick={handleSaveInstructions}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer border-none shadow-sm"
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer border-none shadow-none"
                     >
                       Guardar Instruções
                     </button>
@@ -747,7 +774,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                 </div>
 
                 {/* CARD 2: CONTEXTO AUTOMÁTICO */}
-                <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs">
+                <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none">
                   <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-50">
                     <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase">
                       CONTEXTO AUTOMÁTICO
@@ -792,133 +819,18 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
 
               </div>
 
-              {/* COLUNA 3 - TESTAR ASSISTENTE - Chat simulator console */}
-              <div className="lg:col-span-1 flex flex-col justify-between bg-white border border-[#0c2340]/15 rounded-[20px] p-5 shadow-xs relative">
-                
-                {/* Top Action area of Chat */}
-                <div className="flex justify-between items-center pb-2.5 border-b border-slate-100 shrink-0">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
-                    TESTAR ASSISTENTE
-                  </span>
-                  
-                  {/* Clean conversations buttons */}
-                  <button
-                    onClick={() => {
-                      setChatMessages([
-                        {
-                          id: `init-${Date.now()}`,
-                          sender: 'bot',
-                          text: `Olá! Eu sou o ${assistantName}. Como posso lhe esclarecer sobre NIF, impostos ou multas tributárias hoje?`,
-                          time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-                        }
-                      ]);
-                      triggerToast('Sessão de simulação limpa.', 'info');
-                    }}
-                    className="text-slate-400 hover:text-[#0c2340] hover:bg-slate-50 px-2 py-1 rounded transition-colors uppercase font-black text-[9px] tracking-widest bg-transparent border-none cursor-pointer inline-flex items-center gap-1.5"
-                    type="button"
-                    title="Limpar Conversas"
-                  >
-                    <Trash2 size={11} />
-                    <span>Limpar</span>
-                  </button>
-                </div>
-
-                {/* Chat dialog content area */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar my-4 pr-1 space-y-3.5">
-                  {chatMessages.map((msg) => {
-                    const isUser = msg.sender === 'user';
-                    return (
-                      <div key={msg.id} className={`flex items-start gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                        {!isUser && (
-                          <div className="w-6 h-6 bg-[#0c2340] text-white rounded-lg flex items-center justify-center shrink-0 text-[7px] font-black uppercase border border-slate-200 shadow-3xs select-none">
-                            AGT
-                          </div>
-                        )}
-                        <div className={`max-w-[85%] rounded-2xl px-3 py-2.5 text-xs leading-relaxed ${
-                          isUser
-                            ? 'bg-[#f3e8ff] text-[#0c2340] border border-purple-100 rounded-tr-none text-right font-medium'
-                            : (msg.sender === 'bot' && (msg.text.includes("Para obter o NIF") || (msg.text.includes("Bilhete de Identidade") && msg.text.includes("Comprovativo de Residência"))))
-                              ? 'bg-[#0c2340] text-white rounded-tl-none font-bold whitespace-pre-line text-left shadow-md'
-                              : 'bg-slate-100 text-slate-800 rounded-tl-none font-medium whitespace-pre-line text-left'
-                        }`}>
-                          <p className="m-0 break-words">{msg.text}</p>
-                          <div className={`mt-1 flex justify-end text-[7.5px] font-mono leading-none ${
-                            isUser 
-                              ? 'text-purple-400' 
-                              : (msg.sender === 'bot' && (msg.text.includes("Para obter o NIF") || (msg.text.includes("Bilhete de Identidade") && msg.text.includes("Comprovativo de Residência"))))
-                                ? 'text-slate-300' 
-                                : 'text-slate-400'
-                          } font-bold select-none`}>
-                            <span>{msg.time}</span>
-                            {isUser && msg.delivered && <span className="ml-1 text-purple-600 font-bold">✔✔</span>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {/* Typing simulated indicator */}
-                  {isTyping && (
-                    <div className="flex items-start gap-2">
-                      <div className="w-6 h-6 bg-[#0c2340] text-white rounded-lg flex items-center justify-center shrink-0 text-[7px] font-black uppercase">
-                        AGT
-                      </div>
-                      <div className="bg-slate-100 rounded-2xl rounded-tl-none px-3.5 py-2.5">
-                        <div className="flex gap-1 items-center justify-center py-1">
-                          <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={chatBottomRef} />
-                </div>
-
-                {/* Dedicated Form Input control */}
-                <div className="border-t border-slate-50 pt-2 shrink-0 space-y-1.5">
-                  <div className="relative">
-                    <input
-                      required
-                      type="text"
-                      className="w-full bg-[#f8fafc] border border-slate-200 focus:border-[#0c2340] rounded-xl pl-3.5 pr-10 py-3 text-xs text-slate-800 outline-none transition-all placeholder:text-slate-400 font-medium"
-                      placeholder="Escreva a sua pergunta..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') handleSendTestChatMessage(); }}
-                    />
-                    
-                    <button
-                      type="button"
-                      onClick={handleSendTestChatMessage}
-                      disabled={!chatInput.trim()}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 text-white rounded-full flex items-center justify-center transition-all cursor-pointer border-none"
-                    >
-                      <Send size={11} className="stroke-[2.5]" />
-                    </button>
-                  </div>
-
-                  <div className="text-center pt-0.5">
-                    <span className="text-[8px] text-slate-400 font-bold tracking-widest uppercase select-none inline-flex items-center gap-1.5">
-                      ⚡ Powered by IA Correio Digital
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-
             </div>
           )}
 
           {/* SUB-VIEW 2: Editor Completo de Instruções (Expanded Layout focus) */}
           {activeSubTab === 'instructions' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs space-y-6">
+            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
               <div className="pb-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left">
                 <div>
                   <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">INSTRUÇÕES MESTRE DO AGENTE IA</h3>
                   <p className="text-xs text-slate-500 font-semibold uppercase tracking-tight mt-0.5">Defina o tom de voz, regras de validação legal e os limites de operação assistida.</p>
                 </div>
-                <span className="bg-purple-100 text-[#6366f1] px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider self-start sm:self-auto shadow-3xs">
+                <span className="bg-purple-100 text-[#6366f1] px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider self-start sm:self-auto shadow-none">
                   Modo Expandido
                 </span>
               </div>
@@ -968,7 +880,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                     <button
                       type="button"
                       onClick={handleSaveInstructions}
-                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all border-none cursor-pointer shadow-md inline-flex items-center gap-2 justify-center"
+                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all border-none cursor-pointer shadow-none inline-flex items-center gap-2 justify-center"
                     >
                       <CheckCircle size={14} />
                       <span>Salvar Novas Instruções</span>
@@ -982,7 +894,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
 
           {/* SUB-VIEW 3: Base de Conhecimento (Durable legistation indexer) */}
           {activeSubTab === 'knowledge' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs space-y-6">
+            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
               <div className="pb-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
                 <div>
                   <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">BIBLIOTECA DE LEGISLAÇÃO CONTEXTUAL</h3>
@@ -1053,7 +965,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
 
           {/* SUB-VIEW 4: Ferramentas Autorizadas (Integrations and active gateways) */}
           {activeSubTab === 'tools' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs space-y-6">
+            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
               <div className="pb-4 border-b border-slate-50 text-left">
                 <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">FERRAMENTAS OPERACIONAIS E APIS DA IA</h3>
                 <p className="text-xs text-slate-500 font-semibold uppercase tracking-tight mt-0.5">Determine quais rotas e webservices integrados da sua instituição o assistente pode executar de forma autónoma.</p>
@@ -1103,7 +1015,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
 
           {/* SUB-VIEW 5: Histórico de Conversas (Past queries and ratings) */}
           {activeSubTab === 'history' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs space-y-6">
+            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
               <div className="pb-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
                 <div>
                   <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">DIÁRIO DE INTERACÇÕES DA IA</h3>
@@ -1169,110 +1081,13 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
               </div>
             </div>
           )}
-
-          {/* SUB-VIEW 6: Testar Assistente (Full page expansive chat console) */}
-          {activeSubTab === 'test' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-xs max-w-4xl mx-auto space-y-5">
-              <div className="pb-3 border-b border-slate-50 text-left flex justify-between items-center">
-                <div>
-                  <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">SALA DE TESTE DO INTELIGÊNCIA ARTIFICIAL</h3>
-                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-tight mt-0.5">Simule uma experiência real de conversação. O assistente usará as bases instaladas.</p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setChatMessages([
-                      {
-                        id: `init-${Date.now()}`,
-                        sender: 'bot',
-                        text: `Olá! Eu sou o ${assistantName}. Como posso lhe esclarecer sobre NIF, impostos ou multas tributárias hoje?`,
-                        time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),
-                      }
-                    ]);
-                    triggerToast('Sessão reiniciada.', 'info');
-                  }}
-                  className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-[#0c2340] font-black text-[10px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 border border-slate-200 cursor-pointer"
-                >
-                  <Trash2 size={12} />
-                  <span>Limpar Diálogo</span>
-                </button>
-              </div>
-
-              {/* Central high resolution chat stack */}
-              <div className="bg-slate-50/60 rounded-xl border border-slate-200/70 p-5 h-[380px] overflow-y-auto custom-scrollbar flex flex-col space-y-4">
-                {chatMessages.map(msg => {
-                  const isUser = msg.sender === 'user';
-                  return (
-                    <div key={msg.id} className={`flex items-start gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                      {!isUser && (
-                        <div className="w-8 h-8 bg-[#0c2340] text-white rounded-full flex items-center justify-center shrink-0 font-black text-[10px] uppercase tracking-tighter shadow select-none">
-                          AGT
-                        </div>
-                      )}
-                      
-                      <div className={`max-w-[75%] rounded-[18px] px-4 py-3 text-xs leading-relaxed shadow-3xs text-left ${
-                        isUser 
-                          ? 'bg-[#f3e8ff] hover:bg-indigo-100 text-[#0c2340] border border-purple-100/60 rounded-tr-none font-semibold'
-                          : 'bg-white text-slate-850 rounded-tl-none font-medium whitespace-pre-line border border-slate-150'
-                      }`}>
-                        <p className="m-0 select-text leading-relaxed">{msg.text}</p>
-                        <div className={`mt-1.5 flex justify-end text-[7.5px] font-mono leading-none ${
-                          isUser ? 'text-purple-400' : 'text-slate-400'
-                        } font-black select-none`}>
-                          <span>{msg.time}</span>
-                          {isUser && msg.delivered && <span className="ml-1 text-purple-600">✔✔</span>}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {isTyping && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-[#0c2340] text-white rounded-full flex items-center justify-center shrink-0 font-black text-[10px] uppercase tracking-tighter">
-                      AGT
-                    </div>
-                    <div className="bg-white rounded-[18px] rounded-tl-none px-4.5 py-3 border border-slate-150 shadow-3xs flex items-center">
-                      <div className="flex gap-1 items-center justify-center py-1.5">
-                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Entry panel bottom */}
-              <div className="pt-2 space-y-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    className="w-full bg-slate-50 border border-slate-200.5 focus:border-[#0c2340] rounded-xl pl-4 pr-12 py-3 text-xs text-slate-850 font-semibold outline-none transition-all placeholder:text-slate-400"
-                    placeholder="Escreva a sua pergunta sobre as operações tributárias..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSendTestChatMessage(); }}
-                  />
-
-                  <button
-                    onClick={handleSendTestChatMessage}
-                    disabled={!chatInput.trim() || isTyping}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-45 text-white rounded-full flex items-center justify-center transition-all cursor-pointer border-none shadow-sm"
-                  >
-                    <Send size={13} className="stroke-[2.5]" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </motion.div>
       </AnimatePresence>
 
       {/* RODAPÉ INFORMATIVO (BOTTOM INFORMATION CHIPS) */}
-      <div className="bg-[#f0f9ff] border border-sky-100 rounded-xl p-4 flex items-center gap-3 text-left">
-        <Sparkles size={18} className="text-[#6366f1] shrink-0" />
-        <p className="text-xs text-sky-800 font-extrabold m-0 uppercase tracking-tight">
+      <div className="bg-[#0c2340] border border-[#0c2340]/40 rounded-xl p-4 flex items-center gap-3 text-left">
+        <Sparkles size={18} className="text-indigo-300 shrink-0" />
+        <p className="text-xs text-white font-extrabold m-0 uppercase tracking-tight">
           As alterações feitas serão aplicadas imediatamente ao assistente da sua instituição nos canais oficiais de Sandbox e Correio Digital.
         </p>
       </div>
@@ -1285,7 +1100,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
               initial={{ scale: 0.93, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.93, opacity: 0 }}
-              className="bg-white rounded-[24px] border border-[#0c2340]/15 shadow-2xl w-full max-w-md h-[550px] flex flex-col justify-between overflow-hidden relative"
+              className="bg-white rounded-[24px] border border-[#0c2340]/15 shadow-none w-full max-w-md h-[550px] flex flex-col justify-between overflow-hidden relative"
             >
               {/* Modal chat Header */}
               <div className="bg-[#0c2340] text-white p-5 flex items-center justify-between select-none">
@@ -1319,17 +1134,17 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                   return (
                     <div key={msg.id} className={`flex items-start gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}>
                       {!isUser && (
-                        <div className="w-6.5 h-6.5 bg-[#0c2340] text-white rounded-full flex items-center justify-center shrink-0 text-[8px] font-black uppercase shadow select-none">
+                        <div className="w-6.5 h-6.5 bg-[#0c2340] text-white rounded-full flex items-center justify-center shrink-0 text-[8px] font-black uppercase shadow-none select-none">
                           AGT
                         </div>
                       )}
                       
-                      <div className={`max-w-[80%] rounded-2xl px-3.5 py-3 text-xs leading-relaxed text-left shadow-3xs ${
+                      <div className={`max-w-[80%] rounded-2xl px-3.5 py-3 text-xs leading-relaxed text-left shadow-none ${
                         isUser
                           ? 'bg-purple-100 text-[#0c2340] border border-purple-200/40 rounded-tr-none font-semibold'
                           : (msg.sender === 'bot' && (msg.text.includes("Para obter o NIF") || (msg.text.includes("Bilhete de Identidade") && msg.text.includes("Comprovativo de Residência"))))
-                            ? 'bg-[#0c2340] text-white rounded-tl-none font-bold whitespace-pre-line shadow-md'
-                            : 'bg-white text-slate-800 rounded-tl-none font-semibold whitespace-pre-line border border-slate-150'
+                            ? 'bg-[#0c2340] text-white rounded-tl-none font-bold whitespace-pre-line shadow-none'
+                            : 'bg-white text-slate-850 rounded-tl-none font-semibold whitespace-pre-line border border-slate-150'
                       }`}>
                         <p className="m-0 leading-relaxed">{msg.text}</p>
                         <span className={`block text-[7.5px] font-mono leading-none ${
@@ -1351,7 +1166,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                     <div className="w-6.5 h-6.5 bg-[#0c2340] text-white rounded-full flex items-center justify-center shrink-0 text-[8px] font-black uppercase">
                       AGT
                     </div>
-                    <div className="bg-white rounded-2xl rounded-tl-none px-3.5 py-2.5 border border-slate-150 shadow-3xs">
+                    <div className="bg-white rounded-2xl rounded-tl-none px-3.5 py-2.5 border border-slate-150 shadow-none">
                       <div className="flex gap-1 items-center justify-center py-1">
                         <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                         <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

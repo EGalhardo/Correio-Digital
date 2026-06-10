@@ -37,8 +37,8 @@ const institutionItems: MenuItem[] = [
   { id: 'correspondencias', label: 'Correio', icon: Mail },
   { id: 'gov-contatos', label: 'Agentes', icon: Users },
   { id: 'inst-qrcode', label: 'QR Code', icon: QrCode },
+  { id: 'inst-ai-assistant', label: 'IA', icon: Bot },
   { id: 'perfil', label: 'Conta', icon: User },
-  { id: 'inst-ai-assistant', label: 'Assistência IA', icon: Bot },
 ];
 
 const adminItems: MenuItem[] = [

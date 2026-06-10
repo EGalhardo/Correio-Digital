@@ -245,6 +245,9 @@ interface MessageDetailProps {
   setTab: (tab: string) => void;
   handleReply: (msg: Message) => void;
   onUpdateMessage?: (msg: Message) => void;
+  onDeleteMessage?: (id: number) => void;
+  onRestoreMessage?: (id: number) => void;
+  isDeleted?: boolean;
 }
 
 export function MessageDetail({
@@ -253,6 +256,9 @@ export function MessageDetail({
   setTab,
   handleReply,
   onUpdateMessage,
+  onDeleteMessage,
+  onRestoreMessage,
+  isDeleted,
 }: MessageDetailProps) {
   const messageDate = selectedMessage.date && selectedMessage.date.includes('/')
     ? selectedMessage.date
@@ -831,7 +837,7 @@ export function MessageDetail({
                   <div className="space-y-4">
                     <div>
                       {/* Rich text Toolbar for details view, styled exactly like the attached image */}
-                      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50/85 border border-slate-200 rounded-2xl mb-2 shadow-sm">
+                      <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-white border border-slate-200 rounded-2xl mb-2 shadow-sm">
                         {/* Undo / Redo */}
                         <div className="flex items-center gap-0.5">
                           <button
@@ -1247,25 +1253,58 @@ export function MessageDetail({
           <ArrowLeft size={24} />
         </button>
         
-        <button 
-          onClick={() => {
-            if (sensConfig.level === 'Ultra Restrito') {
-              setShareBlockedNotice('Bloqueado: Política de Controle de Compartilhamento proíbe reencaminhar ou responder a documentos de nível Ultra Restrito.');
-              setTimeout(() => setShareBlockedNotice(null), 5000);
-              return;
-            }
-            addAuditLogToMessage('Resposta enviada');
-            handleReply(selectedMessage);
-          }}
-          className={`px-4 py-2 rounded-xl font-extrabold text-sm transition-all active:scale-95 flex items-center gap-1.5 ${
-            sensConfig.level === 'Ultra Restrito' 
-              ? 'text-red-500 bg-red-50 hover:bg-red-100/30' 
-              : 'text-primary hover:bg-primary/5'
-          }`}
-        >
-          {sensConfig.level === 'Ultra Restrito' && <Lock size={14} />}
-          {sensConfig.level === 'Ultra Restrito' ? 'Responder Bloqueado' : 'Responder'}
-        </button>
+        <div className="flex items-center gap-2">
+          {isDeleted ? (
+            <button
+              onClick={() => {
+                if (onRestoreMessage) {
+                  onRestoreMessage(selectedMessage.id);
+                  setTab('correspondencias');
+                  setSelectedMessage(null);
+                }
+              }}
+              className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-sm rounded-xl transition-all active:scale-95 flex items-center gap-1.5 border-0 cursor-pointer"
+            >
+              Restaurar Ofício
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (onDeleteMessage) {
+                  if (confirm("Deseja realmente enviar esta mensagem para as Excluídas?")) {
+                    onDeleteMessage(selectedMessage.id);
+                    setTab('correspondencias');
+                    setSelectedMessage(null);
+                  }
+                }
+              }}
+              className="px-4 py-2 bg-red-50 hover:bg-red-105 text-red-650 font-extrabold text-sm rounded-xl transition-all active:scale-95 flex items-center gap-1.5 border-0 cursor-pointer"
+            >
+              <Trash2 size={14} />
+              Excluir
+            </button>
+          )}
+
+          <button 
+            onClick={() => {
+              if (sensConfig.level === 'Ultra Restrito') {
+                setShareBlockedNotice('Bloqueado: Política de Controle de Compartilhamento proíbe reencaminhar ou responder a documentos de nível Ultra Restrito.');
+                setTimeout(() => setShareBlockedNotice(null), 5000);
+                return;
+              }
+              addAuditLogToMessage('Resposta enviada');
+              handleReply(selectedMessage);
+            }}
+            className={`px-4 py-2 rounded-xl font-extrabold text-sm transition-all active:scale-95 flex items-center gap-1.5 border-0 cursor-pointer ${
+              sensConfig.level === 'Ultra Restrito' 
+                ? 'text-red-500 bg-red-50 hover:bg-red-100/30' 
+                : 'text-primary hover:bg-primary/5 bg-transparent'
+            }`}
+          >
+            {sensConfig.level === 'Ultra Restrito' && <Lock size={14} />}
+            {sensConfig.level === 'Ultra Restrito' ? 'Responder Bloqueado' : 'Responder'}
+          </button>
+        </div>
       </div>
 
       {shareBlockedNotice && (
@@ -1299,10 +1338,10 @@ export function MessageDetail({
                   onClick={() => {
                     setActiveOfficialAction(null);
                   }}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+                  className="flex items-center justify-center w-10 h-10 bg-white border-2 border-[#d1dbe5] rounded-full text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+                  title="Voltar"
                 >
                   <ArrowLeft size={16} className="text-[#384e6e]" />
-                  <span>Voltar</span>
                 </button>
                 <div className="text-left">
                   <h4 className="font-extrabold text-[#111A2E] text-sm md:text-base flex items-center gap-1.5 uppercase tracking-wide">
@@ -1324,7 +1363,7 @@ export function MessageDetail({
                     <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-1.5">Corpo do Ofício de Resposta</label>
                     
                     {/* Rich text Toolbar styled exactly like the attached image */}
-                    <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-50/85 border border-slate-200 rounded-2xl mb-2 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-white border border-slate-200 rounded-2xl mb-2 shadow-sm">
                       {/* Undo / Redo */}
                       <div className="flex items-center gap-0.5">
                         <button
@@ -1968,10 +2007,10 @@ export function MessageDetail({
               <div className="flex items-center gap-3 pb-4 border-b border-line">
                 <button 
                   onClick={() => setActiveAction(null)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+                  className="flex items-center justify-center w-10 h-10 bg-white border-2 border-[#d1dbe5] rounded-full text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+                  title="Voltar"
                 >
                   <ArrowLeft size={16} className="text-[#384e6e]" />
-                  <span>Voltar</span>
                 </button>
                 <div>
                   <h4 className="font-bold text-primary">{activeAction}</h4>
@@ -2310,7 +2349,7 @@ export function MessageDetail({
                 </div>
                 
                 {/* Metadados obrigatórios do correio: Data, Hora e Localidade */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-705 bg-slate-50 border border-slate-205 rounded-[18px] p-2.5 px-4 shadow-3xs">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-705 bg-white border border-slate-300 rounded-[18px] p-2.5 px-4 shadow-3xs">
                   <div className="flex items-center gap-2 min-w-0">
                     <Calendar size={13} className="text-indigo-650 shrink-0" />
                     <div>
@@ -2376,8 +2415,8 @@ export function MessageDetail({
                           </div>
 
                           <div className="flex items-center gap-3 text-slate-700">
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                              <Calendar size={16} className="text-slate-500" />
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 border border-blue-600">
+                              <Calendar size={16} className="text-white" />
                             </div>
                             <div>
                               <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Data de Emissão (Data)</small>
@@ -2386,8 +2425,8 @@ export function MessageDetail({
                           </div>
 
                           <div className="flex items-center gap-3 text-slate-700">
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                              <Clock size={16} className="text-slate-500" />
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 border border-blue-600">
+                              <Clock size={16} className="text-white" />
                             </div>
                             <div>
                               <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Hora de Registo (Hora)</small>
@@ -2396,8 +2435,8 @@ export function MessageDetail({
                           </div>
 
                           <div className="flex items-center gap-3 text-slate-700">
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                              <MapPin size={16} className="text-slate-500" />
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 border border-blue-600">
+                              <MapPin size={16} className="text-white" />
                             </div>
                             <div>
                               <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Localidade de Tramitação</small>
@@ -2406,8 +2445,8 @@ export function MessageDetail({
                           </div>
 
                           <div className="flex items-center gap-3 text-slate-700">
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                              <Calendar size={16} className="text-slate-500" />
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 border border-blue-600">
+                              <Calendar size={16} className="text-white" />
                             </div>
                             <div>
                               <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Prazo Limite Regulamentar</small>
@@ -2416,8 +2455,8 @@ export function MessageDetail({
                           </div>
 
                           <div className="flex items-center gap-3 text-slate-700">
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                              <Clock size={16} className="text-slate-500" />
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 border border-blue-600">
+                              <Clock size={16} className="text-white" />
                             </div>
                             <div>
                               <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Estado do Documento</small>
@@ -2429,8 +2468,8 @@ export function MessageDetail({
                           </div>
 
                           <div className="flex items-center gap-3 text-slate-700">
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
-                              <MapPin size={16} className="text-slate-500" />
+                            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 border border-blue-600">
+                              <MapPin size={16} className="text-white" />
                             </div>
                             <div>
                               <small className="text-slate-500 text-[9px] md:text-xs font-black uppercase tracking-[0.15em] block leading-none mb-1">Entidade Emissora</small>
@@ -2444,7 +2483,7 @@ export function MessageDetail({
                             const style = CATEGORY_STYLING[meta.name] || CATEGORY_STYLING['Ofício'];
                             return (
                               <div className="flex items-start gap-4 text-slate-700 md:col-span-2">
-                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${style.border} ${style.badge}`}>
+                                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border bg-blue-600 border-blue-600 text-white">
                                   {renderCategoryIcon(meta.icon, 16)}
                                 </div>
                                 <div>
@@ -2468,7 +2507,7 @@ export function MessageDetail({
                             setActiveAction('Ver detalhes');
                             addAuditLogToMessage('Visualizou detalhes completos do documento');
                           }}
-                          className="text-xs font-black uppercase tracking-wider text-white bg-[#0c2340] hover:bg-[#152e4d] px-5 py-3 rounded-full shadow-md flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 font-bold animate-pulse"
+                          className="text-xs font-black uppercase tracking-wider text-white bg-blue-950 hover:bg-blue-900 px-5 py-3 rounded-full shadow-md flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 font-bold"
                         >
                           <Eye size={13} className="text-white" />
                           Ver detalhes Completos
@@ -2477,7 +2516,7 @@ export function MessageDetail({
                     </div>
 
                     {/* QR Code de Protocolo (Lado Direito) */}
-                    <div className="flex flex-col items-center justify-center p-6 bg-slate-50/50 rounded-3xl border border-line/60 lg:w-[280px] shrink-0 self-center lg:self-stretch">
+                    <div className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-line/60 lg:w-[280px] shrink-0 self-center lg:self-stretch">
                       <div className="text-[10px] font-extrabold text-slate-500 uppercase tracking-[0.2em] mb-4">QR CODE DE PROTOCOLO</div>
                       <div 
                         onClick={triggerVerification}
@@ -2575,11 +2614,11 @@ export function MessageDetail({
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 15, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="bg-white rounded-3xl border border-slate-150 shadow-2xl w-full max-w-lg overflow-hidden text-left"
+              className="bg-white rounded-3xl border border-slate-150 shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden text-left"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="bg-slate-900 p-6 text-white flex items-center justify-between">
+              <div className="bg-slate-900 p-6 text-white flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
                     <QrCode size={18} className="text-white" />
@@ -2598,7 +2637,7 @@ export function MessageDetail({
               </div>
 
               {/* Body */}
-              <div className="p-6 space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto flex-1 min-h-0">
                 {isValidating ? (
                   <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
                     <div className="w-10 h-10 rounded-full border-4 border-slate-200 border-t-emerald-500 animate-spin" />

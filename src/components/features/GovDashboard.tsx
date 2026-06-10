@@ -656,7 +656,7 @@ export function GovDashboard({
   return (
     <div
       id="gov-dashboard-wrapper"
-      className="min-h-screen bg-slate-50 text-slate-600 p-4 md:p-8 font-sans"
+      className="min-h-screen bg-white text-slate-600 p-4 md:p-8 font-sans"
     >
       <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
         {/* Top Header Section */}
@@ -727,8 +727,8 @@ export function GovDashboard({
 
         {/* ID Digital & Novas Mensagens Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-5 md:p-6 flex items-center gap-4 md:gap-6 shadow-xs relative overflow-hidden text-left font-sans">
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center shadow-xs shrink-0">
+          <div className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-5 md:p-6 flex items-center gap-4 md:gap-6 relative overflow-hidden text-left font-sans">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-red-50 border border-red-100 rounded-2xl flex items-center justify-center shrink-0">
               <ShieldCheck size={24} className="md:w-8 md:h-8 text-red-600" />
             </div>
             <div className="min-w-0 flex-1">
@@ -738,7 +738,7 @@ export function GovDashboard({
               </div>
               <div className="flex items-center gap-1.5 mt-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] md:text-xs font-bold text-slate-650">Acesso Governamental Ativo (100%)</span>
+                <span className="text-[9px] md:text-xs font-bold text-slate-655">Acesso Governamental Ativo (100%)</span>
               </div>
             </div>
           </div>
@@ -746,9 +746,9 @@ export function GovDashboard({
           <div 
             role="button"
             onClick={() => onNavigate?.('gov-correspondencias')}
-            className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-5 md:p-6 flex items-center gap-4 md:gap-6 shadow-xs hover:shadow-md hover:border-red-600/20 transition-all cursor-pointer group relative overflow-hidden text-left font-sans"
+            className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-5 md:p-6 flex items-center gap-4 md:gap-6 hover:border-red-600/20 transition-all cursor-pointer group relative overflow-hidden text-left font-sans"
           >
-            <div className="w-12 h-12 md:w-16 md:h-16 bg-red-500/5 text-red-600 rounded-2xl flex items-center justify-center shadow-xs shrink-0 group-hover:scale-110 transition-transform border border-red-500/10">
+            <div className="w-12 h-12 md:w-16 md:h-16 bg-red-500/5 text-red-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform border border-red-500/10">
               <Mail size={24} className="md:w-8 md:h-8" />
             </div>
             <div className="min-w-0 flex-1">
@@ -760,12 +760,12 @@ export function GovDashboard({
         </div>
 
         {/* Instituições Conectadas Horizontal Panel */}
-        <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-5 shadow-xs overflow-hidden relative text-left">
+        <section className="bg-white border border-slate-200 rounded-[24px] md:rounded-[32px] p-5 overflow-hidden relative text-left">
           <div className="flex flex-col md:flex-row md:items-center justify-between md:relative gap-2 mb-4 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
                <div className="w-1.5 h-6 bg-red-650 rounded-full" />
                <div className="min-w-0">
-                 <h3 className="text-slate-950 font-black text-xs md:text-base italic tracking-tighter uppercase leading-none">Instituições Conectadas</h3>
+                  <h3 className="text-slate-950 font-black text-xs md:text-base italic tracking-tighter uppercase leading-none">Instituições Conectadas</h3>
                </div>
             </div>
             <div className="md:absolute md:left-1/2 md:-translate-x-1/2 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center mt-1 md:mt-0">
@@ -781,7 +781,7 @@ export function GovDashboard({
                 onClick={() => {
                   onNavigate?.('gov-interoperabilidade');
                 }}
-                className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-[#0c2340] hover:bg-[#152e4d] text-white border border-[#1c3c66] whitespace-nowrap transition-all cursor-pointer shrink-0 shadow-xs hover:shadow-sm"
+                className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-[#0c2340] hover:bg-[#152e4d] text-white border border-[#1c3c66] whitespace-nowrap transition-all cursor-pointer shrink-0"
                 title="Visualizar status de interoperabilidade"
               >
                 {name}
@@ -801,33 +801,23 @@ export function GovDashboard({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {/* Cartão 1 */}
-            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-105 flex items-center justify-center">
-                  <Mail size={20} />
-                </div>
-              </div>
-              <div className="mt-4 space-y-1">
-                <div className="text-3xl font-black text-slate-950 italic tracking-tighter leading-none">
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 flex flex-col justify-between min-h-[145px] text-left hover:border-[#0c2340]/25 transition-all">
+              <div className="space-y-1">
+                <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
                   1.248.752
                 </div>
                 <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
                   Correspondências Enviadas
                 </div>
               </div>
-              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-emerald-650 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
-                <TrendingUp size={12} /> ↑ 12,5% vs mês anterior
+              <div className="mt-2 text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                ↑ 12,5% vs mês anterior
               </div>
             </div>
 
             {/* Cartão 2 */}
-            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-105 flex items-center justify-center">
-                  <Send size={20} className="text-emerald-600" />
-                </div>
-              </div>
-              <div className="mt-4 space-y-1">
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 flex flex-col justify-between min-h-[145px] text-left hover:border-[#0c2340]/25 transition-all">
+              <div className="space-y-1">
                 <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
                   932.540
                 </div>
@@ -835,19 +825,14 @@ export function GovDashboard({
                   Correspondências Entregues
                 </div>
               </div>
-              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-emerald-650 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
-                <TrendingUp size={12} /> ↑ 9,8% vs mês anterior
+              <div className="mt-2 text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                ↑ 9,8% vs mês anterior
               </div>
             </div>
 
             {/* Cartão 3 */}
-            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 border border-amber-105 flex items-center justify-center">
-                  <Clock size={20} />
-                </div>
-              </div>
-              <div className="mt-4 space-y-1">
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 flex flex-col justify-between min-h-[145px] text-left hover:border-[#0c2340]/25 transition-all">
+              <div className="space-y-1">
                 <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
                   316.212
                 </div>
@@ -855,43 +840,14 @@ export function GovDashboard({
                   Pendentes
                 </div>
               </div>
-              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-rose-650 bg-rose-50 w-fit px-2.5 py-1 rounded-lg border border-rose-100 flex items-center gap-1">
-                <TrendingDown size={12} /> ↓ 5,3% vs mês anterior
+              <div className="mt-2 text-[11px] font-bold uppercase tracking-wider text-rose-600">
+                ↓ 5,3% vs mês anterior
               </div>
             </div>
 
             {/* Cartão 4 */}
-            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs flex flex-col justify-between min-h-[170px] text-left relative overflow-hidden">
-              <div className="flex justify-between items-start">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-105 flex items-center justify-center">
-                  <Bell size={20} />
-                </div>
-                {/* Gauge Circle on Top-Right */}
-                <div className="w-12 h-12 relative flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      className="stroke-slate-100 fill-none"
-                      strokeWidth="3.5"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="18"
-                      className="stroke-emerald-500 fill-none"
-                      strokeWidth="3.5"
-                      strokeDasharray="113"
-                      strokeDashoffset={113 - (113 * 92.4) / 100}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-[10px] font-black font-mono text-emerald-600">5%</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 space-y-1">
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 flex flex-col justify-between min-h-[145px] text-left hover:border-[#0c2340]/25 transition-all">
+              <div className="space-y-1">
                 <div className="text-3xl font-black text-slate-955 italic tracking-tighter leading-none">
                   92,4%
                 </div>
@@ -899,8 +855,8 @@ export function GovDashboard({
                   Taxa de Sucesso
                 </div>
               </div>
-              <div className="mt-3 text-[10px] font-black uppercase tracking-wider text-emerald-650 bg-emerald-50 w-fit px-2.5 py-1 rounded-lg border border-emerald-100 flex items-center gap-1">
-                <TrendingUp size={12} /> ↑ 7,6% vs mês anterior
+              <div className="mt-2 text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                ↑ 7,6% vs mês anterior
               </div>
             </div>
           </div>
@@ -1276,9 +1232,9 @@ export function GovDashboard({
                   </h3>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-6 justify-center">
+                <div className="flex flex-col items-center gap-4 justify-center">
                   {/* Donut Chart */}
-                  <div className="w-full sm:w-[50%] h-[160px] relative flex items-center justify-center">
+                  <div className="w-full h-[160px] relative flex items-center justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -1312,14 +1268,14 @@ export function GovDashboard({
                       <span className="text-[9px] uppercase font-mono tracking-widest text-slate-400 font-bold">
                         Fluxo
                       </span>
-                      <span className="text-lg font-black text-slate-950 italic tracking-tighter leading-none mt-0.5">
+                      <span className="text-lg font-black text-slate-955 italic tracking-tighter leading-none mt-0.5">
                         100%
                       </span>
                     </div>
                   </div>
 
                   {/* Legendas coloridas */}
-                  <div className="w-full sm:w-[50%] space-y-2">
+                  <div className="w-full space-y-2">
                     {[
                       { name: "Fiscais", value: "35,6%", color: "#2563eb" },
                       { name: "Educação", value: "25,8%", color: "#ef4444" },
@@ -1348,6 +1304,13 @@ export function GovDashboard({
                   </div>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => onNavigate?.('gov-correspondencias')}
+                className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-none cursor-pointer mt-5"
+              >
+                Análise de Categorias
+              </button>
             </div>
 
             {/* Card Província */}
@@ -1360,34 +1323,38 @@ export function GovDashboard({
                   </h3>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className="flex flex-col gap-4 items-center">
                   {/* Visual Map Representation */}
-                  <div className="w-full sm:w-[45%] h-[180px] bg-sky-50/50 border border-sky-100 rounded-2xl flex items-center justify-center relative overflow-hidden p-2">
+                  <div className="w-full h-[220px] bg-white border border-slate-200 rounded-2xl flex items-center justify-center relative overflow-hidden p-1">
                     <img
-                      src="https://i.postimg.cc/J008DY8G/Mapa-de-Angola-Provincias.gif"
+                      src="https://i.postimg.cc/rp2hhzfK/mapa-Angola.jpg"
                       alt="Mapa de Angola Províncias"
-                      className="w-full h-full object-contain filter hue-rotate-[190deg] brightness-[1.0] contrast-[0.95] opacity-80 animate-fadeIn"
+                      className="w-full h-full object-contain rounded-xl"
                       referrerPolicy="no-referrer"
                     />
-                    {/* Subtle pulsing nodes */}
-                    <span className="absolute top-[40%] left-[45%] w-2 h-2 rounded-full bg-blue-600 animate-ping" />
-                    <span className="absolute top-[40%] left-[45%] w-1.5 h-1.5 rounded-full bg-blue-600 shadow-sm" />
-                    <span className="absolute top-[60%] left-[55%] w-1.5 h-1.5 rounded-full bg-blue-500 shadow-sm opacity-60" />
-                    
-                    <div className="absolute bottom-1 right-2 text-[7px] font-mono uppercase font-black text-blue-500 tracking-wider">
-                      CDA Node Map
-                    </div>
                   </div>
 
                   {/* Província list */}
-                  <div className="w-full sm:w-[55%] space-y-1.5">
+                  <div className="w-full max-h-[170px] overflow-y-auto pr-2 space-y-1.5 text-slate-600 scrollbar-thin feedback-scroll">
                     {[
                       { name: "Luanda", count: "412.540", color: "bg-blue-600" },
                       { name: "Benguela", count: "125.450", color: "bg-purple-600" },
                       { name: "Huíla", count: "98.234", color: "bg-amber-600" },
-                      { name: "Lubango", count: "86.732", color: "bg-indigo-600" },
+                      { name: "Huambo", count: "89.120", color: "bg-rose-600" },
+                      { name: "Cabinda", count: "78.432", color: "bg-teal-600" },
                       { name: "Namibe", count: "62.540", color: "bg-emerald-600" },
-                      { name: "Outras", count: "463.276", color: "bg-slate-400" }
+                      { name: "Cuanza Sul", count: "55.320", color: "bg-indigo-600" },
+                      { name: "Uíge", count: "48.120", color: "bg-orange-600" },
+                      { name: "Malanje", count: "42.980", color: "bg-pink-600" },
+                      { name: "Bié", count: "39.450", color: "bg-cyan-600" },
+                      { name: "Zaire", count: "35.110", color: "bg-lime-600" },
+                      { name: "Moxico", count: "32.650", color: "bg-violet-600" },
+                      { name: "Lunda Norte", count: "29.740", color: "bg-fuchsia-600" },
+                      { name: "Lunda Sul", count: "25.180", color: "bg-sky-600" },
+                      { name: "Cunene", count: "21.900", color: "bg-emerald-500" },
+                      { name: "Cuanza Norte", count: "19.850", color: "bg-amber-500" },
+                      { name: "Cuando Cubango", count: "14.320", color: "bg-red-500" },
+                      { name: "Bengo", count: "11.200", color: "bg-slate-500" }
                     ].map((prov) => (
                       <div
                         key={prov.name}
@@ -1405,6 +1372,13 @@ export function GovDashboard({
                   </div>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => onNavigate?.('gov-relatorio')}
+                className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-none cursor-pointer mt-5"
+              >
+                Análise de Províncias
+              </button>
             </div>
 
             {/* Card Notificações Ativa */}
@@ -1426,7 +1400,7 @@ export function GovDashboard({
                   ].map((notif) => (
                     <div
                       key={notif.name}
-                      className="flex justify-between items-center p-2.5 rounded-2xl bg-slate-50/50 border border-slate-100 hover:border-slate-205 hover:bg-slate-50 transition-colors"
+                      className="flex justify-between items-center p-2.5 rounded-xl bg-white border border-slate-900/10 hover:bg-slate-50 hover:border-slate-900/15 transition-colors"
                     >
                       <div className="space-y-0.5">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">
@@ -1452,7 +1426,7 @@ export function GovDashboard({
               <button
                 type="button"
                 onClick={() => onNavigate?.('gov-relatorio')}
-                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-4"
+                className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-4"
               >
                 Ver todas
               </button>
@@ -1481,50 +1455,19 @@ export function GovDashboard({
                 </div>
 
                 {/* QR Code SVG Vector with scanning corner brackets - Centered & Enlarged */}
-                <div className="relative p-4 bg-white border border-slate-100 rounded-2xl shadow-sm mb-5 shrink-0 flex items-center justify-center">
+                <div className="relative p-4 bg-white rounded-2xl shadow-sm mb-5 shrink-0 flex items-center justify-center">
                   {/* Scanner Brackets */}
                   <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-emerald-500 rounded-tl-sm" />
                   <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-emerald-500 rounded-tr-sm" />
                   <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-emerald-500 rounded-bl-sm" />
                   <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-emerald-500 rounded-br-sm" />
 
-                  <svg viewBox="0 0 100 100" className="w-24 h-24 text-slate-900">
-                    <rect x="0" y="0" width="22" height="22" fill="currentColor" rx="2" />
-                    <rect x="4" y="4" width="14" height="14" fill="white" rx="1" />
-                    <rect x="7" y="7" width="8" height="8" fill="currentColor" rx="0.5" />
-
-                    <rect x="78" y="0" width="22" height="22" fill="currentColor" rx="2" />
-                    <rect x="82" y="4" width="14" height="14" fill="white" rx="1" />
-                    <rect x="85" y="7" width="8" height="8" fill="currentColor" rx="0.5" />
-
-                    <rect x="0" y="78" width="22" height="22" fill="currentColor" rx="2" />
-                    <rect x="4" y="82" width="14" height="14" fill="white" rx="1" />
-                    <rect x="7" y="85" width="8" height="8" fill="currentColor" rx="0.5" />
-
-                    <rect x="30" y="5" width="6" height="6" fill="currentColor" />
-                    <rect x="42" y="10" width="10" height="6" fill="currentColor" />
-                    <rect x="58" y="3" width="6" height="10" fill="currentColor" />
-                    <rect x="30" y="20" width="10" height="6" fill="currentColor" />
-                    
-                    <rect x="5" y="30" width="6" height="6" fill="currentColor" />
-                    <rect x="18" y="42" width="10" height="6" fill="currentColor" />
-                    <rect x="3" y="58" width="6" height="10" fill="currentColor" />
-                    <rect x="22" y="30" width="10" height="6" fill="currentColor" />
-
-                    <rect x="42" y="42" width="10" height="10" fill="currentColor" />
-                    <rect x="58" y="42" width="6" height="14" fill="currentColor" />
-                    <rect x="42" y="58" width="14" height="6" fill="currentColor" />
-
-                    <rect x="78" y="30" width="14" height="6" fill="currentColor" />
-                    <rect x="85" y="45" width="6" height="10" fill="currentColor" />
-                    <rect x="70" y="58" width="10" height="6" fill="currentColor" />
-
-                    <rect x="30" y="78" width="6" height="14" fill="currentColor" />
-                    <rect x="48" y="85" width="10" height="6" fill="currentColor" />
-                    <rect x="62" y="70" width="6" height="10" fill="currentColor" />
-
-                    <rect x="85" y="85" width="10" height="10" fill="currentColor" />
-                  </svg>
+                  <img 
+                    src="/src/assets/images/qr_code_user_1780949394453.png" 
+                    alt="QR Code de Validação" 
+                    className="w-24 h-24 aspect-square object-contain" 
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
 
                 <div className="space-y-2 flex flex-col items-center">
@@ -1543,7 +1486,7 @@ export function GovDashboard({
               <button
                 type="button"
                 onClick={() => onNavigate?.('gov-correspondencias')}
-                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+                className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
               >
                 Verificar Documento
               </button>
@@ -1580,14 +1523,14 @@ export function GovDashboard({
                 onClick={() => {
                   onNavigate?.('gov-correspondencias');
                 }}
-                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+                className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
               >
                 Abrir Assistente IA
               </button>
             </div>
 
             {/* Card SEGURANÇA */}
-            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-xs min-h-[352px] flex flex-col justify-between text-center">
+            <div className="bg-white border border-[#0c2340]/15 rounded-[24px] p-6 shadow-none min-h-[352px] flex flex-col justify-between text-center">
               <div className="flex flex-col items-center">
                 <div className="flex items-center justify-center gap-2 mb-6 pb-2 border-b border-slate-100 w-full">
                   <div className="w-1 h-5 bg-red-650 rounded-full" />
@@ -1618,11 +1561,20 @@ export function GovDashboard({
                 </div>
               </div>
 
-              <div className="p-3 bg-emerald-50/60 border border-emerald-100 rounded-2xl mt-6 flex items-center justify-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-mono uppercase font-black text-emerald-800 tracking-wider">
-                  Monitoramento Ativo &bull; CDA-SHIELD
-                </span>
+              <div className="space-y-3 mt-6">
+                <div className="p-3 bg-white border border-slate-300 rounded-2xl flex items-center justify-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[9px] font-mono uppercase font-black text-slate-700 tracking-wider">
+                    Monitoramento Ativo &bull; CDA-SHIELD
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.('gov-seguranca')}
+                  className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-none cursor-pointer"
+                >
+                  Auditar Segurança
+                </button>
               </div>
             </div>
           </div>
@@ -1674,7 +1626,7 @@ export function GovDashboard({
               <button
                 type="button"
                 onClick={() => onNavigate?.('gov-relatorio')}
-                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+                className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
               >
                 Ver todas as atividades
               </button>
@@ -1690,14 +1642,14 @@ export function GovDashboard({
                   </h3>
                 </div>
 
-                <div className="flex items-center justify-center gap-6 py-10">
-                  <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center relative shadow-xs shrink-0">
+                <div className="flex flex-col items-center justify-center gap-5 py-10 text-center">
+                  <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center relative shadow-xs shrink-0">
                     <span className="absolute inset-0 rounded-full border border-emerald-400 animate-ping opacity-25" />
-                    <CheckCircle2 size={36} className="text-emerald-500" />
+                    <CheckCircle2 size={44} className="text-emerald-500" />
                   </div>
                   
-                  <div className="space-y-0.5">
-                    <h4 className="text-lg font-black text-emerald-600 uppercase tracking-widest leading-none">
+                  <div className="space-y-1.5">
+                    <h4 className="text-[22px] font-black text-emerald-600 uppercase tracking-widest leading-none">
                       Operacional
                     </h4>
                     <p className="text-xs text-slate-500 font-extrabold uppercase mt-1">
@@ -1710,7 +1662,7 @@ export function GovDashboard({
               <button
                 type="button"
                 onClick={() => onNavigate?.('gov-seguranca')}
-                className="w-full bg-[#f4f7fa] hover:bg-[#eaf0f6] text-[#0c2340] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
+                className="w-full bg-[#0c2340] hover:bg-[#091a30] text-white text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl border-0 transition-all shadow-xs cursor-pointer mt-6"
               >
                 Ver Detalhes
               </button>

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo, useEffect, FormEvent } from 'react';
+import { useState, useMemo, useEffect, FormEvent, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -27,7 +27,8 @@ import {
   RefreshCw,
   QrCode,
   Globe,
-  FileSignature
+  FileSignature,
+  Camera
 } from 'lucide-react';
 import { Document, DocRequest, Correspondence } from '../../types';
 
@@ -318,6 +319,18 @@ export function PastaDigitalContent({
   const [isVerifyingIntegrity, setIsVerifyingIntegrity] = useState<boolean>(false);
   const [verificationResult, setVerificationResult] = useState<'none' | 'success' | 'checking'>('none');
 
+  // Camera & Scanner Capabilities (MANDATORY REQUIREMENT)
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isLensActive, setIsLensActive] = useState(false);
+  const [activeScanStep, setActiveScanStep] = useState('');
+  const [scannedDocument, setScannedDocument] = useState<ActionableDoc | null>(null);
+  const [invalidScanToken, setInvalidScanToken] = useState(false);
+  const [isProcessingCode, setIsProcessingCode] = useState(false);
+  const [customScanInput, setCustomScanInput] = useState('');
+
+  const scanVideoRef = useRef<HTMLVideoElement | null>(null);
+  const scanStreamRef = useRef<MediaStream | null>(null);
+
   // Convert default custom state `documents` from App.tsx into equivalent ActionableDoc objects
   const systemOfficialDocs = useMemo<ActionableDoc[]>(() => {
     const defaultDocsMapped = documents.map(doc => {
@@ -498,6 +511,121 @@ export function PastaDigitalContent({
     }, 1500);
   };
 
+  // Camera activation side effects (MANDATORY QR SCANNER FOR PASTA DIGITAL)
+  useEffect(() => {
+    if (isScannerOpen) {
+      startScannerCamera();
+    } else {
+      stopScannerCamera();
+    }
+    return () => stopScannerCamera();
+  }, [isScannerOpen]);
+
+  const startScannerCamera = async () => {
+    setIsLensActive(false);
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+        });
+        scanStreamRef.current = stream;
+        setIsLensActive(true);
+        if (scanVideoRef.current) {
+          scanVideoRef.current.srcObject = stream;
+        }
+      }
+    } catch (err) {
+      console.warn("Acesso real à câmara bloqueado ou indisponível no iFrame. Ativando modo de simulação visual chancelada.", err);
+      setIsLensActive(false);
+    }
+  };
+
+  const stopScannerCamera = () => {
+    if (scanStreamRef.current) {
+      scanStreamRef.current.getTracks().forEach(track => track.stop());
+      scanStreamRef.current = null;
+    }
+    if (scanVideoRef.current) {
+      scanVideoRef.current.srcObject = null;
+    }
+    setIsLensActive(false);
+  };
+
+  const playScanBeep = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const audioCtx = new AudioCtx();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(1400, audioCtx.currentTime); // high pitched clean chirp
+      gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      
+      oscillator.start();
+      setTimeout(() => {
+        oscillator.stop();
+        audioCtx.close();
+      }, 150);
+    } catch (e) {
+      console.warn("Chirp audio error ignored safely:", e);
+    }
+  };
+
+  const startInteractiveScan = (targetDoc: ActionableDoc | null) => {
+    if (isProcessingCode) return;
+    setIsProcessingCode(true);
+    setScannedDocument(null);
+    setInvalidScanToken(false);
+    setActiveScanStep('A ALINHAR LENTE COM MARCAS DE SEGURANÇA...');
+
+    const steps = [
+      { text: 'A PROCESSAR MATRIZ QR & CHAVE DE CERTIFICAÇÃO...', delay: 600 },
+      { text: 'SESSÃO SECURE-DECRIPTO COM O CENTRAL LEDGER...', delay: 1200 },
+      { text: 'A CONSOLIDAR DADOS DO TITULAR GERAL...', delay: 1800 }
+    ];
+
+    steps.forEach(({ text, delay }, index) => {
+      setTimeout(() => {
+        setActiveScanStep(text);
+        if (index === steps.length - 1) {
+          setTimeout(() => {
+            setIsProcessingCode(false);
+            setActiveScanStep('');
+            if (targetDoc) {
+              playScanBeep();
+              setScannedDocument(targetDoc);
+              logSecurityEvent?.(`VALIDACAO_QR_CAMARA: Validado documento ${targetDoc.name} (${targetDoc.id}) via câmara do utilizador.`, 'success');
+            } else {
+              setInvalidScanToken(true);
+              logSecurityEvent?.(`FALHA_QR_CAMARA: Código QR inválido ou ilegível processado pela câmara do utilizador.`, 'warning');
+            }
+          }, 350);
+        }
+      }, delay);
+    });
+  };
+
+  const handleManualScanSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!customScanInput.trim()) return;
+
+    const codeToSearch = customScanInput.trim().toLowerCase();
+    // Search within unified list
+    const found = unifiedDirectory.find(
+      d => d.code.toLowerCase() === codeToSearch || d.id.toLowerCase() === codeToSearch
+    );
+
+    if (found) {
+      startInteractiveScan(found);
+    } else {
+      startInteractiveScan(null);
+    }
+  };
+
 
 
   const getCategoryColor = (cat: string) => {
@@ -547,7 +675,17 @@ export function PastaDigitalContent({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 sm:self-start md:self-auto">
+        <div className="flex items-center gap-2.5 shrink-0 sm:self-start md:self-auto flex-wrap">
+          <button 
+            onClick={() => {
+              setIsScannerOpen(true);
+              setScannedDocument(null);
+              setInvalidScanToken(false);
+            }}
+            className="px-4 py-2.5 bg-[#0c2340] hover:bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-md shadow-[#0c2340]/10 cursor-pointer border-0"
+          >
+            <Camera size={14} /> Validar com Câmara
+          </button>
           <button 
             onClick={() => setTab('solicitar-documento')}
             className="px-4 py-2.5 bg-red-600 hover:bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-md shadow-red-600/10 cursor-pointer border-0"
@@ -555,7 +693,7 @@ export function PastaDigitalContent({
             <Plus size={14} /> Solicitar Documento
           </button>
           <span className="px-3.5 py-2.5 bg-slate-50 border border-slate-150 text-slate-700 text-[10px] font-black tracking-widest uppercase rounded-xl flex items-center gap-1.5 shadow-xs">
-            <ShieldCheck size={14} className="text-red-500 animate-pulse" /> Custódia Segura SME
+            <ShieldCheck size={14} className="text-red-500 animate-pulse" /> Custódia de Documentos
           </span>
         </div>
       </div>
@@ -1041,6 +1179,264 @@ export function PastaDigitalContent({
                 >
                   <Share2 size={14} /> Partilhar Acesso
                 </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+
+        {/* QR CODE CAMERA SCANNER POPUP MODAL (MANDATORY REQUIREMENT) */}
+        {isScannerOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsScannerOpen(false);
+                stopScannerCamera();
+              }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[700]"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 40 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[94%] max-w-lg bg-white rounded-[40px] shadow-3xl z-[701] overflow-hidden max-h-[90vh] flex flex-col border border-slate-100"
+            >
+              {/* Header */}
+              <div className="bg-[#0c2340] p-6 text-white relative">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/10 rounded-xl">
+                    <Camera size={20} className="text-cyan-400" />
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-black tracking-[0.2em] text-cyan-400 uppercase">Validador Instantâneo</span>
+                    <h3 className="text-sm md:text-base font-black uppercase tracking-tight italic">Câmara de Verificação QR CDA</h3>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setIsScannerOpen(false);
+                    stopScannerCamera();
+                  }}
+                  className="absolute top-6 right-6 bg-white/15 hover:bg-white/25 rounded-full p-2.5 text-white border-0 cursor-pointer flex items-center justify-center"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 md:p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                
+                {/* 1. Viewfinder Screen or Scanned Result View */}
+                {!scannedDocument ? (
+                  <div className="space-y-5">
+                    {/* Viewfinder scanner container */}
+                    <div className="relative w-full aspect-square max-w-[280px] mx-auto rounded-3xl overflow-hidden bg-slate-950 border border-slate-900 flex flex-col items-center justify-center select-none shadow-lg">
+                      {/* Live Camera Feed */}
+                      {isLensActive ? (
+                        <video 
+                          ref={scanVideoRef} 
+                          autoPlay 
+                          playsInline 
+                          muted 
+                          className="absolute inset-0 w-full h-full object-cover opacity-60 transform scale-x-[-1]"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-slate-500 z-10 space-y-2">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Fluxo de Câmara Indisponível</p>
+                          <p className="text-[9px] text-slate-500 leading-normal font-semibold max-w-[200px]">
+                            Dispositivo real offline ou sem permissão de iFrame. Use o painel de simulação abaixo para validar qualquer registo.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Laser scanning bar */}
+                      <motion.div 
+                        animate={{ y: [-110, 110, -110] }} 
+                        transition={{ repeat: Infinity, ease: 'easeInOut', duration: 2.2 }} 
+                        className="absolute left-6 right-6 h-[2.5px] bg-[#32b5f8] shadow-[0_0_15px_#38bdf8] rounded-full z-20 pointer-events-none" 
+                      />
+
+                      {/* Viewfinder focal corners */}
+                      <div className="absolute top-6 left-6 w-8 h-8 border-t-4 border-l-4 border-cyan-400 rounded-tl-xl" />
+                      <div className="absolute top-6 right-6 w-8 h-8 border-t-4 border-r-4 border-cyan-400 rounded-tr-xl" />
+                      <div className="absolute bottom-6 left-6 w-8 h-8 border-b-4 border-l-4 border-cyan-400 rounded-bl-xl" />
+                      <div className="absolute bottom-6 right-6 w-8 h-8 border-b-4 border-r-4 border-cyan-400 rounded-br-xl" />
+
+                      {/* Transparent focus target circle */}
+                      <div className="absolute inset-8 border border-dashed border-cyan-400/30 rounded-full opacity-40 animate-pulse pointer-events-none" />
+
+                      {/* Display active status or simulation loader overlay */}
+                      {isProcessingCode && (
+                        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center p-4 z-30 text-center space-y-3">
+                          <RefreshCw size={24} className="text-cyan-400 animate-spin" />
+                          <span className="text-cyan-400 text-[9px] font-black tracking-widest uppercase animate-pulse leading-snug">
+                            {activeScanStep}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(15,23,42,0.1)_0%,rgba(15,23,42,0.85)_100%)] pointer-events-none" />
+                    </div>
+
+                    <div className="text-center">
+                      <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wide">
+                        Posicione o QR Code impresso ou num telemóvel perante a lente
+                      </p>
+                    </div>
+
+                    {/* Invalid alert feedback banner */}
+                    {invalidScanToken && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3.5 bg-red-50 border border-red-200/60 rounded-2xl flex items-start gap-2.5 text-left"
+                      >
+                        <Lock size={15} className="text-red-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h6 className="text-[10px] font-black uppercase text-red-950">Falha Criptográfica / QR Inválido</h6>
+                          <p className="text-[9px] text-red-700 font-bold uppercase mt-0.5">
+                            O validador não localizou o hash de segurança no ledger nacional do CDA. Certifique-se de que é um documento original.
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Manual query code form input */}
+                    <form onSubmit={handleManualScanSubmit} className="space-y-2 border-t border-slate-100 pt-4 text-left">
+                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans">Consultar Código Hash Manualmente</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text"
+                          placeholder="Ex: REG-CIV-9281-LA ou CDA-90118"
+                          value={customScanInput}
+                          onChange={(e) => setCustomScanInput(e.target.value)}
+                          className="flex-1 bg-slate-50 border border-slate-200 focus:border-cyan-500 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-950 focus:bg-white outline-none"
+                        />
+                        <button
+                          type="submit"
+                          disabled={isProcessingCode}
+                          className="px-4 py-2.5 bg-slate-900 hover:bg-slate-950 text-white font-black text-[10px] uppercase tracking-wider rounded-xl cursor-pointer transition-colors border-0 shrink-0"
+                        >
+                          Validar
+                        </button>
+                      </div>
+                    </form>
+
+                    {/* 2. CHOOSE FILE SIMULATION IN PREVIEW */}
+                    <div className="border-t border-slate-100 pt-4 text-left space-y-2">
+                      <span className="text-[9px] font-black text-slate-400 tracking-wider block uppercase">Simulador de Câmara em Sandbox</span>
+                      <p className="text-[9.5px] text-slate-500 font-semibold leading-relaxed">
+                        Como este terminal corre dentro de um ambiente seguro e isolado, clique num dos seguintes documentos oficiais para simular a leitura do seu selo QR real:
+                      </p>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
+                        {unifiedDirectory.map(doc => (
+                          <button
+                            key={doc.id}
+                            type="button"
+                            onClick={() => startInteractiveScan(doc)}
+                            disabled={isProcessingCode}
+                            className="p-2.5 bg-slate-50 border border-slate-150 rounded-xl text-left hover:border-cyan-500 hover:bg-white transition-all cursor-pointer block w-full space-y-1 focus:outline-none"
+                          >
+                            <span className="block text-[8.5px] font-black text-slate-450 uppercase truncate">{doc.categoryLabel}</span>
+                            <span className="block text-[10px] text-slate-800 font-extrabold truncate italic uppercase tracking-tight">{doc.name}</span>
+                            <span className="block text-[7.5px] font-mono text-cyan-600 truncate">{doc.code}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Scanner Success Screen Detail view */
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="space-y-5 text-left"
+                  >
+                    {/* Visual Stamp Ribbon */}
+                    <div className="p-4 bg-emerald-50 border border-emerald-250/60 rounded-3xl flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                        <Check size={18} />
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="px-1.5 py-0.5 bg-emerald-600 text-white text-[7.5px] font-black uppercase rounded font-mono tracking-widest">VALIDAÇÃO INTEGRAL EXECUTADA</span>
+                        <h4 className="text-xs font-black uppercase text-emerald-950 tracking-tight mt-1 font-sans">Selo e Assinatura Autêntica</h4>
+                        <p className="text-[8.5px] text-emerald-800 font-bold uppercase leading-normal">
+                          O documento digital foi chancelado pela entidade emissora e coincide exatamente com o Livro de Registos Consolidado.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-150 rounded-3xl p-5 space-y-3.5">
+                      <h5 className="text-[9.5px] font-black text-slate-400 uppercase tracking-wider block">Detalhes do Documento Chancelado</h5>
+                      
+                      <div className="space-y-2 text-xs">
+                        <div>
+                          <span className="text-[8.5px] font-black text-slate-400 uppercase block">Nome Oficial</span>
+                          <span className="text-slate-900 font-bold uppercase italic tracking-tight">{scannedDocument.name}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3.5 pt-1">
+                          <div>
+                            <span className="text-[8.5px] font-black text-slate-400 uppercase block">Titular</span>
+                            <span className="text-slate-850 font-semibold text-slate-800">{scannedDocument.holder}</span>
+                          </div>
+                          <div>
+                            <span className="text-[8.5px] font-black text-slate-400 uppercase block">Data de Emissão</span>
+                            <span className="text-slate-850 font-semibold text-slate-800">{scannedDocument.date}</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3.5 pt-1">
+                          <div>
+                            <span className="text-[8.5px] font-black text-slate-400 uppercase block">Código de Autenticação</span>
+                            <span className="text-slate-800 font-mono font-bold text-[10.5px] text-red-600">{scannedDocument.code}</span>
+                          </div>
+                          <div>
+                            <span className="text-[8.5px] font-black text-slate-400 uppercase block">Entidade Orgânica</span>
+                            <span className="text-slate-850 font-semibold text-slate-800">{scannedDocument.institution}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Metadata view of the scanned doc */}
+                    <div className="space-y-2">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-sans">Metadados de Integridade Extraídos</span>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {Object.entries(scannedDocument.meta).slice(0, 4).map(([key, value]) => (
+                          <div key={key} className="bg-slate-50 border border-slate-100 p-2 rounded-xl">
+                            <span className="block text-[7.5px] font-bold text-slate-400 uppercase tracking-wider">{key}</span>
+                            <span className="block text-[9px] text-slate-800 font-black truncate mt-0.5" title={value}>{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2.5 border-t border-slate-105 pt-5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInspectedDoc(scannedDocument);
+                          setIsScannerOpen(false);
+                          stopScannerCamera();
+                        }}
+                        className="flex-1 bg-indigo-600 hover:bg-slate-900 text-white font-black py-3 rounded-xl text-[10.5px] uppercase tracking-widest transition-all cursor-pointer text-center border-0"
+                      >
+                        Inspecionar Detalhadamente
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScannedDocument(null);
+                        }}
+                        className="bg-white border border-slate-205 text-slate-700 font-black px-4 py-3 rounded-xl text-[10.5px] uppercase tracking-widest hover:bg-slate-100 transition-colors cursor-pointer text-center"
+                      >
+                        Escanear Outro
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           </>

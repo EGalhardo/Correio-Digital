@@ -223,10 +223,10 @@ export function InstitutionDetail({
       <div className="flex items-center justify-between bg-white border border-slate-200/80 rounded-[20px] p-3 shadow-sm">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-3 py-1.5 text-xs font-black text-slate-800 hover:text-primary hover:bg-slate-50 transition-colors rounded-xl border border-slate-100 shadow-sm cursor-pointer"
+          className="flex items-center justify-center w-8 h-8 text-slate-800 hover:text-primary hover:bg-slate-50 transition-colors rounded-xl border border-slate-100 shadow-sm cursor-pointer"
+          title="Voltar ao Painel"
         >
           <ArrowLeft size={14} />
-          Voltar ao Painel
         </button>
         <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase italic">
           Interconexão Automática
@@ -238,8 +238,8 @@ export function InstitutionDetail({
         <div className="absolute right-0 top-0 -mr-20 -mt-20 w-80 h-80 bg-primary/2.5 rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-1000" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-3 max-w-2xl min-w-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-primary/5 text-primary tracking-wider border border-primary/10">
-              <ShieldCheck size={12} className="text-primary" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase bg-blue-900 text-white tracking-wider border border-blue-800">
+              <ShieldCheck size={12} className="text-white" />
               {meta.category}
             </span>
             <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight italic uppercase">
@@ -252,24 +252,24 @@ export function InstitutionDetail({
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-3 md:flex gap-4 md:gap-6 shrink-0 border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
-            <div className="bg-slate-50/65 border border-slate-100 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px]">
-              <Mail className="text-blue-500 mb-1" size={16} />
-              <div className="text-sm md:text-lg font-black text-slate-900">{incomingMessages.length + outgoingMessages.length}</div>
-              <div className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Mensagens</div>
+            <div className="bg-blue-600 border border-blue-500 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px] text-white">
+              <Mail className="text-white mb-1" size={16} />
+              <div className="text-sm md:text-lg font-black text-white">{incomingMessages.length + outgoingMessages.length}</div>
+              <div className="text-[9px] font-black text-white uppercase tracking-wider">Mensagens</div>
             </div>
-            <div className="bg-slate-50/65 border border-slate-100 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px]">
-              <Receipt className="text-amber-500 mb-1" size={16} />
-              <div className="text-sm md:text-lg font-black text-slate-900">
+            <div className="bg-amber-500 border border-amber-400 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px] text-white">
+              <Receipt className="text-white mb-1" size={16} />
+              <div className="text-sm md:text-lg font-black text-white">
                 {invoices.filter(i => i.status === 'Pendente').length}
               </div>
-              <div className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Facturas</div>
+              <div className="text-[9px] font-black text-white uppercase tracking-wider">Facturas</div>
             </div>
-            <div className="bg-slate-50/65 border border-slate-100 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px]">
-              <FileText className="text-emerald-500 mb-1" size={16} />
-              <div className="text-sm md:text-lg font-black text-slate-900">
+            <div className="bg-emerald-600 border border-emerald-500 rounded-2xl p-3 md:px-5 md:py-4 flex flex-col items-center justify-center text-center shadow-sm min-w-[70px] md:min-w-[90px] text-white">
+              <FileText className="text-white mb-1" size={16} />
+              <div className="text-sm md:text-lg font-black text-white">
                 {incomingDocs.length}
               </div>
-              <div className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Documentos</div>
+              <div className="text-[9px] font-black text-white uppercase tracking-wider">Documentos</div>
             </div>
           </div>
         </div>
@@ -286,7 +286,7 @@ export function InstitutionDetail({
                 Correspondência & Notificações
               </h3>
             </div>
-            <span className="text-[9px] font-black text-slate-600 bg-slate-100 border border-slate-200/50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+            <span className="text-[9px] font-black text-white bg-blue-600 border border-blue-500 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
               Enviados e Recebidos
             </span>
           </div>
@@ -326,7 +326,7 @@ export function InstitutionDetail({
                             </span>
                           </div>
                           <div className="flex flex-col items-end gap-1 shrink-0">
-                            <span className="text-[9px] font-black text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">
+                            <span className="text-[9px] font-black text-white bg-blue-600 border border-blue-500 px-2 py-0.5 rounded-lg">
                               {msg.date}
                             </span>
                             <span className="text-[8px] font-black uppercase tracking-widest text-blue-600 px-1.5 bg-blue-50 rounded-md">
@@ -374,7 +374,7 @@ export function InstitutionDetail({
                             </span>
                           </div>
                           <div className="flex flex-col items-end gap-1 shrink-0">
-                            <span className="text-[9px] font-black text-slate-500 bg-slate-50 border border-slate-150 px-2 py-0.5 rounded-lg">
+                            <span className="text-[9px] font-black text-white bg-blue-600 border border-blue-500 px-2 py-0.5 rounded-lg">
                               {msg.date}
                             </span>
                           </div>
@@ -397,7 +397,7 @@ export function InstitutionDetail({
                 Facturas, Taxas e Documentos
               </h3>
             </div>
-            <span className="text-[9px] font-black text-slate-600 bg-slate-100 border border-slate-200/50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+            <span className="text-[9px] font-black text-white bg-emerald-600 border border-emerald-500 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
               Finanças & Estado
             </span>
           </div>
@@ -501,7 +501,7 @@ export function InstitutionDetail({
                           {doc.preview}
                         </span>
                       </div>
-                      <span className="text-[9px] font-mono font-bold text-slate-550 bg-white border border-slate-200 rounded-lg px-2 py-0.5 shadow-sm">
+                      <span className="text-[9px] font-mono font-bold text-white bg-emerald-600 border border-emerald-500 rounded-lg px-2 py-0.5 shadow-sm">
                         {doc.date}
                       </span>
                     </div>

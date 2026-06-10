@@ -21,6 +21,9 @@ interface AIChatAssistantProps {
   stopIaVoice?: () => void;
   appMode: AppMode;
   onCreateRequest?: (type: string, priority: 'Alta' | 'Média' | 'Baixa') => void;
+  onNavigate?: (tab: string) => void;
+  activeTab?: string;
+  pageContextHint?: string;
 }
 
 export function AIChatAssistant({ 
@@ -29,7 +32,10 @@ export function AIChatAssistant({
   iaLiveActive,
   stopIaVoice,
   appMode,
-  onCreateRequest
+  onCreateRequest,
+  onNavigate,
+  activeTab,
+  pageContextHint
 }: AIChatAssistantProps) {
   const isGov = appMode !== 'user';
   const isAdmin = appMode === 'admin';
@@ -208,6 +214,53 @@ export function AIChatAssistant({
     if (!currentInput.trim() || isLoading) return;
 
     const userMsg: Message = { role: 'user', content: currentInput };
+    
+    // Command interception (Voice navigation commands)
+    const normalizedText = currentInput.toLowerCase().trim();
+    let targetTab: string | null = null;
+    let tabLabel = "";
+    
+    if (
+      normalizedText.includes("ir para") || 
+      normalizedText.includes("abre") || 
+      normalizedText.includes("abrir") || 
+      normalizedText.includes("navega") || 
+      normalizedText.includes("muda para") || 
+      normalizedText.includes("mostrar") || 
+      normalizedText.includes("mostra")
+    ) {
+      if (normalizedText.includes("contacto") || normalizedText.includes("vizinho") || normalizedText.includes("emergência") || normalizedText.includes("emergencia") || normalizedText.includes("civil") || normalizedText.includes("parentes")) {
+        targetTab = "contactos";
+        tabLabel = "Contactos Civis e de Emergência";
+      } else if (normalizedText.includes("correio") || normalizedText.includes("mensagem") || normalizedText.includes("mensagens") || normalizedText.includes("correspondência") || normalizedText.includes("correspondencia") || normalizedText.includes("caixa")) {
+        targetTab = "correspondencias";
+        tabLabel = "Caixa de Correio e Correspondência Oficial";
+      } else if (normalizedText.includes("documento") || normalizedText.includes("fatura") || normalizedText.includes("factura") || normalizedText.includes("trâmite") || normalizedText.includes("tramitação")) {
+        targetTab = "documentos";
+        tabLabel = "Documentos e Tramitação";
+      } else if (normalizedText.includes("carteira") || normalizedText.includes("wallet") || normalizedText.includes("bi") || normalizedText.includes("passaporte") || normalizedText.includes("offline")) {
+        targetTab = "carteira";
+        tabLabel = "Carteira Digital Segura";
+      } else if (normalizedText.includes("perfil") || normalizedText.includes("dados") || normalizedText.includes("biometria") || normalizedText.includes("minha conta")) {
+        targetTab = "perfil";
+        tabLabel = "Meu Perfil de Cidadão";
+      } else if (normalizedText.includes("painel") || normalizedText.includes("início") || normalizedText.includes("inicio") || normalizedText.includes("home") || normalizedText.includes("principal") || normalizedText.includes("página inicial") || normalizedText.includes("pagina inicial")) {
+        targetTab = "home";
+        tabLabel = "Painel Principal";
+      }
+    }
+
+    if (targetTab && onNavigate) {
+      onNavigate(targetTab);
+      const navSuccessMessage = `Certamente! Já mudei o ecrã para si. Estamos agora na página de ${tabLabel} do Correio Digital de Angola. Em que mais posso ajudar?`;
+      setMessages(prev => [...prev, userMsg, { role: 'assistant', content: navSuccessMessage }]);
+      if (!textOverride) setInput('');
+      if (iaLiveActive) {
+        speak(navSuccessMessage);
+      }
+      return;
+    }
+
     setMessages(prev => [...prev, userMsg]);
     if (!textOverride) setInput('');
     setIsLoading(true);
@@ -218,7 +271,9 @@ export function AIChatAssistant({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
-          isGovMode: isGov
+          isGovMode: isGov,
+          currentPage: activeTab,
+          pageContext: pageContextHint
         }),
       });
 

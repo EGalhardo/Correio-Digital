@@ -309,6 +309,321 @@ export const supabaseService = {
   },
 
   /**
+   * Fetch a citizen's profile by BI
+   */
+  async getProfile(bi: string) {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('bi', bi)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      console.error('Supabase getProfile error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch all messages (correspondence) for a citizen or a specific sender
+   */
+  async getMessages(bi: string): Promise<Message[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`recipient_bi.eq.${bi},sender_bi.eq.${bi}`)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map((item: any) => {
+        return {
+          id: Number(item.id),
+          org: item.org,
+          preview: item.preview,
+          date: new Date(item.created_at).toLocaleDateString('pt-AO'),
+          unread: item.unread ? 1 : 0,
+          status: item.status,
+          details: {
+            subject: item.subject,
+            body: item.body,
+            deadline: item.deadline_text,
+            state: item.state_indicator,
+            actions: item.actions || [],
+            attachments: item.attachments || []
+          },
+          sensitivity: item.sensitivity,
+          priorityScale: item.priority_scale,
+          deadlineHoursRemaining: item.deadline_hours_remaining
+        };
+      });
+    } catch (e) {
+      console.error('Supabase getMessages error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch documents for a citizen
+   */
+  async getDocuments(bi: string): Promise<Document[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('holder_bi', bi);
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        name: item.name,
+        validity: item.validity,
+        code: item.code,
+        holder: item.holder_bi,
+        number: item.document_number,
+        issuer: item.issuer,
+        issuedAt: item.issued_at
+      }));
+    } catch (e) {
+      console.error('Supabase getDocuments error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch contacts for a citizen
+   */
+  async getContacts(bi: string): Promise<Contact[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .eq('owner_bi', bi);
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: Number(item.id),
+        name: item.name,
+        bi: item.bi,
+        relation: item.relation,
+        status: item.status,
+        type: item.type
+      }));
+    } catch (e) {
+      console.error('Supabase getContacts error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch citizen/system notifications
+   */
+  async getNotifications(bi: string): Promise<any[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('target_bi', bi)
+        .order('id', { ascending: false });
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: Number(item.id),
+        title: item.title,
+        message: item.message,
+        time: item.time_text,
+        type: item.type,
+        targetTab: item.target_tab
+      }));
+    } catch (e) {
+      console.error('Supabase getNotifications error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Save a system notification to Supabase
+   */
+  async insertNotification(notif: any, targetBi: string) {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const payload = {
+        target_bi: targetBi,
+        title: notif.title,
+        message: notif.message,
+        time_text: notif.time || 'Agora',
+        type: notif.type || 'info',
+        target_tab: notif.targetTab || 'home'
+      };
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert([payload])
+        .select();
+
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      console.error('Supabase insertNotification error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch services user_requests
+   */
+  async getUserRequests(bi?: string): Promise<UserRequest[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      let query = supabase.from('user_requests').select('*');
+      if (bi) {
+        query = query.eq('user_bi', bi);
+      }
+      const { data, error } = await query.order('id', { ascending: false });
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: Number(item.id),
+        user: item.user_name,
+        type: item.service_type,
+        priority: item.priority as any,
+        time: item.time_text,
+        status: item.status as any,
+        bi: item.user_bi,
+        institution: item.institution || 'AGT',
+        date: item.request_date
+      }));
+    } catch (e) {
+      console.error('Supabase getUserRequests error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch doc requests
+   */
+  async getDocRequests(bi?: string): Promise<DocRequest[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      let query = supabase.from('document_requests').select('*');
+      if (bi) {
+        query = query.eq('user_bi', bi);
+      }
+      const { data, error } = await query.order('id', { ascending: false });
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: Number(item.id),
+        userName: item.user_name,
+        userBi: item.user_bi,
+        docType: item.doc_type,
+        institution: item.institution,
+        date: item.request_date ? new Date(item.request_date).toLocaleDateString('pt-AO') : 'Recente',
+        status: item.status as any,
+        aiStatus: item.ai_status as any
+      }));
+    } catch (e) {
+      console.error('Supabase getDocRequests error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch audit logs
+   */
+  async getAuditLogs(): Promise<any[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('id', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      if (!data) return [];
+
+      return data.map((item: any) => ({
+        id: String(item.id),
+        action: item.action,
+        user: item.username,
+        timestamp: new Date(item.timestamp).toLocaleString('pt-AO'),
+        type: item.action_type || 'info'
+      }));
+    } catch (e) {
+      console.error('Supabase getAuditLogs error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch digital protocols
+   */
+  async getDigitalProtocols(): Promise<any[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('digital_protocols')
+        .select('*')
+        .order('official_issue_date', { ascending: false });
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      console.error('Supabase getDigitalProtocols error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Insert digital protocol
+   */
+  async insertDigitalProtocol(p: any) {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const payload = {
+        protocol_number: p.protocolNumber,
+        issuer_institution: p.issuerInstitution,
+        official_issue_date: p.officialIssueDate || new Date().toISOString().split('T')[0],
+        official_time: p.officialTime || new Date().toLocaleTimeString(),
+        issuer_responsible: p.issuerResponsible || 'Sistema CADA',
+        category: p.category || 'Geral',
+        document_type: p.documentType || 'Correspondência',
+        current_state: p.currentState || 'Ativo',
+        priority: p.priority || 'Normal',
+        qr_code_url: p.qrCodeUrl || '',
+        digital_signature: p.digitalSignature || 'SEC_COMP_CAD_KEY_SIGNED',
+        legal_validity: p.legalValidity || 'Ponto de barramento seguro CADA'
+      };
+      const { data, error } = await supabase
+        .from('digital_protocols')
+        .insert([payload])
+        .select();
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      console.error('Supabase insertDigitalProtocol error:', e);
+      return null;
+    }
+  },
+
+  /**
    * Seed the database with all local states.
    * Ensures 100% data fidelity between citizen profile, messages, contacts, and requests.
    */

@@ -309,7 +309,7 @@ export function GovRelatorioContent({
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value as any)}
-            className="w-full bg-slate-50 border border-slate-150 rounded-xl px-4 py-3 text-slate-700 text-xs sm:text-sm font-black uppercase tracking-wide cursor-pointer focus:border-blue-500 hover:bg-slate-100/60 outline-none transition-all appearance-none"
+            className="w-full bg-white border border-slate-150 rounded-xl px-4 py-3 text-slate-700 text-xs sm:text-sm font-black uppercase tracking-wide cursor-pointer focus:border-blue-500 hover:bg-slate-100/60 outline-none transition-all appearance-none"
           >
             <option value="usuarios">👥 Relatório Demográfico & Atividade de Usuários (Angola)</option>
             <option value="instituicoes">🏢 Relatório de Integração de Organismos & Instituições</option>
@@ -458,7 +458,7 @@ export function GovRelatorioContent({
           <div className="space-y-3">
             {selectedType === 'usuarios' ? (
               <>
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                   <div>
                     <h4 className="text-xs sm:text-sm font-black text-slate-800 font-sans">Adesão por Chave BI Digital</h4>
                     <p className="text-[10px] text-slate-400 font-semibold mt-1">Sincronização Integrada</p>
@@ -473,7 +473,7 @@ export function GovRelatorioContent({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                   <div>
                     <h4 className="text-xs sm:text-sm font-black text-slate-800 font-sans">Criação Presencial BUAP / GAE</h4>
                     <p className="text-[10px] text-slate-400 font-semibold mt-1">Balcão de Atendimento</p>
@@ -568,7 +568,7 @@ export function GovRelatorioContent({
           <div className="space-y-3">
             {selectedType === 'usuarios' ? (
               <>
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                   <div>
                     <h4 className="text-xs sm:text-sm font-black text-slate-800 font-sans">Erros de Chave BI Expirada</h4>
                     <p className="text-[10px] text-slate-400 font-semibold mt-1">Necessita de actualização presencial</p>
@@ -583,7 +583,7 @@ export function GovRelatorioContent({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                   <div>
                     <h4 className="text-xs sm:text-sm font-black text-slate-800 font-sans">Cancelamentos Solicitados</h4>
                     <p className="text-[10px] text-slate-400 font-semibold mt-1">Pedido Formal por Migração</p>
@@ -682,7 +682,7 @@ export function GovRelatorioContent({
           {selectedType === 'usuarios' ? (
             <>
               {/* SMS Lock */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-[#00A859] shrink-0">
                     <Wallet size={16} />
@@ -698,7 +698,7 @@ export function GovRelatorioContent({
               </div>
 
               {/* BI Code */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-blue-500 shrink-0">
                     <CreditCard size={16} />
@@ -714,7 +714,7 @@ export function GovRelatorioContent({
               </div>
 
               {/* Certificado Chancelado */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+              <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-indigo-500 shrink-0">
                     <Lock size={16} />

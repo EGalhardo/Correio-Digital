@@ -754,7 +754,7 @@ export function GovContactsContent({
                     <tr key={w.id} className="text-xs text-[#334155] hover:bg-slate-50/60 transition-colors border-b border-slate-100 last:border-b-0">
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-755 text-xs uppercase shadow-3xs shrink-0 font-sans">
+                          <div className="w-10 h-10 rounded-xl bg-blue-950 text-white flex items-center justify-center font-black text-xs uppercase shadow-none shrink-0 font-sans">
                             {w.name.split(' ').map(n => n[0]).slice(0, 2).join('') || (isPlatformAdmin ? 'TR' : 'AG')}
                           </div>
                           <div className="min-w-0 text-left">
@@ -804,14 +804,14 @@ export function GovContactsContent({
                           <button
                             onClick={() => handleEditWorkerClick(w)}
                             title="Editar Dados"
-                            className="py-1.5 px-3 bg-white border border-slate-205 hover:border-slate-405 text-slate-650 hover:text-slate-950 rounded-xl text-[9.5px] font-black uppercase tracking-wider cursor-pointer transition-colors"
+                            className="bg-transparent border-none text-[#0c2340] hover:text-indigo-600 hover:underline text-[9.5px] font-black uppercase tracking-wider cursor-pointer transition-colors p-1"
                           >
                             Editar
                           </button>
                           <button
                             onClick={() => handleDeleteWorker(w.id, w.name)}
                             title={isPlatformAdmin ? "Remover Agente da Plataforma" : "Remover Agente"}
-                            className="py-1.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-150 rounded-xl cursor-pointer transition-colors"
+                            className="bg-transparent border-none text-rose-600 hover:text-rose-800 cursor-pointer transition-colors p-1"
                           >
                             <Trash2 size={12} className="mx-auto" />
                           </button>
@@ -977,7 +977,7 @@ export function GovContactsContent({
         </div>
 
         {/* Global Stats indicators */}
-        <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-[20px] border border-slate-100 self-start md:self-auto">
+        <div className="flex items-center gap-3 bg-white p-3 rounded-[20px] border border-slate-200 self-start md:self-auto">
           <div className="text-left px-3">
             <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Usuários Aprovados</div>
             <div className="text-lg font-black text-slate-800">
@@ -995,7 +995,7 @@ export function GovContactsContent({
       <div className="space-y-8 animate-fadeIn">
 
         {/* 1. Contentor "Categorias de Usuários" */}
-        <section className="bg-white border border-slate-200 rounded-[32px] p-6 shadow-sm overflow-hidden relative group text-left">
+        <section className="bg-white border border-slate-200 rounded-[32px] p-6 overflow-hidden relative group text-left">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5">
                <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
@@ -1014,10 +1014,10 @@ export function GovContactsContent({
                   onClick={() => {
                     setSelectedCategory(name);
                   }}
-                  className={`px-5 py-3 rounded-2xl text-[11px] md:text-xs font-black uppercase transition-all cursor-pointer shrink-0 shadow-sm text-left flex items-center gap-2.5 border ${
+                  className={`px-5 py-3 rounded-2xl text-[11px] md:text-xs font-black uppercase transition-all cursor-pointer shrink-0 text-left flex items-center gap-2.5 border ${
                     isActive 
-                      ? 'bg-[#0e2b64] border-[#0e2b64] text-white shadow-lg font-bold' 
-                      : 'bg-slate-50 border-slate-100 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                      ? 'bg-[#0e2b64] border-[#0e2b64] text-white font-bold' 
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
                   }`}
                 >
                   <Users size={13} className={isActive ? 'text-white/80' : 'text-slate-400'} />

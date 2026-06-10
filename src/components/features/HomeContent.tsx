@@ -85,7 +85,7 @@ export function HomeContent({
       {/* Quick Summary / Security Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
         <div className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-4 md:p-6 flex items-center gap-4 md:gap-6 shadow-sm overflow-hidden relative group">
-          <div className={`w-12 h-12 md:w-16 md:h-16 ${isInst ? 'bg-white border-slate-100' : 'bg-emerald-50 border-emerald-100'} rounded-2xl flex items-center justify-center shadow-sm shrink-0 border`}>
+          <div className={`w-12 h-12 md:w-16 md:h-16 ${isInst ? 'bg-white border-slate-100' : 'bg-green-600 border-green-600'} rounded-2xl flex items-center justify-center shadow-sm shrink-0 border`}>
             {isInst ? (
               <img 
                 src="https://i.postimg.cc/1XDX0qsQ/agt.png" 
@@ -94,7 +94,7 @@ export function HomeContent({
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <ShieldCheck size={24} className="md:w-8 md:h-8 text-emerald-600" />
+              <ShieldCheck size={24} className="md:w-8 md:h-8 text-white" />
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -114,8 +114,8 @@ export function HomeContent({
           onClick={() => setTab('correspondencias')}
           className="bg-white border border-slate-200 rounded-[28px] md:rounded-[32px] p-4 md:p-6 flex items-center gap-4 md:gap-6 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all cursor-pointer group relative overflow-hidden"
         >
-          <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/5 text-primary rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-110 transition-transform border border-primary/10">
-            <Mail size={24} className="md:w-8 md:h-8" />
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-red-600 text-white rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-110 transition-transform border border-red-600">
+            <Mail size={24} className="md:w-8 md:h-8 font-bold" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[9px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1 truncate">Novas Mensagens</div>
@@ -143,19 +143,23 @@ export function HomeContent({
             <button 
               key={name} 
               onClick={() => {
-                if (name === "AGT") {
-                   onCreateRequest?.("NIF", "Média");
-                } else if (name === "SME") {
-                   onCreateRequest?.("Visto/BI", "Alta");
-                } else if (name === "INE") {
-                   onCreateRequest?.("Certificação Estatística", "Média");
+                if (!isInst) {
+                  if (name === "AGT") {
+                     onCreateRequest?.("NIF", "Média");
+                  } else if (name === "SME") {
+                     onCreateRequest?.("Visto/BI", "Alta");
+                  } else if (name === "INE") {
+                     onCreateRequest?.("Certificação Estatística", "Média");
+                  }
                 }
               }}
               onDoubleClick={() => {
-                onDoubleClickInstitution?.(name);
+                if (!isInst && onDoubleClickInstitution) {
+                  onDoubleClickInstitution?.(name);
+                }
               }}
-              className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-primary text-white border border-primary/20 whitespace-nowrap hover:bg-[#091f46] hover:border-primary transition-all cursor-pointer shrink-0 shadow-md hover:shadow-lg grow-0 text-left"
-              title="Dê duplo clique para ver detalhes desta instituição"
+              className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-[#0c2340] text-white border border-[#0c2340]/20 whitespace-nowrap hover:bg-[#091f46] hover:border-[#0c2340] transition-all cursor-pointer shrink-0 shadow-md hover:shadow-lg grow-0 text-left"
+              title={(isInst || !onDoubleClickInstitution) ? name : "Dê duplo clique para ver detalhes desta instituição"}
             >
               {name}
             </button>

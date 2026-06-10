@@ -103,6 +103,9 @@ interface MailContentProps {
   handleSelectMessage: (msg: Message) => void;
   bi: string;
   isInst?: boolean;
+  onDeleteMessage?: (id: number) => void;
+  onRestoreMessage?: (id: number) => void;
+  deletedMessageIds?: number[];
 }
 
 export function MailContent({
@@ -121,7 +124,10 @@ export function MailContent({
   filteredMessages,
   handleSelectMessage,
   bi,
-  isInst
+  isInst,
+  onDeleteMessage,
+  onRestoreMessage,
+  deletedMessageIds = [],
 }: MailContentProps) {
   const [editorBold, setEditorBold] = useState(false);
   const [editorItalic, setEditorItalic] = useState(false);
@@ -297,11 +303,11 @@ export function MailContent({
         <div className="flex items-center gap-4 mb-2">
           <button 
             onClick={() => setIsComposing(false)}
-            className="flex items-center gap-2.5 px-6 py-2.5 bg-white border-2 border-[#d1dbe5] rounded-full font-black text-xs md:text-sm text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95"
+            className="flex items-center justify-center w-10 h-10 bg-white border-2 border-[#d1dbe5] rounded-full text-[#384e6e] hover:bg-slate-50 transition-all shadow-md cursor-pointer hover:scale-105 active:scale-95 shrink-0"
             aria-label="Voltar"
+            title="Voltar ao Correio"
           >
             <ArrowLeft size={16} className="text-[#384e6e]" />
-            <span>Voltar ao Correio</span>
           </button>
           <div>
             <h3 className="text-base md:text-xl font-black text-primary leading-none">Nova Mensagem</h3>
@@ -787,15 +793,16 @@ export function MailContent({
 
       {/* Filters & Tabs Container */}
       <div className="bg-white border border-slate-300 rounded-[32px] p-2.5 shadow-sm flex flex-col lg:flex-row gap-3">
-        <div className="flex gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl lg:min-w-[420px]">
+        <div className="flex flex-wrap md:flex-nowrap gap-1.5 p-1 bg-white border border-slate-200 rounded-2xl lg:min-w-[500px] w-full lg:w-auto">
           {[
-            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !m.unread).length },
-            { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => m.unread).length },
-            { id: 'enviadas', label: 'Enviadas', count: sentMessages.length }
+            { id: 'lidas', label: 'Lidas', count: inbox.filter(m => !deletedMessageIds.includes(m.id) && !m.unread).length },
+            { id: 'naoLidas', label: 'Não Lidas', count: inbox.filter(m => !deletedMessageIds.includes(m.id) && m.unread).length },
+            { id: 'enviadas', label: 'Enviadas', count: sentMessages.filter(m => !deletedMessageIds.includes(m.id)).length },
+            { id: 'excluidas', label: 'Excluídas', count: [...inbox, ...sentMessages].filter(m => deletedMessageIds.includes(m.id)).length }
           ].map(t => {
             const isActive = correspondenciaTab === t.id;
             let activeStyle = '';
-            let badgeStyle = 'bg-slate-300 text-slate-700';
+            let badgeStyle = '';
 
             if (isActive) {
               if (t.id === 'lidas') {
@@ -803,20 +810,32 @@ export function MailContent({
                 badgeStyle = 'bg-white text-emerald-700';
               } else if (t.id === 'naoLidas') {
                 activeStyle = 'bg-red-600 text-white shadow-md shadow-red-200 ring-2 ring-red-600';
-                badgeStyle = 'bg-white text-red-600';
+                badgeStyle = 'bg-white text-red-650';
               } else if (t.id === 'enviadas') {
                 activeStyle = 'bg-blue-600 text-white shadow-md shadow-blue-200 ring-2 ring-blue-600';
                 badgeStyle = 'bg-white text-blue-600';
+              } else if (t.id === 'excluidas') {
+                activeStyle = 'bg-rose-600 text-white shadow-md shadow-rose-200 ring-2 ring-rose-600';
+                badgeStyle = 'bg-white text-rose-600';
               }
             } else {
               activeStyle = 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50';
+              if (t.id === 'lidas') {
+                badgeStyle = 'bg-emerald-600 text-white';
+              } else if (t.id === 'naoLidas') {
+                badgeStyle = 'bg-red-600 text-white';
+              } else if (t.id === 'enviadas') {
+                badgeStyle = 'bg-blue-600 text-white';
+              } else if (t.id === 'excluidas') {
+                badgeStyle = 'bg-rose-600 text-white';
+              }
             }
 
             return (
               <button 
                 key={t.id}
                 onClick={() => setCorrespondenciaTab(t.id)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all ${activeStyle}`}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-[11px] md:text-xs font-black uppercase tracking-tight transition-all border-0 cursor-pointer ${activeStyle}`}
               >
                 {t.label}
                 {t.count > 0 && (
@@ -836,7 +855,7 @@ export function MailContent({
             placeholder="Pesquisar correspondência oficial..."
             value={searchMail}
             onChange={(e) => setSearchMail(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-2xl pl-12 pr-4 py-3 md:py-3.5 text-xs md:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-primary/10 focus:bg-white focus:border-primary/30 transition-all outline-none placeholder:text-slate-500"
+            className="w-full bg-white border border-slate-300 rounded-2xl pl-12 pr-4 py-3 md:py-3.5 text-xs md:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-primary/10 focus:bg-white focus:border-primary/30 transition-all outline-none placeholder:text-slate-500"
           />
         </div>
       </div>
@@ -880,8 +899,8 @@ export function MailContent({
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                               item.unread 
-                                ? 'bg-[#fff5f5] text-[#e05252] border border-[#fdd8d8]' 
-                                : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                ? 'bg-red-600 text-white border border-red-605' 
+                                : 'bg-emerald-600 text-white border border-emerald-605'
                             }`}>
                               {item.unread ? 'Não Lida' : 'Lida'}
                             </span>
@@ -961,13 +980,36 @@ export function MailContent({
 
                       {/* Ações Column */}
                       <td className="py-5 px-5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleSelectMessage(item)}
-                          className="text-[9.5px] font-black uppercase text-indigo-650 hover:text-indigo-850 transition-colors tracking-widest hover:underline cursor-pointer bg-transparent border-0 outline-none"
-                        >
-                          {isInst ? 'ANALISAR PLEITO' : 'ABRIR OFÍCIO'}
-                        </button>
+                        <div className="flex items-center justify-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectMessage(item)}
+                            className="text-[9.5px] font-black uppercase text-indigo-650 hover:text-indigo-850 transition-colors tracking-widest hover:underline cursor-pointer bg-transparent border-0 outline-none"
+                          >
+                            {isInst ? 'ANALISAR' : 'ABRIR'}
+                          </button>
+                          {correspondenciaTab === 'excluidas' ? (
+                            <button
+                              type="button"
+                              onClick={() => onRestoreMessage && onRestoreMessage(item.id)}
+                              className="text-[9.5px] font-black uppercase text-emerald-600 hover:text-emerald-700 transition-colors tracking-widest hover:underline cursor-pointer bg-transparent border-0 outline-none"
+                            >
+                              Restaurar
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm("Tem a certeza que deseja enviar esta mensagem oficial para as Excluídas?")) {
+                                  onDeleteMessage && onDeleteMessage(item.id);
+                                }
+                              }}
+                              className="text-[9.5px] font-black uppercase text-rose-600 hover:text-rose-800 transition-colors tracking-widest hover:underline cursor-pointer bg-transparent border-0 outline-none"
+                            >
+                              Excluir
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

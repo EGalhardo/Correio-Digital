@@ -50,7 +50,10 @@ export function DeleteContactModal({
                 Cancelar
               </button>
               <button 
-                onClick={handleDeleteContact}
+                onClick={() => {
+                  handleDeleteContact();
+                  setContactToDelete(null);
+                }}
                 className="py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-colors"
               >
                 Eliminar

@@ -216,9 +216,10 @@ export function GovEmissaoContent({
          <div className="flex items-center justify-between mb-4">
             <button 
               onClick={() => setShowForm(false)}
-              className="flex items-center gap-2 text-slate-600 hover:text-slate-950 font-black text-xs uppercase tracking-widest transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-950 transition-colors border-0 cursor-pointer shrink-0"
+              title="Voltar ao Correio"
             >
-              <ArrowLeft size={16} /> Voltar ao Correio
+              <ArrowLeft size={16} />
             </button>
          </div>
        ) : (
