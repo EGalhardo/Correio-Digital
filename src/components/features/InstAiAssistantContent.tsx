@@ -34,7 +34,9 @@ import {
   FileCode,
   Sparkles,
   Globe,
-  Sliders
+  Sliders,
+  RefreshCw,
+  Info
 } from 'lucide-react';
 
 interface InstAiAssistantProps {
@@ -53,8 +55,9 @@ interface KnowledgeItem {
   id: string;
   name: string;
   size: string;
+  type?: string;
   uploadedAt: string;
-  status: 'Processado' | 'Indexando';
+  status: 'Processado' | 'Indexando' | 'Em Processamento';
 }
 
 interface InteractionLog {
@@ -77,7 +80,7 @@ interface ToolIntegration {
 
 export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
   // Navigation Sub Tab State
-  const [activeSubTab, setActiveSubTab] = useState<'config' | 'instructions' | 'knowledge' | 'tools' | 'history'>('config');
+  const [activeSubTab, setActiveSubTab] = useState<'config' | 'knowledge' | 'history'>('config');
 
   useEffect(() => {
     const scrollParent = () => {
@@ -173,13 +176,16 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
   const [previewInput, setPreviewInput] = useState<string>('');
   const [isPreviewTyping, setIsPreviewTyping] = useState<boolean>(false);
   const previewChatBottomRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
 
   // Knowledge Base Files state
   const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeItem[]>([
-    { id: 'kb1', name: 'Manual_Procedimentos_Fiscais_AGT.pdf', size: '2.4 MB', uploadedAt: '12/05/2026', status: 'Processado' },
-    { id: 'kb2', name: 'Regulamento_Custas_Tributarias.pdf', size: '1.1 MB', uploadedAt: '14/05/2026', status: 'Processado' },
-    { id: 'kb3', name: 'Instrucao_Preenchimento_Modelo_1.docx', size: '420 KB', uploadedAt: '01/06/2026', status: 'Processado' },
-    { id: 'kb4', name: 'Tabela_Codigos_Atividades_Economicas.pdf', size: '4.8 MB', uploadedAt: '04/06/2026', status: 'Indexando' }
+    { id: 'kb1', name: 'Regulamento_Institucional.pdf', size: '2.4 MB', type: 'PDF', uploadedAt: '15/06/2026 14:32', status: 'Processado' },
+    { id: 'kb2', name: 'Manual_Atendimento.docx', size: '1.1 MB', type: 'DOCX', uploadedAt: '15/06/2026 11:18', status: 'Processado' },
+    { id: 'kb3', name: 'Politica_Privacidade.pdf', size: '890 KB', type: 'PDF', uploadedAt: '14/06/2026 16:45', status: 'Processado' },
+    { id: 'kb4', name: 'Perguntas_Frequentes.txt', size: '320 KB', type: 'TXT', uploadedAt: '14/06/2026 09:20', status: 'Processado' },
+    { id: 'kb5', name: 'Procedimentos_Fiscais.pdf', size: '3.2 MB', type: 'PDF', uploadedAt: '11/06/2026 10:05', status: 'Em Processamento' }
   ]);
 
   // Authorized API Tools integration state
@@ -249,37 +255,56 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
     addAuditLog?.('Instruções operacionais do Assistente de IA atualizadas por agente autorizado.', 'success');
   };
 
-  // Action: Add simulated PDF to database
-  const handleUploadDummyFile = () => {
-    const filePool = [
-      'Decreto_Presidencial_Regulamentacao_Virtual.pdf',
-      'Portaria_Instrucoes_Fiscais_Aduaneiras.docx',
-      'Instrucoes_Procedimentos_Contribuinte_Singular.pdf',
-      'Codigo_Geral_Tributos_Angola_Revisado.pdf'
-    ];
-    const picked = filePool[Math.floor(Math.random() * filePool.length)];
-    const existing = knowledgeFiles.find(f => f.name === picked);
+  // Action: Add selected or dropped file to base
+  const handleUploadFileInstance = (file: File) => {
+    const existing = knowledgeFiles.find(f => f.name.toLowerCase() === file.name.toLowerCase());
     if (existing) {
       triggerToast('Este documento já está registrado na base de conhecimento.', 'warning');
       return;
     }
 
+    const today = new Date();
+    const formattedDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()} ${today.getHours().toString().padStart(2, '0')}:${today.getMinutes().toString().padStart(2, '0')}`;
+
+    // Get formatted file size
+    const sizeInMB = file.size / (1024 * 1024);
+    const sizeStr = sizeInMB < 0.1 
+      ? `${(file.size / 1024).toFixed(0)} KB` 
+      : `${sizeInMB.toFixed(1)} MB`;
+
+    // Extract file extension and support general file types
+    let ext = file.name.split('.').pop()?.toUpperCase() || 'PDF';
+    // Clean ext limit to 5 chars
+    if (ext.length > 5) ext = ext.substring(0, 4);
+
     const newDoc: KnowledgeItem = {
       id: `doc-${Date.now()}`,
-      name: picked,
-      size: `${(Math.random() * 2.5 + 1.2).toFixed(1)} MB`,
-      uploadedAt: new Date().toLocaleDateString('pt-PT'),
-      status: 'Indexando'
+      name: file.name,
+      type: ext,
+      size: sizeStr,
+      uploadedAt: formattedDate,
+      status: 'Em Processamento'
     };
 
     setKnowledgeFiles(prev => [newDoc, ...prev]);
-    triggerToast(`Documento "${picked}" adicionado para processamento.`, 'success');
-    addAuditLog?.(`Novo manual anexado ao conhecimento do Assistente: ${picked}`, 'success');
+    triggerToast(`Documento "${file.name}" carregado para processamento.`, 'success');
+    addAuditLog?.(`Novo documento anexado ao conhecimento do Assistente: ${file.name}`, 'success');
 
     // Simulate complete index status
     setTimeout(() => {
       setKnowledgeFiles(current => current.map(f => f.id === newDoc.id ? { ...f, status: 'Processado' } : f));
-    }, 5500);
+    }, 4500);
+  };
+
+  const handleFileSelectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleUploadFileInstance(files[0]);
+    }
+    // reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Action: Delete document from database
@@ -374,7 +399,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
   const activeCheckboxesCount = Object.values(contextConfig).filter(Boolean).length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 text-[#1e293b] font-sans antialiased" id="inst-ai-assistant-root">
+    <div className="space-y-6 max-w-none w-full pb-12 text-[#1e293b] font-sans antialiased" id="inst-ai-assistant-root">
       
       {/* Dynamic Action Toast Notification */}
       <AnimatePresence>
@@ -401,12 +426,12 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
       </AnimatePresence>
 
       {/* CABEÇALHO DA PÁGINA (PAGE HEADER) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 px-1">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 px-1" id="ia-header-section">
         <div className="text-left">
-          <h1 className="text-2xl md:text-[28px] font-black text-[#0c2340] tracking-tight m-0 leading-tight">
+          <h1 className="text-2xl md:text-[28px] font-black text-slate-800 tracking-tight m-0 leading-tight">
             IA
           </h1>
-          <p className="text-xs md:text-sm text-slate-700 font-bold mt-1.5">
+          <p className="text-xs md:text-sm text-slate-500 font-bold mt-1.5">
             Configure e gerencie o assistente virtual da sua instituição.
           </p>
         </div>
@@ -414,7 +439,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
         {/* State and Preview Trigger */}
         <div className="flex items-center gap-3">
           {/* Badge de Estado: Active status blinker */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-black text-emerald-800 select-none tracking-wider shadow-none">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full text-[10px] font-black text-emerald-850 select-none tracking-wider shadow-none">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             ● ATIVO
           </div>
@@ -422,11 +447,11 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
           <button
             type="button"
             onClick={() => setIsPreviewOpen(true)}
-            className="bg-[#0c2340] hover:bg-indigo-950 text-white py-2 px-5 rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-none border-none"
+            className="bg-[#0c2340] hover:bg-slate-900 text-white py-2.5 px-5 rounded-lg text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer shadow-none border-none"
             id="preview-assistant-btn"
           >
             <Eye size={14} className="stroke-[2.5]" />
-            <span>Pré-visualizar Assistente</span>
+            <span>PRÉ-VISUALIZAR ASSISTENTE</span>
           </button>
         </div>
       </div>
@@ -474,7 +499,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                   <h2 className="text-xl font-black text-[#0c2340] tracking-tight m-0 leading-none">{assistantName}</h2>
                   <button
                     onClick={() => setIsEditingNameInline(true)}
-                    className="p-1.5 hover:bg-slate-50 text-slate-400 hover:text-[#0c2340] rounded-lg transition-colors cursor-pointer border-none bg-transparent"
+                    className="p-1 bg-transparent border-none cursor-pointer text-slate-450 hover:text-slate-800 transition-colors"
                     title="Editar Nome do Assistente"
                   >
                     <Pencil size={13} className="stroke-[2.5]" />
@@ -494,7 +519,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                   <Bot size={14} className="stroke-[2.5]" />
                 </div>
                 <div className="text-left">
-                  <span className="block text-[10px] font-extrabold text-slate-600 uppercase tracking-wider leading-none">Modelo</span>
+                  <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider leading-none">Modelo</span>
                   <span className="font-extrabold text-[#0c2340] text-xs block mt-0.5">{model}</span>
                 </div>
               </div>
@@ -504,7 +529,7 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                   <Globe size={14} className="stroke-[2.5]" />
                 </div>
                 <div className="text-left">
-                  <span className="block text-[10px] font-extrabold text-slate-600 uppercase tracking-wider leading-none">Idioma</span>
+                  <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider leading-none">Idioma</span>
                   <span className="font-extrabold text-[#0c2340] text-xs block mt-0.5">Português</span>
                 </div>
               </div>
@@ -514,17 +539,17 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
                   <Sliders size={14} className="stroke-[2.5]" />
                 </div>
                 <div className="text-left">
-                  <span className="block text-[10px] font-extrabold text-slate-600 uppercase tracking-wider leading-none">Temp</span>
+                  <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider leading-none">Temp</span>
                   <span className="font-extrabold text-[#0c2340] text-xs block mt-0.5">{temperature}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <div className="text-emerald-600 bg-emerald-50 w-7 h-7 rounded-lg flex items-center justify-center shrink-0">
-                  <CheckCircle size={14} className="stroke-[2.5]" />
+                  <ShieldCheck size={14} className="stroke-[2.5]" />
                 </div>
                 <div className="text-left">
-                  <span className="block text-[10px] font-extrabold text-slate-600 uppercase tracking-wider leading-none">Estado</span>
+                  <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider leading-none">Estado</span>
                   <span className="font-bold text-emerald-700 text-xs block mt-0.5">Ativo</span>
                 </div>
               </div>
@@ -593,503 +618,298 @@ export function InstAiAssistantContent({ addAuditLog }: InstAiAssistantProps) {
         </div>
       </div>
 
-      {/* MENU DE NAVEGAÇÃO HORIZONTAL */}
-      <div className="w-full flex items-center border-b border-slate-200 mt-2 gap-2 overflow-x-auto scrollbar-none">
-        {[
-          { id: 'config', label: 'Configuração Geral', icon: Settings, color: '#4f46e5' },
-          { id: 'instructions', label: 'Instruções da IA', icon: FileText, color: '#4f46e5' },
-          { id: 'knowledge', label: 'Base de Conhecimento', icon: BookOpen, color: '#4f46e5' },
-          { id: 'tools', label: 'Ferramentas Autorizadas', icon: Activity, color: '#4f46e5' },
-          { id: 'history', label: 'Histórico de Conversas', icon: MessageSquare, color: '#4f46e5' },
-        ].map(tab => {
-          const IconComponent = tab.icon;
-          const isActive = activeSubTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-wider transition-all duration-150 shrink-0 border-b-2 cursor-pointer bg-transparent outline-none ${
-                isActive 
-                  ? 'border-[#4f46e5] text-[#4f46e5] font-black' 
-                  : 'border-transparent text-slate-500 hover:text-slate-850'
-              }`}
-            >
-              <IconComponent 
-                size={14} 
-                className="shrink-0"
-                style={{ color: isActive ? tab.color : 'currentColor' }}
-              />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* DYNAMIC VIEWS ACCORDING TO NAVIGATION MENU */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeSubTab}
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -15 }}
-          transition={{ duration: 0.2 }}
-        >
-          {/* SUB-VIEW 1: Configuração Geral */}
-          {activeSubTab === 'config' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-              
-              {/* COLUNA 1 - CONFIGURAÇÃO GERAL */}
-              <div className="lg:col-span-1 flex flex-col justify-between bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none gap-5">
-                <div className="space-y-4">
-                  <div className="pb-3 border-b border-slate-100">
-                    <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase">
-                      CONFIGURAÇÃO GERAL
-                    </h3>
-                  </div>
-
-                  {/* Nome do Assistente Input */}
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                      Nome do Assistente
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-semibold text-[#0c2340] outline-none transition-all shadow-none"
-                      placeholder="Ex: Assistente AGT"
-                      value={tempName}
-                      onChange={(e) => setTempName(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Descrição Textarea */}
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                      Descrição do Assistente
-                    </label>
-                    <textarea
-                      rows={4}
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 outline-none transition-all leading-relaxed resize-none shadow-none"
-                      placeholder="Descreva a função operativa..."
-                      value={tempDescription}
-                      onChange={(e) => setTempDescription(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Model, Temp, and Language */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                        Modelo de IA
-                      </label>
-                      <select
-                        className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-3 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-none"
-                        value={tempModel}
-                        onChange={(e) => setTempModel(e.target.value)}
-                      >
-                        <option value="GPT-4o">GPT-4o (Standard)</option>
-                        <option value="Gemini 1.5 Pro">Gemini 1.5 Pro</option>
-                        <option value="Claude 3.5 Sonnet">Claude 3.5 Sonnet</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1.5 text-left">
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                        Temperatura
-                      </label>
-                      <select
-                        className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-3 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-none"
-                        value={tempTemperature}
-                        onChange={(e) => setTempTemperature(e.target.value)}
-                      >
-                        <option value="0.0">0.0 (Preciso)</option>
-                        <option value="0.2">0.2 (Tributário)</option>
-                        <option value="0.5">0.5 (Equilibrado)</option>
-                        <option value="0.8">0.8 (Criativo)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">
-                      Idioma de Resposta
-                    </label>
-                    <select
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl px-4 py-3 text-xs font-bold text-[#0c2340] outline-none cursor-pointer shadow-none"
-                      value={tempLanguage}
-                      onChange={(e) => setTempLanguage(e.target.value)}
-                    >
-                      <option value="Português (Portugal)">Português (Portugal)</option>
-                      <option value="Português (Angola)">Português (Angola)</option>
-                      <option value="Inglês (UK)">Inglês (UK)</option>
-                      <option value="Francês">Francês</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={handleSaveGeneralConfig}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer border-none shadow-none"
-                  >
-                    Guardar Alterações
-                  </button>
-                </div>
-              </div>
-
-              {/* COLUNA 2 - CONFIGURAÇÃO DA IA - Divided in two cards */}
-              <div className="lg:col-span-1 flex flex-col justify-between gap-6">
-                
-                {/* CARD 1: INSTRUÇÕES DA IA */}
-                <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none flex flex-col justify-between flex-1 gap-4">
-                  <div className="space-y-4 flex-1">
-                    <div className="pb-2 border-b border-slate-100">
-                      <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase">
-                        INSTRUÇÕES DA IA
-                      </h3>
-                    </div>
-
-                    <textarea
-                      rows={6}
-                      className="w-full bg-white border border-[#0c2340]/15 focus:border-[#0c2340] rounded-xl p-3.5 text-xs font-mono font-bold text-slate-800 outline-none tracking-tight leading-relaxed resize-none flex-1 min-h-[140px] shadow-none"
-                      value={tempInstructions}
-                      onChange={(e) => setTempInstructions(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2 mt-2">
-                    <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-600 uppercase tracking-wider pl-1">
-                      <span>{tempInstructions.length} / 2000 caracteres</span>
-                      <span className="text-emerald-500 font-black">Homologado</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleSaveInstructions}
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer border-none shadow-none"
-                    >
-                      Guardar Instruções
-                    </button>
-                  </div>
-                </div>
-
-                {/* CARD 2: CONTEXTO AUTOMÁTICO */}
-                <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none">
-                  <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-50">
-                    <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase">
-                      CONTEXTO AUTOMÁTICO
-                    </h3>
-                    <HelpCircle size={15} className="text-[#6366f1] cursor-pointer" title="Permissões internas que sustentam o conhecimento contextuais do contribuinte" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 text-left">
-                    {[
-                      { key: 'readMail', label: 'Ler Correspondência' },
-                      { key: 'readProcessStatus', label: 'Ler Estado dos Processos' },
-                      { key: 'readTaxpayerData', label: 'Ler Dados do Contribuinte' },
-                      { key: 'readSchedules', label: 'Ler Agendamentos' },
-                      { key: 'readHistory', label: 'Ler Histórico de Interações' },
-                      { key: 'readAttachments', label: 'Ler Documentos Anexos' }
-                    ].map(item => (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => setContextConfig({
-                          ...contextConfig,
-                          [item.key as any]: !contextConfig[item.key as keyof typeof contextConfig]
-                        })}
-                        className="flex items-start gap-2 text-left bg-transparent border-none cursor-pointer select-none py-1 group outline-none"
-                      >
-                        <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                          contextConfig[item.key as keyof typeof contextConfig]
-                            ? 'bg-indigo-600 border-indigo-600 text-white'
-                            : 'bg-white border-slate-300 group-hover:border-slate-450'
-                        }`}>
-                          {contextConfig[item.key as keyof typeof contextConfig] && (
-                            <Check size={11} className="stroke-[3.5]" />
-                          )}
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-600 select-none group-hover:text-slate-800 transition-colors uppercase tracking-tight leading-tight">
-                          {item.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-
+      {/* CENTRAL CONTENT GRID (CONFIGURAÇÃO GERAL & BASE DE CONHECIMENTO SIDE-BY-SIDE) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mt-2">
+        {/* COLUNA ESQUERDA - CONFIGURAÇÃO GERAL (5 spans) */}
+        <div className="lg:col-span-5 bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none flex flex-col justify-between gap-5 text-left">
+          <div className="space-y-4">
+            <div className="pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase">
+                CONFIGURAÇÃO GERAL
+              </h3>
             </div>
-          )}
 
-          {/* SUB-VIEW 2: Editor Completo de Instruções (Expanded Layout focus) */}
-          {activeSubTab === 'instructions' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
-              <div className="pb-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-left">
-                <div>
-                  <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">INSTRUÇÕES MESTRE DO AGENTE IA</h3>
-                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-tight mt-0.5">Defina o tom de voz, regras de validação legal e os limites de operação assistida.</p>
+            {/* Nome do Assistente Input */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
+                Nome do Assistente
+              </label>
+              <input
+                type="text"
+                className="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 outline-none transition-all shadow-xs"
+                placeholder="Ex: Assistente AGT"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+              />
+            </div>
+
+            {/* Descrição Textarea */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
+                Descrição do Assistente
+              </label>
+              <textarea
+                rows={4}
+                className="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-4 py-3 text-xs font-semibold text-slate-800 outline-none transition-all leading-relaxed resize-none shadow-xs"
+                placeholder="Descreva a função operativa..."
+                value={tempDescription}
+                onChange={(e) => setTempDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Model, Temp */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
+                  Modelo de IA
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-xl pl-3 pr-8 py-3 text-xs font-bold text-slate-800 outline-none cursor-pointer appearance-none transition-all"
+                    value={tempModel}
+                    onChange={(e) => setTempModel(e.target.value)}
+                  >
+                    <option value="GPT-4o">GPT-4o (Standard)</option>
+                    <option value="Gemini 1.5 Pro">Gemini 1.5 Pro</option>
+                    <option value="Claude 3.5 Sonnet">Claude 3.5 Sonnet</option>
+                  </select>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-[9px] font-bold">
+                    ▼
+                  </span>
                 </div>
-                <span className="bg-purple-100 text-[#6366f1] px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider self-start sm:self-auto shadow-none">
-                  Modo Expandido
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
+                  Temperatura
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-xl pl-3 pr-8 py-3 text-xs font-bold text-slate-800 outline-none cursor-pointer appearance-none transition-all"
+                    value={tempTemperature}
+                    onChange={(e) => setTempTemperature(e.target.value)}
+                  >
+                    <option value="0.0">0.0 (Preciso)</option>
+                    <option value="0.2">0.2 (Tributário)</option>
+                    <option value="0.5">0.5 (Equilibrado)</option>
+                    <option value="0.8">0.8 (Criativo)</option>
+                  </select>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-[9px] font-bold">
+                    ▼
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Idioma */}
+            <div className="space-y-1.5 text-left">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">
+                Idioma de Resposta
+              </label>
+              <div className="relative">
+                <select
+                  className="w-full bg-white border border-slate-200 focus:border-indigo-500 rounded-xl pl-4 pr-8 py-3 text-xs font-bold text-slate-800 outline-none cursor-pointer appearance-none transition-all"
+                  value={tempLanguage}
+                  onChange={(e) => setTempLanguage(e.target.value)}
+                >
+                  <option value="Português (Portugal)">Português (Portugal)</option>
+                  <option value="Português (Angola)">Português (Angola)</option>
+                  <option value="Inglês (UK)">Inglês (UK)</option>
+                  <option value="Francês">Francês</option>
+                </select>
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-[9px] font-bold">
+                  ▼
                 </span>
               </div>
+            </div>
+          </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
-                
-                {/* Guidelines information banner */}
-                <div className="lg:col-span-4 bg-slate-50 p-5 rounded-xl space-y-4">
-                  <span className="block text-[10px] font-black text-slate-450 tracking-wider uppercase">RECOMENDAÇÕES LEGAIS</span>
-                  
-                  <div className="p-3.5 bg-white border border-[#0c2340]/15 rounded-lg space-y-2">
-                    <span className="font-extrabold text-[11px] text-[#0c2340] uppercase">1. Imparcialidade e Limitação</span>
-                    <p className="text-[11px] leading-relaxed text-slate-500 m-0">O atendente virtual não pode sugerir formas alternativas de evasão fiscal ou fornecer auditorias humanas de livre julgamento.</p>
-                  </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleSaveGeneralConfig}
+              className="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer border-none shadow-none"
+            >
+              Guardar Alterações
+            </button>
+          </div>
+        </div>
 
-                  <div className="p-3.5 bg-white border border-[#0c2340]/15 rounded-lg space-y-2">
-                    <span className="font-extrabold text-[11px] text-[#0c2340] uppercase">2. Custódia de Sigilo</span>
-                    <p className="text-[11px] leading-relaxed text-slate-500 m-0">A IA deve orientar o contribuinte a não enviar faturas bancárias ou senhas de acesso diretamente no chat, direcionando ao correio oficial quando necessário.</p>
-                  </div>
+        {/* COLUNA DIREITA - BASE DE CONHECIMENTO (7 spans) */}
+        <div 
+          className={`lg:col-span-7 bg-white border rounded-[20px] p-6 shadow-none flex flex-col justify-between gap-4 text-left transition-all duration-200 relative ${
+            isDragging 
+              ? 'border-indigo-500 bg-indigo-50/10 ring-2 ring-indigo-500/15 scale-[1.005]' 
+              : 'border-[#0c2340]/15'
+          }`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+              handleUploadFileInstance(files[0]);
+            }
+          }}
+        >
+          {/* Hidden File Input supporting several file formats */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.gif,.xls,.xlsx"
+            onChange={handleFileSelectChange}
+            id="kb-file-input-uploader"
+          />
 
-                  <div className="p-3.5 bg-indigo-50 border border-indigo-100 rounded-lg flex items-start gap-2">
-                    <AlertCircle size={15} className="text-indigo-600 shrink-0 mt-0.5" />
-                    <p className="text-[10.5px] font-bold text-indigo-700 leading-normal m-0 uppercase pl-0.5">
-                      As regras modificadas passam a vigorar imediatamente após salvar.
-                    </p>
-                  </div>
-                </div>
+          <div>
+            <div className="pb-3 border-b border-slate-100 flex items-center justify-between gap-4 text-left">
+              <div>
+                <h3 className="text-sm font-black text-[#0c2340] tracking-wider uppercase m-0 leading-none">
+                  BASE DE CONHECIMENTO
+                </h3>
+                <p className="text-[11px] text-slate-400 font-semibold tracking-tight mt-1 bg-transparent max-w-lg leading-snug">
+                  Gerencie os documentos que a IA utiliza como fonte de conhecimento institucional. Todos os documentos são processados e indexados para pesquisa semântica.
+                </p>
+              </div>
 
-                {/* Code editor feel prompt instructions */}
-                <div className="lg:col-span-8 flex flex-col justify-between space-y-4">
-                  <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 flex flex-col">
-                    <div className="flex items-center gap-1.5 pb-2 border-b border-slate-800 text-slate-450 font-mono text-[10px] uppercase select-none">
-                      <FileCode size={13} className="text-[#a855f7]" />
-                      <span>instrucoes_assistente_agt.json</span>
-                    </div>
-                    <textarea
-                      rows={14}
-                      className="w-full bg-transparent border-0 text-amber-200/95 font-mono text-xs focus:outline-none focus:ring-0 leading-relaxed py-3 resize-none font-bold"
-                      value={tempInstructions}
-                      onChange={(e) => setTempInstructions(e.target.value)}
-                    />
-                  </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-2.5 bg-[#4f46e5] hover:bg-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-1.5 transition-all cursor-pointer border-none shrink-0"
+              >
+                <Plus size={14} className="stroke-[3]" />
+                <span>Adicionar Documento</span>
+              </button>
+            </div>
 
-                  <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 font-semibold text-[11px] text-slate-500 uppercase tracking-wide">
-                    <span>{tempInstructions.length} / 2000 caracteres no diretório de sistema</span>
+            {/* Document list table with vertical scroll functionality */}
+            <div className="overflow-x-auto overflow-y-auto max-h-[305px] mt-4 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_0_rgba(241,245,249,1)]">
+                  <tr className="border-b border-indigo-50/50 text-slate-400 uppercase tracking-widest text-[9px] font-extrabold bg-white">
+                    <th className="py-2.5 px-1 pb-2 font-black">Nome do Documento</th>
+                    <th className="py-2.5 px-1 pb-2 text-center font-black">Tipo</th>
+                    <th className="py-2.5 px-1 pb-2 text-center font-black">Data de Carga</th>
+                    <th className="py-2.5 px-1 pb-2 text-center font-black">Tamanho</th>
+                    <th className="py-2.5 px-1 pb-2 text-center font-black">Estado</th>
+                    <th className="py-2.5 px-1 pb-2 text-right font-black">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {knowledgeFiles.map(file => {
+                    const isImg = ['JPG', 'JPEG', 'PNG', 'GIF', 'WEBP'].includes(file.type || '');
+                    const isDoc = ['DOC', 'DOCX'].includes(file.type || '');
+                    const isPdf = file.type === 'PDF';
                     
-                    <button
-                      type="button"
-                      onClick={handleSaveInstructions}
-                      className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all border-none cursor-pointer shadow-none inline-flex items-center gap-2 justify-center"
-                    >
-                      <CheckCircle size={14} />
-                      <span>Salvar Novas Instruções</span>
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {/* SUB-VIEW 3: Base de Conhecimento (Durable legistation indexer) */}
-          {activeSubTab === 'knowledge' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
-              <div className="pb-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
-                <div>
-                  <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">BIBLIOTECA DE LEGISLAÇÃO CONTEXTUAL</h3>
-                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-tight mt-0.5">Adicione decretos tributários, manuais operacionais de auditoria e tabelas oficiais para fins de indexação.</p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleUploadDummyFile}
-                  className="px-5 py-3 bg-[#0c2340] hover:bg-[#152e4d] text-white rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer border-none"
-                >
-                  <Plus size={15} />
-                  <span>Anexar Legislação</span>
-                </button>
-              </div>
-
-              {/* Grid document entries */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                {knowledgeFiles.map(file => (
-                  <div key={file.id} className="bg-slate-50 border border-slate-200 hover:border-slate-350 rounded-xl p-4 flex items-center justify-between transition-colors select-none">
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 text-[#3b82f6] rounded-xl flex items-center justify-center shrink-0">
-                        <FileText size={20} className="stroke-[2.5]" />
-                      </div>
-                      <div className="truncate space-y-0.5">
-                        <h4 className="font-extrabold text-[#0c2340] text-xs truncate max-w-[240px] m-0 uppercase tracking-tight">{file.name}</h4>
-                        <p className="text-[10px] font-bold text-slate-400 m-0 uppercase tracking-tight">
-                          {file.size} • Upload em {file.uploadedAt}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0 ml-3">
-                      {file.status === 'Processado' ? (
-                        <span className="bg-emerald-100/80 text-emerald-800 border border-emerald-200 rounded-md text-[8.5px] font-black px-2 py-0.5 uppercase tracking-wide">
-                          Indexado
-                        </span>
-                      ) : (
-                        <span className="bg-amber-100 text-amber-800 border border-amber-200 rounded-md text-[8.5px] font-black px-2 py-0.5 uppercase tracking-wide animate-pulse">
-                          Processando
-                        </span>
-                      )}
-
-                      <button
-                        onClick={() => handleDeleteFile(file.id, file.name)}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-                        title="Remover documento"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Empty state conditional */}
-              {knowledgeFiles.length === 0 && (
-                <div className="py-12 text-center text-slate-400">
-                  <BookOpen size={40} className="mx-auto text-slate-300 stroke-[1.5] mb-2" />
-                  <p className="text-xs font-bold uppercase tracking-wider m-0">Nenhum documento anexado ao assistente</p>
-                  <p className="text-[11px] text-slate-400 mt-1 max-w-sm mx-auto">
-                    Carregue publicações do Diário da República para sustentar as respostas da inteligência artificial.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* SUB-VIEW 4: Ferramentas Autorizadas (Integrations and active gateways) */}
-          {activeSubTab === 'tools' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
-              <div className="pb-4 border-b border-slate-50 text-left">
-                <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">FERRAMENTAS OPERACIONAIS E APIS DA IA</h3>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-tight mt-0.5">Determine quais rotas e webservices integrados da sua instituição o assistente pode executar de forma autónoma.</p>
-              </div>
-
-              {/* API list block items */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                {tools.map(tool => (
-                  <div key={tool.id} className="bg-slate-50 border border-slate-200 rounded-xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-slate-200 text-slate-700 text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
-                          {tool.category}
-                        </span>
-                        {tool.active && (
-                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block animate-pulse" />
-                        )}
-                      </div>
-                      <h4 className="font-extrabold text-[#0c2340] text-xs m-0 uppercase tracking-tight">{tool.name}</h4>
-                      <p className="text-[11px] font-medium text-slate-500 leading-relaxed m-0">
-                        {tool.description}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => handleToggleTool(tool.id)}
-                      className="shrink-0 p-1 bg-transparent border-none cursor-pointer self-end sm:self-auto outline-none"
-                      title={tool.active ? 'Bloquear ferramenta' : 'Autorizar ferramenta'}
-                    >
-                      {tool.active ? (
-                        <div className="flex items-center gap-1.5 text-emerald-600">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 select-none">ATIVO</span>
-                          <ToggleRight size={28} className="text-emerald-500" />
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 select-none">BLOQUEADO</span>
-                          <ToggleLeft size={28} className="text-slate-350" />
-                        </div>
-                      )}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* SUB-VIEW 5: Histórico de Conversas (Past queries and ratings) */}
-          {activeSubTab === 'history' && (
-            <div className="bg-white border border-[#0c2340]/15 rounded-[20px] p-6 shadow-none space-y-6">
-              <div className="pb-4 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
-                <div>
-                  <h3 className="text-base font-black text-[#0c2340] tracking-tight m-0">DIÁRIO DE INTERACÇÕES DA IA</h3>
-                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-tight mt-0.5">Audite as conversações iniciadas por cidadãos através do portal e confira o nível de satisfação retornado.</p>
-                </div>
-                
-                <div className="flex items-center bg-slate-150 border border-slate-200.5 rounded-lg px-3 py-1.5 gap-2 max-w-xs self-start sm:self-auto">
-                  <Search size={14} className="text-slate-450" />
-                  <input
-                    type="text"
-                    placeholder="Filtrar por nome ou BI..."
-                    className="bg-transparent border-0 text-xs font-bold text-slate-700 outline-none w-full placeholder:text-slate-400 lowercase pr-1"
-                  />
-                </div>
-              </div>
-
-              {/* Table list log items */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-700 border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-widest text-[9.5px]">
-                      <th className="py-3 px-4 pl-1">Cidadão / Contribuinte</th>
-                      <th className="py-3 px-4">BI do Contribuinte</th>
-                      <th className="py-3 px-4">Tópico Inicial</th>
-                      <th className="py-3 px-4 text-center">Mensagens</th>
-                      <th className="py-3 px-4 text-center">Satisfação</th>
-                      <th className="py-3 px-4 text-right">Data / Tempo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {interactionLogs.map(log => (
-                      <tr key={log.id} className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3.5 px-4 pl-1 font-extrabold text-[#0c2340] uppercase tracking-tight">
-                          {log.citizenName}
-                        </td>
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-500">
-                          {log.bi}
-                        </td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-600">
-                          {log.topic}
-                        </td>
-                        <td className="py-3.5 px-4 text-center font-bold text-slate-700">
-                          {log.messagesCount}
-                        </td>
-                        <td className="py-3.5 px-4 text-center">
-                          <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                            log.satisfaction === 'Alta' 
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' 
-                              : log.satisfaction === 'Média'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-100'
-                              : 'bg-rose-50 text-rose-700 border border-rose-100'
+                    return (
+                      <tr key={file.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td className="py-2 px-1 font-bold text-slate-800 flex items-center gap-2.5">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border text-[8px] font-black tracking-tighter uppercase ${
+                            isPdf 
+                              ? 'bg-rose-50 border-rose-200/40 text-rose-600' 
+                              : isImg
+                              ? 'bg-emerald-50 border-emerald-200/40 text-emerald-600'
+                              : isDoc
+                              ? 'bg-indigo-50 border-indigo-200/40 text-indigo-600'
+                              : 'bg-amber-50 border-amber-200/40 text-amber-700'
                           }`}>
-                            {log.satisfaction}
+                            <span>{file.type || 'PDF'}</span>
+                          </div>
+                          <span className="truncate max-w-[145px] text-xs font-bold text-slate-700" title={file.name}>
+                            {file.name}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right font-medium text-slate-450 uppercase text-[10px]">
-                          {log.time}
+                        <td className="py-2 px-1 text-center font-mono font-extrabold text-slate-450 uppercase text-[9.5px]">
+                          {file.type || 'PDF'}
+                        </td>
+                        <td className="py-2 px-1 text-center font-semibold text-slate-500 whitespace-nowrap">
+                          {file.uploadedAt}
+                        </td>
+                        <td className="py-2 px-1 text-center font-bold text-slate-650">
+                          {file.size}
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          {file.status === 'Processado' ? (
+                            <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-600 rounded-md text-[8.5px] font-extrabold px-2 py-0.5 inline-flex items-center gap-1 uppercase tracking-wide">
+                              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block" />
+                              Processado
+                            </span>
+                          ) : (
+                            <span className="bg-indigo-50 border border-indigo-200/60 text-indigo-700 rounded-md text-[8.5px] font-extrabold px-2 py-0.5 inline-flex items-center gap-1 uppercase tracking-wide animate-pulse">
+                              <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full inline-block animate-ping" />
+                              Em Processamento
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-1">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button className="p-1 hover:bg-slate-50 text-slate-400 hover:text-[#0c2340] rounded border-none bg-transparent cursor-pointer" title="Visualizar">
+                              <Eye size={13} className="stroke-[2.5]" />
+                            </button>
+                            <button className="p-1 hover:bg-slate-50 text-slate-400 hover:text-indigo-600 rounded border-none bg-transparent cursor-pointer" title="Recarregar">
+                              <RefreshCw size={12} className="stroke-[2.5]" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteFile(file.id, file.name)}
+                              className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded border-none bg-transparent cursor-pointer" 
+                              title="Remover"
+                            >
+                              <Trash2 size={13} className="stroke-[2.5]" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    );
+                  })}
+                  {knowledgeFiles.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-slate-400 uppercase font-black tracking-widest text-[10px]">
+                        Nenhum documento na base de conhecimento
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Table pagination stats footer */}
+          <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-450 border-t border-slate-105 pt-2.5 mt-1 uppercase tracking-wider">
+            <span>{knowledgeFiles.length} documentos</span>
+            <div className="flex items-center gap-4">
+              <span>Página 1 de 1</span>
+              <div className="flex items-center gap-1">
+                <button className="p-1 text-slate-300 hover:text-slate-800 disabled:opacity-40 border-none bg-transparent cursor-pointer" disabled>
+                  ◀
+                </button>
+                <button className="p-1 text-slate-300 hover:text-slate-800 disabled:opacity-40 border-none bg-transparent cursor-pointer" disabled>
+                  ▶
+                </button>
               </div>
             </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+          </div>
+        </div>
+      </div>
 
-      {/* RODAPÉ INFORMATIVO (BOTTOM INFORMATION CHIPS) */}
-      <div className="bg-[#0c2340] border border-[#0c2340]/40 rounded-xl p-4 flex items-center gap-3 text-left">
-        <Sparkles size={18} className="text-indigo-300 shrink-0" />
-        <p className="text-xs text-white font-extrabold m-0 uppercase tracking-tight">
-          As alterações feitas serão aplicadas imediatamente ao assistente da sua instituição nos canais oficiais de Sandbox e Correio Digital.
-        </p>
+      {/* RODAPÉ INFORMATIVO ("Como Funciona" Alert box strictly matching layout) */}
+      <div className="bg-indigo-50/40 border border-indigo-100 rounded-xl p-4 flex items-start gap-3 mt-2 text-left" id="comofunciona-alert-box">
+        <div className="w-7 h-7 rounded-full bg-indigo-50 border border-indigo-150 flex items-center justify-center text-indigo-600 shrink-0 mt-0.5">
+          <Info className="w-4 h-4 text-indigo-600" />
+        </div>
+        <div>
+          <p className="text-[11px] text-indigo-950 font-bold leading-relaxed uppercase tracking-tight m-0">
+            <strong className="text-indigo-900 font-extrabold mr-1.5">Como funciona:</strong>
+            Os documentos são processados automaticamente após o upload e ficam disponíveis para a IA consultar durante as conversas. Ao remover um documento, a IA deixa imediatamente de utilizar esse conteúdo como fonte de conhecimento.
+          </p>
+        </div>
       </div>
 
       {/* THE COMPREHENSIVE FLOATING WEB CHAT PREVIEW MODAL */}

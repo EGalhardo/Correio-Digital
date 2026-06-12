@@ -282,9 +282,18 @@ export interface Correspondence {
   originProvince: string;
   destinationProvince: string;
   institution: 'AGT' | 'SME' | 'Tribunal Supremo' | 'Registo Civil' | 'ENDE' | 'MINJUS' | string;
-  status: 'Lida' | 'Não Lida' | 'Enviada' | 'Processando' | 'Bloqueada' | string;
+  status: 'Enviada' | 'Recebida' | 'Em Análise' | 'Respondida' | 'Arquivada' | 'Cancelada' | string;
   date: string;
   body: string;
+  category?: string;
+  sentDate?: string;
+  receivedDate?: string;
+  responseTime?: string;
+  priority?: 'Alta' | 'Média' | 'Baixa' | string;
+  attachments?: { name: string; size: string }[];
+  history?: { action: string; dateTime: string; user: string }[];
+  isDelayed?: boolean;
+  delayDays?: number;
 }
 
 

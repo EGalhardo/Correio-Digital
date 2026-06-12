@@ -521,6 +521,49 @@ export default function App() {
   const [activeFallback, setActiveFallback] = useState<{ channel: 'SMS' | 'USSD' | 'PUSH'; message: string; protocol: string } | null>(null);
   const [showOfflineManagerWidget, setShowOfflineManagerWidget] = useState(false);
 
+  const [successProtocolModal, setSuccessProtocolModal] = useState<{
+    protocolNumber: string;
+    org: string;
+    subject: string;
+    digitalSignature: string;
+    documentHash: string;
+    officialIssueDate: string;
+    officialTime: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (successProtocolModal) {
+      setTimeout(() => {
+        const canvas = document.getElementById('protocol-qrcode-canvas') as HTMLCanvasElement;
+        if (canvas) {
+          import('qrcode').then((QRCode) => {
+            QRCode.toCanvas(canvas, JSON.stringify({
+              protocolNumber: successProtocolModal.protocolNumber,
+              type: "Correspondência",
+              org: successProtocolModal.org,
+              subject: successProtocolModal.subject,
+              date: successProtocolModal.officialIssueDate,
+              time: successProtocolModal.officialTime,
+              hash: successProtocolModal.documentHash,
+              signature: successProtocolModal.digitalSignature
+            }), {
+              width: 170,
+              margin: 1,
+              color: {
+                dark: '#0f172a',
+                light: '#ffffff'
+              }
+            }, (error) => {
+              if (error) console.error(error);
+            });
+          }).catch(err => {
+            console.error('Failed to import qrcode dynamic module:', err);
+          });
+        }
+      }, 150);
+    }
+  }, [successProtocolModal]);
+
   // Face Scan simulated progress for login screen
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -975,6 +1018,17 @@ export default function App() {
     setIsComposing(false);
     setComposeData({ to: '', subject: '', body: '', attachments: [] });
 
+    const protocolData = {
+      protocolNumber: protocol.protocolNumber,
+      org: composeData.to,
+      subject: composeData.subject,
+      digitalSignature: protocol.digitalSignature || `RSA-AO-2026-CHANCELAR-${protocol.protocolNumber}`,
+      documentHash: protocol.documentHash || 'SHA256:d82ebd908e09f87c6533010b9876274',
+      officialIssueDate: protocol.officialIssueDate || new Date().toLocaleDateString('pt-PT'),
+      officialTime: protocol.officialTime || new Date().toLocaleTimeString('pt-PT').substring(0, 5)
+    };
+    setSuccessProtocolModal(protocolData);
+
     if (!isOnline) {
       const q = OfflineManager.queueAction('SEND_MESSAGE', { messageId, to: composeData.to, subject: composeData.subject });
       setOfflineQueue(OfflineManager.getQueue());
@@ -1027,6 +1081,17 @@ export default function App() {
     setDocSentMessages(prev => [newMessage, ...prev]);
     setIsDocComposing(false);
     setDocComposeData({ to: '', subject: '', body: '' });
+
+    const protocolData = {
+      protocolNumber: protocol.protocolNumber,
+      org: docComposeData.to,
+      subject: docComposeData.subject,
+      digitalSignature: protocol.digitalSignature || `RSA-AO-2026-CHANCELAR-${protocol.protocolNumber}`,
+      documentHash: protocol.documentHash || 'SHA256:d82ebd908e09f87c6533010b9876274',
+      officialIssueDate: protocol.officialIssueDate || new Date().toLocaleDateString('pt-PT'),
+      officialTime: protocol.officialTime || new Date().toLocaleTimeString('pt-PT').substring(0, 5)
+    };
+    setSuccessProtocolModal(protocolData);
 
     if (!isOnline) {
       const q = OfflineManager.queueAction('SEND_DOCUMENT', { messageId, to: docComposeData.to, subject: docComposeData.subject });
@@ -2725,6 +2790,127 @@ Ficha civil do titular:
                 >
                   <RefreshCw size={14} className="animate-spin" />
                   Sincronizar Agora
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Sucesso com Selo de QR Code Gov */}
+      <AnimatePresence>
+        {successProtocolModal && (
+          <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: -20 }}
+              className="bg-white rounded-[32px] border border-slate-200 shadow-2xl w-full max-w-lg overflow-hidden text-left my-8"
+            >
+              <div className="p-6 bg-gradient-to-r from-blue-900 to-indigo-950 text-white relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl font-sans"></div>
+                <div className="flex items-center gap-3 relative z-10 font-sans">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-500/20">
+                    <Check size={22} className="stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm uppercase tracking-wide text-white">Correspondência Enviada</h4>
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-[#93c5fd] block mt-0.5">Selo Criptográfico de Emissão CDA</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSuccessProtocolModal(null)}
+                  className="absolute top-6 right-6 text-white/60 hover:text-white p-1 rounded-full hover:bg-white/10 z-20 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <p className="text-slate-600 text-xs text-center leading-relaxed font-semibold font-sans">
+                  A correspondência governamental foi autenticada e enviada! O sistema gerou o selo digital oficial com QR Code de rastreio integrado abaixo.
+                </p>
+
+                {/* Selo Físico Timbrado Preview */}
+                <div className="border border-slate-200 bg-slate-50/50 rounded-2xl p-5 relative overflow-hidden flex flex-col items-center justify-center font-sans">
+                  <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-yellow-500 via-yellow-405 to-black"></div>
+                  
+                  {/* Angola Republic seal mock style */}
+                  <div className="flex items-center gap-1.5 mb-4 text-[10px] font-black text-[#0f172a] uppercase tracking-wider">
+                    <Shield size={14} className="text-yellow-600 shrink-0" />
+                    <span>República de Angola &bull; Ministério CDA</span>
+                  </div>
+
+                  {/* QR Canvas Container */}
+                  <div className="bg-white p-3.5 rounded-2xl border border-slate-150 shadow-sm relative flex items-center justify-center">
+                    <canvas id="protocol-qrcode-canvas" className="w-[170px] h-[170px]" />
+                    {/* Inner secure shield icon overlay for gorgeous layout */}
+                    <div className="absolute w-10 h-10 rounded-lg bg-slate-900 border border-slate-705 flex items-center justify-center text-white shadow-md top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                    </div>
+                  </div>
+
+                  {/* Protocol Details */}
+                  <div className="mt-4 text-center space-y-1">
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block font-sans">Código do Protocolo Nacional</span>
+                    <p className="text-xs font-black text-indigo-650 font-mono tracking-wider uppercase select-all">
+                      {successProtocolModal.protocolNumber}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cripto Specs info */}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 font-mono text-[9.5px] text-slate-650">
+                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[8.5px]">Assunto:</span>
+                    <span className="text-slate-700 font-extrabold text-right truncate max-w-[240px]">{successProtocolModal.subject}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[8.5px]">Órgão Destino:</span>
+                    <span className="text-slate-700 font-extrabold text-right truncate max-w-[240px]">{successProtocolModal.org}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[8.5px]">Data de Emissão:</span>
+                    <span className="text-slate-700 font-extrabold">{successProtocolModal.officialIssueDate} às {successProtocolModal.officialTime}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[8.5px]">Assinatura Digital RSA-AO:</span>
+                    <span className="text-slate-500 font-medium truncate max-w-[200px]">{successProtocolModal.digitalSignature}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[8.5px]">Hash SHA-256 de Acervo:</span>
+                    <span className="text-slate-500 font-medium truncate max-w-[200px]">{successProtocolModal.documentHash}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="p-6 bg-slate-50 border-t border-slate-150 flex flex-col sm:flex-row gap-2 font-sans">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const canvas = document.getElementById('protocol-qrcode-canvas') as HTMLCanvasElement;
+                    if (canvas) {
+                      const url = canvas.toDataURL('image/png');
+                      const link = document.createElement('a');
+                      link.download = `selo-oficial-${successProtocolModal.protocolNumber}.png`;
+                      link.href = url;
+                      link.click();
+                      addAuditLog(`Selo do Protocolo ${successProtocolModal.protocolNumber} exportado para impressão física`, 'success');
+                    }
+                  }}
+                  className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 font-extrabold text-xs uppercase rounded-xl hover:bg-slate-100 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] transition-all"
+                >
+                  <ArrowLeft size={14} className="rotate-90 text-indigo-600 translate-y-[-0.5px]" />
+                  Descarregar Selo Oficial
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSuccessProtocolModal(null)}
+                  className="flex-1 py-3 bg-primary text-white font-extrabold text-xs uppercase rounded-xl hover:opacity-95 shadow-md shadow-primary/10 cursor-pointer text-center active:scale-[0.98] transition-all border-0 font-sans"
+                >
+                  Concluir Envio
                 </button>
               </div>
             </motion.div>

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, 
@@ -42,7 +43,13 @@ import {
   UserPlus,
   Trash2,
   Edit,
-  MapPin
+  MapPin,
+  User,
+  Briefcase,
+  Building,
+  Phone,
+  Info,
+  Zap
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { 
@@ -123,7 +130,72 @@ export function GovContactsContent({
   auditLogs = []
 }: GovContactsContentProps) {
   
-  // Workers State for Institution Mode
+  // Workers State for Institution Mode and Admin Central
+  const AVAILABLE_ROLES = [
+    'Administrador Central',
+    'Supervisor Nacional',
+    'Operador',
+    'Auditor',
+    'Suporte Técnico',
+    'Gestor da Plataforma'
+  ];
+
+  const AVAILABLE_DEPARTMENTS = [
+    'Sede Executiva / Gestão Unificada',
+    'Auditoria Territorial / Inspeção Geral',
+    'Homologações de Documentos / Backoffice',
+    'Prevenção de Fraude / Compliance',
+    'Criptografia / Chaves Privadas',
+    'Políticas / Parâmetros API'
+  ];
+
+  const ALL_PERMISSIONS = [
+    { id: 'Visualizar', label: 'Visualizar Cadastros', desc: 'Consultar dados dactiloscópicos e fichas de cidadão' },
+    { id: 'Homologar', label: 'Homologar BI', desc: 'Validar e deferir emissões de BI digital pendentes' },
+    { id: 'Bloqueio', label: 'Bloquear Contas', desc: 'Suspender preventivamente chaves privadas ou acessos de cidadão' },
+    { id: 'Alertas', label: 'Emitir Alertas', desc: 'Disparar notificações de emergência ou quarentena nacional' },
+    { id: 'Logs', label: 'Consultar Logs', desc: 'Aceder integralmente aos logs de auditoria e auditoria de IPs' },
+    { id: 'API', label: 'Gerir Parâmetros API', desc: 'Configurar parâmetros e chaves de barramento dactiloscópico' }
+  ];
+
+  const playSuccessSound = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12); // A5
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.22);
+    } catch (e) {
+      // Audio context disallowed or not supported
+    }
+  };
+
+  const playToggleSound = (isActive: boolean) => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(isActive ? 660 : 440, ctx.currentTime);
+      osc.frequency.setValueAtTime(isActive ? 880 : 330, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.10, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+    } catch (e) {
+      // Fail silently
+    }
+  };
+
   interface Trabajador {
     id: string;
     name: string;
@@ -131,9 +203,12 @@ export function GovContactsContent({
     role: string;
     department: string;
     agentId: string;
-    status: 'Ativo' | 'Suspenso' | 'Férias' | 'Pendente';
+    status: 'Ativo' | 'Desativado' | 'Suspenso' | 'Férias' | 'Pendente';
     lastAccess: string;
     phone: string;
+    registrationDate: string;
+    permissions: string[];
+    activityLogs: { action: string; timestamp: string; ip: string }[];
   }
 
   const [workers, setWorkers] = useState<Trabajador[]>(() => {
@@ -153,45 +228,68 @@ export function GovContactsContent({
           id: 'w-admin-1',
           name: 'Edlasio Galhardo',
           email: 'e.galhardo@mindis.gov.ao',
-          role: 'Administrador Geral / Central',
-          department: 'Infraestrutura Central (CDA)',
+          role: 'Administrador Central',
+          department: 'Sede Executiva / Gestão Unificada',
           agentId: 'CDA-0001',
           status: 'Ativo',
           lastAccess: 'Hoje, 10:22',
-          phone: '+244 923 888 777'
+          phone: '+244 923 888 777',
+          registrationDate: '02/01/2026',
+          permissions: ['Visualizar', 'Homologar', 'Bloqueio', 'Alertas', 'Logs', 'API'],
+          activityLogs: [
+            { action: 'Efetuou login na consola dactiloscópica', timestamp: '12/06/2026 10:15', ip: '197.231.42.15' },
+            { action: 'Homologou com sucesso cadastro de cidadão José Kalunga', timestamp: '12/06/2026 10:18', ip: '197.231.42.15' },
+            { action: 'Restaurou chaves privadas de segurança', timestamp: '12/06/2026 10:22', ip: '197.231.42.15' }
+          ]
         },
         {
           id: 'w-admin-2',
           name: 'Kambanza Neto',
           email: 'k.neto@cda.gov.ao',
-          role: 'Suporte Técnico Especializado',
-          department: 'Segurança Cibernética',
+          role: 'Suporte Técnico',
+          department: 'Criptografia / Chaves Privadas',
           agentId: 'CDA-0050',
           status: 'Ativo',
           lastAccess: 'Hoje, 08:30',
-          phone: '+244 924 113 050'
+          phone: '+244 924 113 050',
+          registrationDate: '15/01/2026',
+          permissions: ['Visualizar', 'API'],
+          activityLogs: [
+            { action: 'Gerou novas chaves criptográficas HSM', timestamp: '11/06/2026 14:15', ip: '197.231.40.89' },
+            { action: 'Efetuou login na consola dactiloscópica', timestamp: '12/06/2026 08:30', ip: '197.231.40.89' }
+          ]
         },
         {
           id: 'w-admin-3',
           name: 'Marta Viana',
           email: 'm.viana@cda.gov.ao',
-          role: 'Auditora Geral',
-          department: 'Auditoria & Compliance',
+          role: 'Auditor',
+          department: 'Prevenção de Fraude / Compliance',
           agentId: 'CDA-0022',
           status: 'Ativo',
           lastAccess: 'Ontem, 15:44',
-          phone: '+244 912 770 022'
+          phone: '+244 912 770 022',
+          registrationDate: '20/01/2026',
+          permissions: ['Visualizar', 'Logs'],
+          activityLogs: [
+            { action: 'Auditou logs dactiloscópicos do servidor', timestamp: '11/06/2026 15:30', ip: '197.231.40.101' }
+          ]
         },
         {
           id: 'w-admin-4',
           name: 'Valeriano Lima',
           email: 'v.lima@cda.gov.ao',
-          role: 'Moderador de Cadastros',
-          department: 'Processamento de Identidade',
+          role: 'Operador',
+          department: 'Homologações de Documentos / Backoffice',
           agentId: 'CDA-0099',
           status: 'Ativo',
-          lastAccess: '28/05/2026',
-          phone: '+244 931 555 099'
+          lastAccess: 'Ontem, 09:12',
+          phone: '+244 931 555 099',
+          registrationDate: '10/02/2026',
+          permissions: ['Visualizar', 'Homologar'],
+          activityLogs: [
+            { action: 'Validou biometria de cidadã Maria Antónia', timestamp: '11/06/2026 09:12', ip: '197.231.41.200' }
+          ]
         }
       ];
     }
@@ -205,7 +303,10 @@ export function GovContactsContent({
         agentId: 'CDA-0044',
         status: 'Ativo',
         lastAccess: 'Hoje, 09:15',
-        phone: '+244 923 112 044'
+        phone: '+244 923 112 044',
+        registrationDate: '10/01/2026',
+        permissions: ['Visualizar', 'Homologar', 'API'],
+        activityLogs: []
       },
       {
         id: 'w-2',
@@ -216,7 +317,10 @@ export function GovContactsContent({
         agentId: 'CDA-0981',
         status: 'Ativo',
         lastAccess: 'Ontem, 16:40',
-        phone: '+244 912 804 981'
+        phone: '+244 912 804 981',
+        registrationDate: '18/01/2026',
+        permissions: ['Visualizar', 'Homologar'],
+        activityLogs: []
       },
       {
         id: 'w-3',
@@ -227,7 +331,10 @@ export function GovContactsContent({
         agentId: 'CDA-0152',
         status: 'Ativo',
         lastAccess: '25/05/2026',
-        phone: '+244 931 773 152'
+        phone: '+244 931 773 152',
+        registrationDate: '01/02/2026',
+        permissions: ['Visualizar'],
+        activityLogs: []
       },
       {
         id: 'w-4',
@@ -238,7 +345,10 @@ export function GovContactsContent({
         agentId: 'CDA-0431',
         status: 'Férias',
         lastAccess: '18/05/2026',
-        phone: '+244 922 400 431'
+        phone: '+244 922 400 431',
+        registrationDate: '02/02/2026',
+        permissions: ['Visualizar', 'Logs'],
+        activityLogs: []
       }
     ];
   });
@@ -247,6 +357,8 @@ export function GovContactsContent({
     const key = appMode === 'admin-workers' ? 'correio_digital_admin_workers' : 'correio_digital_workers';
     localStorage.setItem(key, JSON.stringify(workers));
   }, [workers, appMode]);
+
+  const PROVINCES = ['Luanda', 'Benguela', 'Huíla', 'Cabinda', 'Bengo', 'Huambo'];
 
   // Citizen State (adapted from Interoperabilidade page for Admin "Usuários" page)
   interface Citizen {
@@ -257,17 +369,35 @@ export function GovContactsContent({
     municipio: string;
     address: string;
     contact: string;
-    status: 'Aprovado' | 'Pendente' | 'Não Aprovado';
+    status: 'Pendente de Validação' | 'Em Análise pela IA' | 'Em Revisão Administrativa' | 'Aprovado Automaticamente' | 'Aprovado Manualmente' | 'Rejeitado' | 'Bloqueado' | 'Ativo';
     biNumber?: string;
+    email?: string;
+    phone?: string;
+    registrationDate?: string;
+    lastAccess?: string;
+    coherenceLevel?: number;
+    iaResult?: 'Aprovado' | 'Revisão Administrativa' | 'Rejeitado';
+    facialMatch?: number;
+    imageQuality?: number;
+    ocrDataMatch?: number;
+    validationStatus?: string;
+    facePhotos?: string[];
+    numDigitalDocs?: number;
+    numCorrespondences?: number;
+    activityHistory?: { action: string; timestamp: string; ip?: string }[];
+    urlFrente?: string;
+    urlVerso?: string;
     facePhoto?: string;
     reason?: string;
     verificationScore?: number;
+    dbUUID?: string;
+    iaReport?: string;
   }
 
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
   const [filterProvince, setFilterProvince] = useState<string>('Todas');
   const [filterMunicipio, setFilterMunicipio] = useState<string>('Todos');
-  const [filterStatus, setFilterStatus] = useState<'Aprovado' | 'Pendente' | 'Não Aprovado'>('Aprovado');
+  const [filterStatus, setFilterStatus] = useState<string>('Todas');
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   // IA review states
@@ -276,6 +406,17 @@ export function GovContactsContent({
   const [aiMatchScore, setAiMatchScore] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>('');
   const [isRejecting, setIsRejecting] = useState<boolean>(false);
+  const [modalActiveTab, setModalActiveTab] = useState<'validation' | 'activity' | 'edit'>('validation');
+
+  // Edit fields states for selection inside modal
+  const [editName, setEditName] = useState('');
+  const [editBi, setEditBi] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editProvince, setEditProvince] = useState('');
+  const [editMunicipio, setEditMunicipio] = useState('');
 
   // New Step-by-Step validation states for the 3-step citizen verification
   const [reviewStepTab, setReviewStepTab] = useState<1 | 2 | 3>(1);
@@ -299,25 +440,52 @@ export function GovContactsContent({
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Garantir que todos estejam convertidos para os novos status válidos
+        const validStatuses = [
+          'Pendente de Validação',
+          'Em Análise pela IA',
+          'Em Revisão Administrativa',
+          'Aprovado Automaticamente',
+          'Aprovado Manualmente',
+          'Rejeitado',
+          'Bloqueado',
+          'Ativo'
+        ];
         return parsed.map((c: any) => {
           let st = c.status;
-          if (st === 'Ativo') st = 'Aprovado';
-          if (st === 'Suspenso' || st === 'Inativo') st = 'Não Aprovado';
-          if (st !== 'Aprovado' && st !== 'Pendente' && st !== 'Não Aprovado') st = 'Pendente';
+          if (st === 'Aprovado' || st === 'Ativo') st = 'Ativo';
+          if (st === 'Pendente' || st === 'Pendente de Validação') st = 'Pendente de Validação';
+          if (st === 'Não Aprovado' || st === 'Rejeitado') st = 'Rejeitado';
+          if (!validStatuses.includes(st)) {
+            st = 'Pendente de Validação';
+          }
           return {
             ...c,
             status: st,
-            biNumber: c.biNumber || c.bi || (c.id === 'u1' ? '009874562LA041' : `00${Math.floor(100000 + Math.random() * 900000)}LA041`),
-            facePhoto: c.facePhoto || (
-              c.id === 'u1' ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face' :
-              c.id === 'u2' ? 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face' :
-              c.id === 'u3' ? 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face' :
-              c.id === 'u4' ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face' :
-              c.id === 'u5' ? 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face' :
-              c.id === 'u6' ? 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop&crop=face' :
-              'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=250&h=250&fit=crop&crop=face'
-            )
+            email: c.email || `${c.name.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+            phone: c.phone || c.contact || '+244 923 000 111',
+            registrationDate: c.registrationDate || '12/05/2026',
+            lastAccess: c.lastAccess || '12/06/2026',
+            coherenceLevel: c.coherenceLevel !== undefined ? c.coherenceLevel : (st === 'Ativo' || st === 'Aprovado Automaticamente' ? 98 : st === 'Em Revisão Administrativa' ? 82 : 45),
+            facialMatch: c.facialMatch || (st === 'Ativo' || st === 'Aprovado Automaticamente' ? 97 : st === 'Em Revisão Administrativa' ? 80 : 35),
+            imageQuality: c.imageQuality || (st === 'Ativo' || st === 'Aprovado Automaticamente' ? 95 : 85),
+            ocrDataMatch: c.ocrDataMatch || (st === 'Ativo' || st === 'Aprovado Automaticamente' ? 100 : 75),
+            iaResult: c.iaResult || (st === 'Ativo' || st === 'Aprovado Automaticamente' ? 'Aprovado' : st === 'Em Revisão Administrativa' ? 'Revisão Administrativa' : 'Rejeitado'),
+            iaReport: c.iaReport || (st === 'Ativo' || st === 'Aprovado Automaticamente' ? 'Análise biofísica e OCR sem desconformidade detetada.' : 'Divergência rítmica facial.'),
+            numDigitalDocs: c.numDigitalDocs || Math.floor(Math.random() * 8) + 1,
+            numCorrespondences: c.numCorrespondences || Math.floor(Math.random() * 5),
+            facePhotos: c.facePhotos || [
+              c.facePhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
+              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face',
+              'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=250&h=250&fit=crop&crop=face',
+              'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop&crop=face',
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face'
+            ],
+            activityHistory: c.activityHistory || [
+              { action: 'Acesso à Carteira Digital', timestamp: '12/06/2026 10:15', ip: '197.231.42.15' },
+              { action: 'Despacho de Correspondência Recebida', timestamp: '10/06/2026 14:22', ip: '197.231.42.15' }
+            ],
+            biNumber: c.biNumber || c.bi || `00${Math.floor(100000 + Math.random() * 900000)}LA041`,
+            facePhoto: c.facePhoto || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face'
           };
         });
       } catch (e) {
@@ -327,16 +495,39 @@ export function GovContactsContent({
     return [
       { 
         id: 'u1', 
-        name: 'Edlasio Galhardo', 
+        name: 'João Pedro Manuel', 
         category: 'Trabalhador', 
         province: 'Luanda', 
         municipio: 'Maianga', 
         address: 'Bairro Alvalade, Rua do Comércio', 
-        contact: '+244 923 000 111', 
-        status: 'Aprovado',
-        biNumber: '009874562LA041',
-        facePhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
-        verificationScore: 98.4
+        contact: '+244 923 881 202', 
+        status: 'Aprovado Automaticamente',
+        biNumber: '00098876666666LA045',
+        email: 'joao.pedro@gov.ao',
+        phone: '+244 923 881 202',
+        registrationDate: '10/05/2026',
+        lastAccess: '11/06/2026',
+        coherenceLevel: 99,
+        facialMatch: 98,
+        imageQuality: 95,
+        ocrDataMatch: 100,
+        iaResult: 'Aprovado',
+        iaReport: 'OCR confere 100% com o Registo Civil. Verificação facial positiva de 98% de correspondência biométrica. Qualidade das imagens de 95% para processamento.',
+        numDigitalDocs: 4,
+        numCorrespondences: 3,
+        facePhotos: [
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face'
+        ],
+        activityHistory: [
+          { action: 'Acesso à Carteira Digital', timestamp: '11/06/2026 14:15', ip: '197.231.42.15' },
+          { action: 'Despacho de Correspondência Recebida', timestamp: '09/06/2026 11:22', ip: '197.231.42.15' },
+          { action: 'Assinatura Eletrónica de Certidão', timestamp: '05/06/2026 09:10', ip: '197.231.42.15' }
+        ],
+        facePhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face'
       },
       { 
         id: 'u2', 
@@ -346,10 +537,32 @@ export function GovContactsContent({
         municipio: 'Kilamba Kiaxi', 
         address: 'Centralidade do Kilamba, Bloco C', 
         contact: '+244 912 884 551', 
-        status: 'Aprovado',
+        status: 'Ativo',
         biNumber: '005432109LA098',
-        facePhoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face',
-        verificationScore: 97.2
+        email: 'kiara.sousa@univ.ao',
+        phone: '+244 912 884 551',
+        registrationDate: '01/06/2026',
+        lastAccess: '12/06/2026',
+        coherenceLevel: 94,
+        facialMatch: 92,
+        imageQuality: 91,
+        ocrDataMatch: 100,
+        iaResult: 'Aprovado',
+        iaReport: 'Homologação biométrica processada com sucesso. OCR sem desconformidade detetada.',
+        numDigitalDocs: 2,
+        numCorrespondences: 1,
+        facePhotos: [
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop&crop=face'
+        ],
+        activityHistory: [
+          { action: 'Acesso à Carteira Digital', timestamp: '12/06/2026 08:31', ip: '197.88.10.150' },
+          { action: 'Consulta de Carta de Condução', timestamp: '10/06/2026 16:45', ip: '197.88.10.150' }
+        ],
+        facePhoto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face'
       },
       { 
         id: 'u3', 
@@ -359,8 +572,30 @@ export function GovContactsContent({
         municipio: 'Lobito', 
         address: 'Bairro Comercial, Rua 2', 
         contact: '+244 931 772 101', 
-        status: 'Pendente',
+        status: 'Pendente de Validação',
         biNumber: '008765432BE022',
+        email: 'manuel.bernardo@clube.ao',
+        phone: '+244 931 772 101',
+        registrationDate: '11/06/2026',
+        lastAccess: 'Pendente',
+        coherenceLevel: 88,
+        facialMatch: 86,
+        imageQuality: 90,
+        ocrDataMatch: 90,
+        iaResult: 'Revisão Administrativa',
+        iaReport: 'Documento original com desgaste físico visível. Recomenda-se batimento visual humano complementar.',
+        numDigitalDocs: 0,
+        numCorrespondences: 0,
+        facePhotos: [
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face'
+        ],
+        activityHistory: [
+          { action: 'Submissão de Registo Integrado', timestamp: '11/06/2026 11:20', ip: '41.197.80.12' }
+        ],
         facePhoto: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face'
       },
       { 
@@ -371,10 +606,33 @@ export function GovContactsContent({
         municipio: 'Benguela', 
         address: 'Zona Hospitalar, Benguela Sede', 
         contact: '+244 915 220 384', 
-        status: 'Aprovado',
+        status: 'Ativo',
         biNumber: '001234567BE055',
-        facePhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face',
-        verificationScore: 99.1
+        email: 'sara.ferreira@empresa.ao',
+        phone: '+244 915 220 384',
+        registrationDate: '15/05/2026',
+        lastAccess: '12/06/2026',
+        coherenceLevel: 99,
+        facialMatch: 99,
+        imageQuality: 98,
+        ocrDataMatch: 100,
+        iaResult: 'Aprovado',
+        iaReport: 'Excelente nitidez na captura. Assinatura digital gerada sem erros operacionais.',
+        numDigitalDocs: 6,
+        numCorrespondences: 4,
+        facePhotos: [
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop&crop=face'
+        ],
+        activityHistory: [
+          { action: 'Acesso à Carteira Digital', timestamp: '12/06/2026 10:44', ip: '197.220.14.77' },
+          { action: 'Consulta de Título de Propriedade', timestamp: '12/06/2026 10:41', ip: '197.220.14.77' },
+          { action: 'Apresentação de BI Eletrónico', timestamp: '11/06/2026 19:20', ip: '197.220.14.77' }
+        ],
+        facePhoto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face'
       },
       { 
         id: 'u5', 
@@ -384,8 +642,30 @@ export function GovContactsContent({
         municipio: 'Lubango', 
         address: 'Avenida Agostinho Neto, Centro', 
         contact: '+244 923 112 044', 
-        status: 'Pendente',
+        status: 'Em Revisão Administrativa',
         biNumber: '002345678HU066',
+        email: 'antonio.lopes@gov.ao',
+        phone: '+244 923 112 044',
+        registrationDate: '08/06/2026',
+        lastAccess: 'Pendente',
+        coherenceLevel: 75,
+        facialMatch: 72,
+        imageQuality: 88,
+        ocrDataMatch: 80,
+        iaResult: 'Revisão Administrativa',
+        iaReport: 'Coerência limítrofe detetada de 75%. Divergência parcial na grafia do sobrenome entre formulário (António Lopes) e BI (António de Oliveira Lopes). Requer conferência humana.',
+        numDigitalDocs: 0,
+        numCorrespondences: 1,
+        facePhotos: [
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=250&h=250&fit=crop&crop=face'
+        ],
+        activityHistory: [
+          { action: 'Submissão de Registo Integrado', timestamp: '08/06/2026 09:30', ip: '41.197.88.22' }
+        ],
         facePhoto: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face'
       },
       { 
@@ -396,8 +676,30 @@ export function GovContactsContent({
         municipio: 'Huambo', 
         address: 'Centro do Huambo', 
         contact: '+244 928 600 001', 
-        status: 'Não Aprovado',
+        status: 'Rejeitado',
         biNumber: '004567890HA011',
+        email: 'maria.antonia@estudante.ao',
+        phone: '+244 928 600 001',
+        registrationDate: '10/06/2026',
+        lastAccess: 'Rejeitado',
+        coherenceLevel: 45,
+        facialMatch: 35,
+        imageQuality: 82,
+        ocrDataMatch: 60,
+        iaResult: 'Rejeitado',
+        iaReport: 'Divergência biométrica: a foto registada na selfie não condiz com as características antropométricas da foto presente no Bilhete de Identidade principal (Match Facial de apenas 35%).',
+        numDigitalDocs: 0,
+        numCorrespondences: 0,
+        facePhotos: [
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face'
+        ],
+        activityHistory: [
+          { action: 'Submissão de Registo Integrado', timestamp: '10/06/2026 16:15', ip: '41.197.55.99' }
+        ],
         facePhoto: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&h=250&fit=crop&crop=face',
         reason: 'Divergência biométrica: a foto registada na selfie não condiz com as características antropométricas da foto presente no Bilhete de Identidade.'
       },
@@ -409,11 +711,34 @@ export function GovContactsContent({
         municipio: 'Cabinda', 
         address: 'Rua do Porto de Cabinda', 
         contact: '+244 923 100 007', 
-        status: 'Não Aprovado',
+        status: 'Bloqueado',
         biNumber: '003456789CA077',
+        email: 'jose.kalunga@porto.ao',
+        phone: '+244 923 100 007',
+        registrationDate: '20/05/2026',
+        lastAccess: '10/06/2026',
+        coherenceLevel: 98,
+        facialMatch: 97,
+        imageQuality: 96,
+        ocrDataMatch: 100,
+        iaResult: 'Aprovado',
+        iaReport: 'Integridade de conta verificada. Conta bloqueada temporariamente administrativa por solicitação do utilizador devido a extravio do terminal físico móvel.',
+        numDigitalDocs: 3,
+        numCorrespondences: 2,
+        facePhotos: [
+          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=250&h=250&fit=crop&crop=face'
+        ],
+        activityHistory: [
+          { action: 'Bloqueio de Segurança Autorizado', timestamp: '10/06/2026 12:45', ip: 'Admin_Consola' },
+          { action: 'Acesso à Carteira Digital', timestamp: '09/06/2026 18:22', ip: '197.231.42.15' }
+        ],
         facePhoto: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=250&h=250&fit=crop&crop=face',
-        reason: 'Fotocópia embaçada: imagem do documento de identidade está ilegível para processamento óptico (OCR).'
-      },
+        reason: 'Conta bloqueada administrativamente por solicitação do utilizador.'
+      }
     ];
   });
 
@@ -439,9 +764,9 @@ export function GovContactsContent({
 
         if (data && data.length > 0) {
           const supabaseCitizens: Citizen[] = data.map((item: any) => {
-            let st: 'Aprovado' | 'Pendente' | 'Não Aprovado' = 'Pendente';
-            if (item.status === 'Aprovado') st = 'Aprovado';
-            if (item.status === 'Reprovado' || item.status === 'Não Aprovado') st = 'Não Aprovado';
+            let st: 'Pendente de Validação' | 'Aprovado Manualmente' | 'Rejeitado' = 'Pendente de Validação';
+            if (item.status === 'Aprovado') st = 'Aprovado Manualmente';
+            if (item.status === 'Reprovado' || item.status === 'Não Aprovado') st = 'Rejeitado';
 
             return {
               id: item.id,
@@ -487,7 +812,7 @@ export function GovContactsContent({
       const matchCategory = selectedCategory === 'Todos' || citizen.category.toLowerCase() === selectedCategory.toLowerCase();
       const matchProvince = filterProvince === 'Todas' || citizen.province === filterProvince;
       const matchMunicipio = filterMunicipio === 'Todos' || citizen.municipio === filterMunicipio;
-      const matchStatus = citizen.status === filterStatus;
+      const matchStatus = filterStatus === 'Todas' || citizen.status === filterStatus;
       return matchCategory && matchProvince && matchMunicipio && matchStatus;
     });
   }, [citizens, selectedCategory, filterProvince, filterMunicipio, filterStatus]);
@@ -507,8 +832,30 @@ export function GovContactsContent({
       municipio: addUserMunicipio,
       address: addUserAddress,
       contact: addUserContact,
-      status: 'Pendente',
+      status: 'Pendente de Validação',
       biNumber: `00${Math.floor(100000 + Math.random() * 900000)}LA041`,
+      email: `${addUserName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+      phone: addUserContact,
+      registrationDate: '12/06/2026',
+      lastAccess: 'Pendente',
+      coherenceLevel: 85,
+      facialMatch: 82,
+      imageQuality: 90,
+      ocrDataMatch: 100,
+      iaResult: 'Revisão Administrativa',
+      iaReport: 'Registo e captura biométrica de auto-cadastro concluída. Aguardando processamento.',
+      numDigitalDocs: 1,
+      numCorrespondences: 0,
+      facePhotos: [
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face',
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=250&h=250&fit=crop&crop=face',
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=250&h=250&fit=crop&crop=face',
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=250&h=250&fit=crop&crop=face',
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&h=250&fit=crop&crop=face'
+      ],
+      activityHistory: [
+        { action: 'Submissão de Cadastro Oficial', timestamp: '12/06/2026 11:45', ip: '197.231.40.10' }
+      ],
       facePhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&h=250&fit=crop&crop=face'
     };
 
@@ -519,7 +866,7 @@ export function GovContactsContent({
     setAddUserAddress('');
     setAddUserContact('');
 
-    addAuditLog?.(`Cadastro: Usuário "${newUser.name}" registrado com sucesso em ${newUser.province}.`, 'success');
+    addAuditLog?.(`Cadastro: Cidadão "${newUser.name}" submetido para validação inteligente da IA em ${newUser.province}.`, 'info');
   };
 
   const MUNICIPALITIES_BY_PROVINCE: { [key: string]: string[] } = {
@@ -543,14 +890,20 @@ export function GovContactsContent({
   const [newWorkerDept, setNewWorkerDept] = useState('');
   const [newWorkerAgentId, setNewWorkerAgentId] = useState('');
   const [newWorkerPhone, setNewWorkerPhone] = useState('');
-  const [newWorkerStatus, setNewWorkerStatus] = useState<'Ativo' | 'Suspenso' | 'Férias' | 'Pendente'>('Ativo');
+  const [newWorkerStatus, setNewWorkerStatus] = useState<'Ativo' | 'Desativado' | 'Suspenso' | 'Férias' | 'Pendente'>('Ativo');
+  const [newWorkerAccessProfile, setNewWorkerAccessProfile] = useState('Operador de Atendimento');
   
   // Search state for workers
   const [workerSearch, setWorkerSearch] = useState('');
   const [workerStatusFilter, setWorkerStatusFilter] = useState<string>('all');
   
-  // Selected Worker state
+  // Selected Worker state for permissions and logs
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+  const [activeWorkerTab, setActiveWorkerTab] = useState<'permissions' | 'logs'>('permissions');
+
+  const selectedWorker = useMemo(() => {
+    return workers.find(w => w.id === selectedWorkerId) || null;
+  }, [workers, selectedWorkerId]);
 
   const resetForm = () => {
     setNewWorkerName('');
@@ -560,6 +913,7 @@ export function GovContactsContent({
     setNewWorkerAgentId('');
     setNewWorkerPhone('');
     setNewWorkerStatus('Ativo');
+    setNewWorkerAccessProfile('Operador de Atendimento');
     setIsEditingWorker(false);
     setEditingWorkerId(null);
   };
@@ -571,6 +925,9 @@ export function GovContactsContent({
       return;
     }
 
+    const isPlatformAdmin = appMode === 'admin-workers';
+    const currentTime = '12/06/2026 ' + new Date().toTimeString().slice(0, 5);
+
     if (isEditingWorker && editingWorkerId) {
       setWorkers(prev => prev.map(w => w.id === editingWorkerId ? {
         ...w,
@@ -578,25 +935,40 @@ export function GovContactsContent({
         email: newWorkerEmail,
         role: newWorkerRole,
         phone: newWorkerPhone,
-        department: w.department || 'Geral',
+        department: newWorkerDept || 'Geral',
         agentId: w.agentId || `CDA-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: w.status || 'Ativo'
+        status: newWorkerStatus || 'Ativo',
+        registrationDate: w.registrationDate || '12/06/2026',
+        permissions: w.permissions || ['Visualizar'],
+        activityLogs: [
+          { action: 'Dados cadastrais atualizados pelo painel central', timestamp: currentTime, ip: '197.231.42.15' },
+          ...(w.activityLogs || [])
+        ]
       } : w));
-      addAuditLog?.(`[AGENTES] Registo do agente ${newWorkerName} atualizado com sucesso.`, 'success');
+      addAuditLog?.(`[TRABALHADORES] Registo do trabalhador ${newWorkerName} atualizado com sucesso.`, 'success');
     } else {
+      const defaultPerms = isPlatformAdmin 
+        ? ['Visualizar', 'Homologar']
+        : ['Visualizar'];
+
       const newWorker: Trabajador = {
         id: `w-${Date.now()}`,
         name: newWorkerName,
         email: newWorkerEmail,
         role: newWorkerRole,
         phone: newWorkerPhone,
-        department: 'Geral',
+        department: newWorkerDept || 'Geral',
         agentId: `CDA-${Math.floor(1000 + Math.random() * 9000)}`,
-        status: 'Ativo',
-        lastAccess: 'Nunca acedeu'
+        status: newWorkerStatus || 'Ativo',
+        lastAccess: 'Nunca acedeu',
+        registrationDate: '12/06/2026',
+        permissions: defaultPerms,
+        activityLogs: [
+          { action: 'Conta criada e ativada no sistema dactiloscópico', timestamp: currentTime, ip: '197.231.42.15' }
+        ]
       };
       setWorkers(prev => [...prev, newWorker]);
-      addAuditLog?.(`[AGENTES] Novo agente ${newWorkerName} cadastrado com sucesso.`, 'success');
+      addAuditLog?.(`[TRABALHADORES] Novo trabalhador ${newWorkerName} cadastrado com sucesso.`, 'success');
     }
 
     setShowAddWorkerModal(false);
@@ -617,17 +989,29 @@ export function GovContactsContent({
   };
 
   const handleDeleteWorker = (id: string, name: string) => {
-    if (confirm(`Tem a certeza que deseja remover o agente ${name} do sistema?`)) {
+    if (confirm(`Tem a certeza que deseja remover o trabalhador ${name} do sistema?`)) {
       setWorkers(prev => prev.filter(w => w.id !== id));
       if (selectedWorkerId === id) setSelectedWorkerId(null);
-      addAuditLog?.(`[AGENTES] Agente ${name} foi removido do ecossistema institucional.`, 'warning');
+      addAuditLog?.(`[TRABALHADORES] Trabalhador ${name} foi removido do ecossistema institucional.`, 'warning');
     }
   };
 
   const handleToggleWorkerStatus = (id: string, name: string, currentStatus: string) => {
-    const nextStatus = currentStatus === 'Ativo' ? 'Suspenso' : 'Ativo';
-    setWorkers(prev => prev.map(w => w.id === id ? { ...w, status: nextStatus } : w));
-    addAuditLog?.(`[AGENTES] Estado do agente ${name} alterado para ${nextStatus}.`, 'info');
+    const nextStatus = currentStatus === 'Ativo' ? 'Desativado' : 'Ativo';
+    setWorkers(prev => prev.map(w => w.id === id ? { 
+      ...w, 
+      status: nextStatus as any,
+      activityLogs: [
+        { 
+          action: nextStatus === 'Ativo' ? 'Acesso dactiloscópico reativado' : 'Acesso dactiloscópico revogado', 
+          timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), 
+          ip: '197.231.42.15' 
+        },
+        ...(w.activityLogs || [])
+      ]
+    } : w));
+    playToggleSound(nextStatus === 'Ativo');
+    addAuditLog?.(`[TRABALHADORES] Estado do trabalhador ${name} alterado para ${nextStatus}.`, 'info');
   };
 
   // Filtered workers list
@@ -656,12 +1040,12 @@ export function GovContactsContent({
               </span>
             </div>
             <h1 className="text-3xl md:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">
-              {isPlatformAdmin ? 'Gestão de Agentes da Plataforma' : 'Gestão de Agentes'}
+              {isPlatformAdmin ? 'Gestão de Trabalhadores' : 'Gestão de Trabalhadores'}
             </h1>
             <p className="text-slate-500 font-medium text-xs mt-2 max-w-xl">
               {isPlatformAdmin 
-                ? 'Controle de administradores, moderadores e técnicos autorizados da plataforma central. Administre permissões, acessos e registe novos operadores da plataforma.'
-                : 'Controle de agentes públicos, funcionários e técnicos autorizados da instituição. Administre as credenciais operacionais e registe novos operadores do sistema.'}
+                ? 'Controle de administradores, moderadores e técnicos autorizados da plataforma central. Administre permissões, acessos e registe novos trabalhadores da plataforma.'
+                : 'Controle de funcionários e técnicos autorizados da instituição. Administre as credenciais operacionais e registe novos trabalhadores do sistema.'}
             </p>
           </div>
 
@@ -673,7 +1057,7 @@ export function GovContactsContent({
             className="flex items-center gap-2 px-5 py-3 bg-blue-950 hover:bg-blue-900 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-950/10 cursor-pointer border-0 transition-all self-start md:self-auto"
           >
             <UserPlus size={16} />
-            {isPlatformAdmin ? 'Adicionar Agente da Plataforma' : 'Adicionar Agente'}
+            {isPlatformAdmin ? 'Adicionar Trabalhador' : 'Adicionar Trabalhador'}
           </button>
         </div>
 
@@ -681,7 +1065,7 @@ export function GovContactsContent({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-xs">
             <span className="font-mono text-[10px] font-black uppercase text-slate-400 tracking-wider block">
-              {isPlatformAdmin ? 'Total de Agentes da Plataforma' : 'Total de Agentes'}
+              {isPlatformAdmin ? 'Total de Trabalhadores' : 'Total de Trabalhadores'}
             </span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-3xl font-black text-slate-900 italic font-mono">{workers.length}</span>
@@ -710,7 +1094,7 @@ export function GovContactsContent({
               <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
               <div>
                 <h3 className="text-lg font-black tracking-tighter text-slate-900 uppercase italic">
-                  {isPlatformAdmin ? 'Quadro de Agentes da Plataforma' : 'Quadro de Colaboradores Autorizados'}
+                  {isPlatformAdmin ? 'Quadro de Trabalhadores' : 'Quadro de Trabalhadores'}
                 </h3>
                 <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase font-mono">
                   {isPlatformAdmin 
@@ -740,18 +1124,25 @@ export function GovContactsContent({
               <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead className="sticky top-0 z-10 bg-blue-950 text-white text-[10px] font-black uppercase tracking-widest">
                   <tr>
-                    <th className="py-4 px-5 rounded-l-2xl">Colaborador / Agente</th>
+                    <th className="py-4 px-5 rounded-l-2xl">Colaborador / Trabalhador</th>
                     <th className="py-4 px-5">E-mail / Contacto</th>
                     <th className="py-4 px-5">Telefone</th>
-                    <th className="py-4 px-5">Função / Cargo</th>
-                    <th className="py-4 px-5 text-center">Estado</th>
+                    <th className="py-4 px-5">Função e Setor</th>
+                    <th className="py-4 px-5 text-center">Estado / Acesso Rápido</th>
                     <th className="py-4 px-5 text-center">Último Acesso</th>
                     <th className="py-4 px-5 text-center rounded-r-2xl">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
                   {filteredWorkers.map((w) => (
-                    <tr key={w.id} className="text-xs text-[#334155] hover:bg-slate-50/60 transition-colors border-b border-slate-100 last:border-b-0">
+                    <tr 
+                      key={w.id} 
+                      onClick={() => {
+                        setSelectedWorkerId(w.id);
+                        setActiveWorkerTab('permissions');
+                      }}
+                      className="text-xs text-[#334155] hover:bg-slate-50/80 transition-colors border-b border-slate-100 last:border-b-0 cursor-pointer"
+                    >
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-blue-950 text-white flex items-center justify-center font-black text-xs uppercase shadow-none shrink-0 font-sans">
@@ -785,32 +1176,72 @@ export function GovContactsContent({
                         </div>
                       </td>
 
-                      <td className="py-4 px-5 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border tracking-wider shrink-0 select-none ${
-                          w.status === 'Ativo' 
-                            ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
-                            : 'bg-amber-50 border-amber-100 text-amber-700'
-                        }`}>
-                          {w.status || 'Ativo'}
-                        </span>
+                      <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              const nextStatus = w.status === 'Ativo' ? 'Desativado' : 'Ativo';
+                              setWorkers(prev => prev.map(worker => {
+                                if (worker.id === w.id) {
+                                  const timestamp = '12/06/2026 ' + new Date().toTimeString().slice(0, 5);
+                                  const actionMsg = nextStatus === 'Ativo' ? 'Capacidade restaurada: Reativou acesso dactiloscópico' : 'Interrompeu acesso dactiloscópico preventivamente';
+                                  return {
+                                    ...worker,
+                                    status: nextStatus,
+                                    activityLogs: [
+                                      { action: actionMsg, timestamp, ip: '197.231.42.15' },
+                                      ...(worker.activityLogs || [])
+                                    ]
+                                  };
+                                }
+                                return worker;
+                              }));
+                              playToggleSound(nextStatus === 'Ativo');
+                              addAuditLog?.(`[TRABALHADORES] Acesso dactiloscópico de ${w.name} alterado para ${nextStatus}.`, nextStatus === 'Ativo' ? 'success' : 'warning');
+                            }}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none focus:outline-none ${
+                              w.status === 'Ativo' ? 'bg-emerald-600' : 'bg-slate-300'
+                            }`}
+                            type="button"
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                                w.status === 'Ativo' ? 'translate-x-4' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                          <span className={`text-[10px] font-black uppercase w-14 text-left select-none ${
+                            w.status === 'Ativo' 
+                              ? 'text-emerald-700' 
+                              : 'text-slate-400'
+                          }`}>
+                            {w.status === 'Ativo' ? 'Ativo' : w.status === 'Suspenso' ? 'Suspenso' : 'Inativo'}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-4 px-5 text-center font-mono text-[10px] font-bold text-slate-500">
                         {w.lastAccess || 'Sem registo'}
                       </td>
 
-                      <td className="py-4 px-5 text-center">
+                      <td className="py-4 px-5 text-center" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleEditWorkerClick(w)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditWorkerClick(w);
+                            }}
                             title="Editar Dados"
                             className="bg-transparent border-none text-[#0c2340] hover:text-indigo-600 hover:underline text-[9.5px] font-black uppercase tracking-wider cursor-pointer transition-colors p-1"
                           >
                             Editar
                           </button>
                           <button
-                            onClick={() => handleDeleteWorker(w.id, w.name)}
-                            title={isPlatformAdmin ? "Remover Agente da Plataforma" : "Remover Agente"}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteWorker(w.id, w.name);
+                            }}
+                            title={isPlatformAdmin ? "Remover de Serviço" : "Remover de Serviço"}
                             className="bg-transparent border-none text-rose-600 hover:text-rose-800 cursor-pointer transition-colors p-1"
                           >
                             <Trash2 size={12} className="mx-auto" />
@@ -826,7 +1257,7 @@ export function GovContactsContent({
             <div className="py-16 bg-white border border-slate-200 rounded-[32px] text-center text-slate-400 shadow-3xs w-full">
               <Users size={28} className="mx-auto text-slate-300 mb-2" />
               <span className="text-[10.5px] font-black uppercase tracking-wider block">
-                {isPlatformAdmin ? 'Nenhum agente da plataforma localizado...' : 'Nenhum agente localizado...'}
+                {isPlatformAdmin ? 'Nenhum trabalhador localizado...' : 'Nenhum trabalhador localizado...'}
               </span>
               <p className="text-[9.5px] font-bold uppercase mt-1">Experimente alterar os critérios de filtro ou pesquisa.</p>
             </div>
@@ -834,127 +1265,550 @@ export function GovContactsContent({
         </div>
 
         {/* MODAL / SLIDE-OVER PARA ADICIONAR/EDITAR AGENTE */}
-        <AnimatePresence>
-          {showAddWorkerModal && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowAddWorkerModal(false)}
-                className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
-              />
+        {typeof document !== 'undefined' && createPortal(
+          <AnimatePresence>
+            {showAddWorkerModal && (
+              <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowAddWorkerModal(false)}
+                  className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                />
 
-              {/* Modal Body */}
-              <motion.div
-                initial={{ scale: 0.93, opacity: 0, y: 15 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.93, opacity: 0, y: 15 }}
-                className="relative bg-white w-full max-w-md max-h-[92vh] rounded-[40px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.18)] border border-slate-100 flex flex-col overflow-hidden mx-auto p-6 md:p-8 space-y-6 z-10"
-              >
-                {/* Header Area */}
-                <div className="flex items-center gap-4 text-left relative shrink-0">
-                  <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-[20px] flex items-center justify-center shrink-0 border border-indigo-100/40 shadow-sm">
-                    <UserPlus size={24} strokeWidth={2.5} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl md:text-[22px] font-black text-[#0c2340] italic uppercase tracking-tighter leading-none mb-1">
-                      {isPlatformAdmin 
-                        ? (isEditingWorker ? 'Editar Agente Central' : 'Novo Agente Central')
-                        : (isEditingWorker ? 'Editar Ficha do Agente' : 'Registar Novo Agente')}
-                    </h3>
-                    <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest font-sans leading-none">
-                      {isPlatformAdmin 
-                        ? 'CREDENCIAL OPERACIONAL PLATAFORMA'
-                        : 'CREDENCIAIS AUTORIZADAS INSTITUIÇÃO'}
-                    </p>
-                  </div>
-                  {/* Corner close button */}
-                  <button 
-                    onClick={() => setShowAddWorkerModal(false)} 
-                    className="absolute -top-1 -right-1 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-full"
-                    type="button"
-                    title="Fechar formulário"
-                  >
-                    <Plus size={18} className="rotate-45" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleCreateWorker} className="flex-1 flex flex-col justify-between overflow-y-auto custom-scrollbar space-y-4 pr-1 text-left">
-                  <div className="space-y-4">
-                    <div className="grid gap-1.5">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo *</label>
-                      <input
-                        required
-                        type="text"
-                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
-                        placeholder="Ex: Dr. Francisco Manuel"
-                        value={newWorkerName}
-                        onChange={(e) => setNewWorkerName(e.target.value)}
-                      />
+                {/* Modal Body */}
+                <motion.div
+                  initial={{ scale: 0.93, opacity: 0, y: 15 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.93, opacity: 0, y: 15 }}
+                  className="relative bg-white w-full max-w-4xl max-h-[95vh] rounded-[32px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.18)] border border-slate-100 flex flex-col overflow-hidden mx-auto p-6 md:p-10 space-y-6 z-10"
+                >
+                  {/* Header Area */}
+                  <div className="flex items-center gap-4 text-left relative shrink-0">
+                    <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center shrink-0 border border-indigo-100/40 shadow-sm">
+                      <UserPlus size={26} strokeWidth={2.5} />
                     </div>
-
-                    <div className="grid gap-1.5">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Email *</label>
-                      <input
-                        required
-                        type="email"
-                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
-                        placeholder={isPlatformAdmin ? "f.manuel@mindis.gov.ao" : "f.manuel@cda.gov.ao"}
-                        value={newWorkerEmail}
-                        onChange={(e) => setNewWorkerEmail(e.target.value)}
-                      />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xl md:text-[23px] font-black text-[#0c2340] italic uppercase tracking-tighter leading-none mb-1">
+                        {isPlatformAdmin 
+                          ? (isEditingWorker ? 'EDITAR TRABALHADOR' : 'REGISTAR NOVO TRABALHADOR')
+                          : (isEditingWorker ? 'EDITAR FICHA DO TRABALHADOR' : 'REGISTAR NOVO TRABALHADOR')}
+                      </h3>
+                      <p className="text-[#4f46e5] font-black text-[10px] uppercase tracking-[0.16em] mt-1 m-0 leading-none">
+                        {isPlatformAdmin 
+                          ? 'CREDENCIAL OPERACIONAL PLATAFORMA'
+                          : 'CREDENCIAIS AUTORIZADAS INSTITUIÇÃO'}
+                      </p>
                     </div>
-
-                    <div className="grid gap-1.5">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Telefone *</label>
-                      <input
-                        required
-                        type="text"
-                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-mono font-bold placeholder:text-slate-350"
-                        placeholder="+244 923 000 000"
-                        value={newWorkerPhone}
-                        onChange={(e) => setNewWorkerPhone(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Função / Cargo *</label>
-                      <input
-                        required
-                        type="text"
-                        className="w-full bg-white border-2 border-slate-100 focus:border-[#0c2340]/20 rounded-[16px] px-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
-                        placeholder={isPlatformAdmin ? "Ex: Administrador de Redes" : "Ex: Inspetor Chefe"}
-                        value={newWorkerRole}
-                        onChange={(e) => setNewWorkerRole(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Actions rows mimicking image button styles */}
-                  <div className="pt-4 shrink-0">
-                    <button
-                      type="submit"
-                      className="w-full bg-[#0c2340] hover:bg-[#152e4d] text-white py-4 rounded-[22px] font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0c2340]/15 flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer active:scale-98 font-sans border-0"
-                    >
-                      <Check size={14} className="stroke-[3]" />
-                      {isEditingWorker ? 'Guardar Ficha do Agente' : 'Submeter Cadastro'}
-                    </button>
-
-                    <button
+                    {/* Corner close button */}
+                    <button 
+                      onClick={() => setShowAddWorkerModal(false)} 
+                      className="absolute -top-1 -right-1 text-slate-400 hover:text-slate-600 transition-all p-2 hover:bg-slate-50 rounded-full border-none bg-transparent cursor-pointer"
                       type="button"
-                      onClick={() => setShowAddWorkerModal(false)}
-                      className="w-full text-slate-400 hover:text-slate-600 transition-colors bg-transparent border-0 cursor-pointer text-[10px] font-black uppercase tracking-widest font-sans py-2 block text-center mt-2"
+                      title="Fechar"
                     >
-                      Voltar ao Menu
+                      <X size={20} />
                     </button>
                   </div>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+
+                  <form onSubmit={handleCreateWorker} className="flex-1 flex flex-col justify-between overflow-y-auto custom-scrollbar space-y-6 pr-1 text-left">
+                    <div className="space-y-6">
+                      
+                      {/* DADOS PESSOAIS */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-[#4f46e5]">
+                          <User size={15} className="stroke-[2.5]" />
+                          <span className="font-extrabold text-[11px] uppercase tracking-widest">Dados Pessoais</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* NOME COMPLETO */}
+                          <div className="grid gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <User size={16} />
+                              </span>
+                              <input
+                                required
+                                type="text"
+                                className="w-full bg-white border-2 border-slate-100 focus:border-[#4f46e5]/30 rounded-[20px] pl-11 pr-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                                placeholder="Ex: Dr. Francisco Manuel"
+                                value={newWorkerName}
+                                onChange={(e) => setNewWorkerName(e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          {/* EMAIL INSTITUCIONAL */}
+                          <div className="grid gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Institucional *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <Mail size={16} />
+                              </span>
+                              <input
+                                required
+                                type="email"
+                                className="w-full bg-white border-2 border-slate-100 focus:border-[#4f46e5]/30 rounded-[20px] pl-11 pr-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-bold placeholder:text-slate-350"
+                                placeholder={isPlatformAdmin ? "f.manuel@mindis.gov.ao" : "f.manuel@cda.gov.ao"}
+                                value={newWorkerEmail}
+                                onChange={(e) => setNewWorkerEmail(e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          {/* TELEFONE */}
+                          <div className="grid gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Telefone *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <Phone size={16} />
+                              </span>
+                              <input
+                                required
+                                type="text"
+                                className="w-full bg-white border-2 border-slate-100 focus:border-[#4f46e5]/30 rounded-[20px] pl-11 pr-4 py-3.5 text-xs text-slate-800 outline-none transition-all font-mono font-bold placeholder:text-slate-350"
+                                placeholder="+244 923 000 000"
+                                value={newWorkerPhone}
+                                onChange={(e) => setNewWorkerPhone(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Dotted separator */}
+                      <div className="border-t border-dashed border-slate-150" />
+
+                      {/* DADOS ORGANIZACIONAIS */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-[#4f46e5]">
+                          <Briefcase size={15} className="stroke-[2.5]" />
+                          <span className="font-extrabold text-[11px] uppercase tracking-widest">Afiliação & Funções do Trabalhador</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* FUNÇÃO / CARGO (SELECT) */}
+                          <div className="grid gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Perfil Funcional *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <IdCard size={16} />
+                              </span>
+                              <select
+                                required
+                                value={newWorkerRole}
+                                onChange={(e) => {
+                                  setNewWorkerRole(e.target.value);
+                                  setNewWorkerAccessProfile(e.target.value);
+                                }}
+                                className="w-full bg-white border-2 border-slate-100 focus:border-[#4f46e5]/30 rounded-[20px] pl-11 pr-10 py-3.5 text-xs text-slate-800 font-bold outline-none transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="" disabled>Selecione o cargo/perfil</option>
+                                {AVAILABLE_ROLES.map(role => (
+                                  <option key={role} value={role}>{role}</option>
+                                ))}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[9px]">
+                                ▼
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* DEPARTAMENTO / ÁREA */}
+                          <div className="grid gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Departamento / Área Territorial *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <Building size={16} />
+                              </span>
+                              <select
+                                required
+                                value={newWorkerDept}
+                                onChange={(e) => setNewWorkerDept(e.target.value)}
+                                className="w-full bg-white border-2 border-slate-100 focus:border-[#4f46e5]/30 rounded-[20px] pl-11 pr-10 py-3.5 text-xs text-slate-800 font-bold outline-none transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="" disabled>Selecione a área operacional</option>
+                                {AVAILABLE_DEPARTMENTS.map(dept => (
+                                  <option key={dept} value={dept}>{dept}</option>
+                                ))}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[9px]">
+                                ▼
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* IDENTIFICADOR EXTERNO */}
+                          <div className="grid gap-1.5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ID Único do Agente (Opcional)</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <Lock size={16} />
+                              </span>
+                              <input
+                                type="text"
+                                className="w-full bg-slate-50 border-2 border-slate-100 rounded-[20px] pl-11 pr-4 py-3.5 text-xs text-slate-500 font-mono outline-none"
+                                placeholder="Gerado automaticamente se vazio"
+                                value={newWorkerAgentId}
+                                readOnly
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Dotted separator */}
+                      <div className="border-t border-dashed border-slate-150" />
+
+                      {/* ESTADO DO UTILIZADOR */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-emerald-500">
+                          <CheckCircle2 size={15} className="stroke-[2.5]" />
+                          <span className="font-extrabold text-[11px] uppercase tracking-widest">Estágio de Autorização</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                          {/* ESTADO DROPDOWN SELECT */}
+                          <div className="grid gap-1.5 md:col-span-5">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado de Acesso *</label>
+                            <div className="relative">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 pointer-events-none">
+                                <CheckCircle2 size={16} />
+                              </span>
+                              <select
+                                required
+                                value={newWorkerStatus}
+                                onChange={(e) => setNewWorkerStatus(e.target.value as any)}
+                                className="w-full bg-white border-2 border-slate-100 focus:border-emerald-500/30 rounded-[20px] pl-11 pr-10 py-3.5 text-xs text-slate-800 font-bold outline-none transition-all appearance-none cursor-pointer"
+                              >
+                                <option value="Ativo">Ativo (Permitido)</option>
+                                <option value="Desativado">Desativado (Bloqueado)</option>
+                                <option value="Suspenso">Suspenso (Preventivo)</option>
+                                <option value="Férias">Férias (Temporário)</option>
+                                <option value="Pendente">Pendente de Análise</option>
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[9px]">
+                                ▼
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* GREEN MESSAGE NOTICE BOX */}
+                          <div className="md:col-span-7 bg-[#f0fdf4] border border-[#10b981]/15 rounded-[20px] p-4 flex gap-3 text-left">
+                            <Info size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                            <p className="text-xs text-[#065f46] leading-relaxed font-bold m-0 select-none">
+                              Utilizadores com estado 'Desativado' ou 'Suspenso' verão o seu acesso dactiloscópico e barramento postal revogado preventivamente.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Separator before buttons */}
+                    <div className="border-t border-dashed border-slate-150 mt-4" />
+
+                    {/* Actions rows mimicking image button styles */}
+                    <div className="pt-2 shrink-0 flex items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddWorkerModal(false)}
+                        className="px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-[20px] font-extrabold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer"
+                      >
+                        <X size={15} />
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="submit"
+                        className="flex-1 bg-[#0c2340] hover:bg-[#152e4d] text-white py-3.5 rounded-[20px] font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0c2340]/15 flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer active:scale-98 font-sans border-0"
+                      >
+                        <Check size={15} className="stroke-[3]" />
+                        {isEditingWorker ? 'Guardar Ficha do Trabalhador' : 'Submeter Cadastro'}
+                      </button>
+                    </div>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+
+            {/* Beautiful Slide-Over / Side Drawer for Permissions and Activity Logs */}
+            {selectedWorkerId && selectedWorker && (
+              <div className="fixed inset-0 z-[99999] flex justify-end">
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setSelectedWorkerId(null)}
+                  className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs"
+                />
+
+                {/* Right Slide-over Content Container */}
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                  className="relative bg-white w-full max-w-lg h-full shadow-[0_0_50px_rgba(15,23,42,0.15)] border-l border-slate-100 flex flex-col overflow-hidden z-10"
+                >
+                  {/* Top Header Card */}
+                  <div className="bg-indigo-950 text-white p-6 relative shrink-0">
+                    <button 
+                      onClick={() => setSelectedWorkerId(null)}
+                      className="absolute top-4 right-4 text-indigo-200 hover:text-white transition-all bg-indigo-900/40 hover:bg-indigo-900 duration-155 p-2 rounded-full cursor-pointer border-0"
+                      title="Fechar Painel"
+                    >
+                      <X size={16} />
+                    </button>
+
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-800 text-white flex items-center justify-center font-black text-lg shadow-inner font-sans border border-indigo-700">
+                        {selectedWorker.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-mono text-[9px] font-black uppercase text-indigo-400 tracking-[0.2em] block">
+                          Cadastro Consular central
+                        </span>
+                        <h4 className="text-xl font-black tracking-tight text-white m-0 truncate leading-tight mt-0.5 animate-fadeIn">
+                          {selectedWorker.name}
+                        </h4>
+                        <p className="text-xs text-indigo-200 font-medium m-0 truncate mt-1">
+                          {selectedWorker.role} • {selectedWorker.department}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 bg-indigo-900/60 rounded-xl p-3 mt-4 text-[10px] font-medium text-indigo-150">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-indigo-400 uppercase tracking-widest font-bold block text-[8px] font-mono leading-none">ID Funcionário</span>
+                        <span className="font-mono font-black text-white mt-1 block truncate text-xs">{selectedWorker.agentId || 'CDA-GUEST'}</span>
+                      </div>
+                      <div className="w-px h-6 bg-indigo-800 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-indigo-400 uppercase tracking-widest font-bold block text-[8px] font-mono leading-none">Inscrito em</span>
+                        <span className="font-sans font-extrabold text-white mt-1 block truncate text-xs">{selectedWorker.registrationDate || '02/01/2026'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabs Selector Row */}
+                  <div className="flex border-b border-slate-100 bg-slate-50/50 shrink-0 select-none">
+                    <button
+                      onClick={() => setActiveWorkerTab('permissions')}
+                      className={`flex-1 py-3 text-center font-black text-[11px] uppercase tracking-wider relative cursor-pointer border-b-2 outline-none transition-all ${
+                        activeWorkerTab === 'permissions'
+                          ? 'border-indigo-600 text-indigo-950 font-black'
+                          : 'border-transparent text-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1.5">
+                        <ShieldCheck size={14} />
+                        Gerir Permissões
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveWorkerTab('logs')}
+                      className={`flex-1 py-3 text-center font-black text-[11px] uppercase tracking-wider relative cursor-pointer border-b-2 outline-none transition-all ${
+                        activeWorkerTab === 'logs'
+                          ? 'border-indigo-600 text-indigo-950 font-black'
+                          : 'border-transparent text-slate-400 hover:text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Activity size={14} />
+                        Histórico Logs ({selectedWorker.activityLogs?.length || 0})
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Drawer Content Body */}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 text-left">
+                    {activeWorkerTab === 'permissions' ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-black text-slate-900 text-sm tracking-tight block">Permissões Especiais</span>
+                            <span className="text-[10px] text-slate-400 font-bold block mt-0.5">Controla o que este técnico pode operar e ver</span>
+                          </div>
+
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => {
+                                setWorkers(prev => prev.map(w => w.id === selectedWorkerId ? {
+                                  ...w,
+                                  permissions: [],
+                                  activityLogs: [
+                                    { action: 'Revogadas todas as permissões especiais', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: '197.231.42.15' },
+                                    ...(w.activityLogs || [])
+                                  ]
+                                } : w));
+                                playSuccessSound();
+                              }}
+                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-705 text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-0"
+                            >
+                              Limpar
+                            </button>
+                            <button
+                              onClick={() => {
+                                setWorkers(prev => prev.map(w => w.id === selectedWorkerId ? {
+                                  ...w,
+                                  permissions: ALL_PERMISSIONS.map(p => p.id),
+                                  activityLogs: [
+                                    { action: 'Atribuídas permissões administrativas globais', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: '197.231.42.15' },
+                                    ...(w.activityLogs || [])
+                                  ]
+                                } : w));
+                                playSuccessSound();
+                              }}
+                              className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-0"
+                            >
+                              Máximo
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* List of Permissions Items */}
+                        <div className="space-y-3 pt-2">
+                          {ALL_PERMISSIONS.map(rolePerm => {
+                            const isGranted = selectedWorker.permissions?.includes(rolePerm.id) ?? false;
+                            return (
+                              <div 
+                                key={rolePerm.id}
+                                onClick={() => {
+                                  const nextPerms = isGranted 
+                                    ? (selectedWorker.permissions || []).filter(p => p !== rolePerm.id)
+                                    : [...(selectedWorker.permissions || []), rolePerm.id];
+                                  
+                                  setWorkers(prev => prev.map(w => w.id === selectedWorkerId ? {
+                                    ...w,
+                                    permissions: nextPerms,
+                                    activityLogs: [
+                                      { 
+                                        action: isGranted 
+                                          ? `Revogou permissão: ${rolePerm.label}` 
+                                          : `Concedeu permissão: ${rolePerm.label}`, 
+                                        timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), 
+                                        ip: '197.231.42.15' 
+                                      },
+                                      ...(w.activityLogs || [])
+                                    ]
+                                  } : w));
+                                  playSuccessSound();
+                                }}
+                                className={`p-4 rounded-2xl border transition-all cursor-pointer flex gap-3 text-left ${
+                                  isGranted 
+                                    ? 'bg-indigo-50/40 border-indigo-500/30' 
+                                    : 'bg-white border-slate-100 hover:bg-slate-50/40'
+                                }`}
+                              >
+                                {/* Checkbox Indicator */}
+                                <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-all outline-none ${
+                                  isGranted 
+                                    ? 'bg-indigo-600 border-indigo-600 text-white' 
+                                    : 'border-slate-300 bg-white'
+                                }`}>
+                                  {isGranted && <Check size={12} strokeWidth={3} />}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <span className={`text-xs font-black block tracking-tight ${isGranted ? 'text-indigo-950 font-black' : 'text-slate-800'}`}>
+                                    {rolePerm.label}
+                                  </span>
+                                  <span className="text-[10px] text-slate-450 block mt-1 leading-snug font-medium">
+                                    {rolePerm.desc}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      // Tab Audit Logs
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-black text-slate-900 text-sm tracking-tight block">Auditoria de Atividade (IP logs)</span>
+                            <span className="text-[10px] text-slate-400 font-bold block mt-0.5">Rastreamento de acessos e ações consulares</span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              const timestamp = '12/06/2026 ' + new Date().toTimeString().slice(0, 5);
+                              const simulatedIps = ['197.231.42.15', '197.231.40.89', '197.245.2.112', '197.231.42.22'];
+                              const chosenIp = simulatedIps[Math.floor(Math.random() * simulatedIps.length)];
+                              const simulatedActions = [
+                                'Realizou auditoria de chaves consulares',
+                                'Exportou relatório descritivo dactiloscópico',
+                                'Consultou ficha biométrica do cidadão',
+                                'Efetuou login no sistema central'
+                              ];
+                              const chosenAction = simulatedActions[Math.floor(Math.random() * simulatedActions.length)];
+
+                              setWorkers(prev => prev.map(w => w.id === selectedWorkerId ? {
+                                ...w,
+                                activityLogs: [
+                                  { action: chosenAction, timestamp, ip: chosenIp },
+                                  ...(w.activityLogs || [])
+                                ]
+                              } : w));
+                              playSuccessSound();
+                              addAuditLog?.(`Atividade simulada adicionada para o trabalhador ${selectedWorker.name}.`, 'info');
+                            }}
+                            className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-[#4f46e5] text-[9px] font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer border-0"
+                          >
+                            Simular Novo Log IP
+                          </button>
+                        </div>
+
+                        {/* Logs Timeline */}
+                        <div className="space-y-3 pt-2">
+                          {selectedWorker.activityLogs && selectedWorker.activityLogs.length > 0 ? (
+                            selectedWorker.activityLogs.map((log, index) => (
+                              <div key={index} className="bg-slate-50/50 border border-slate-100 p-3.5 rounded-xl text-left relative flex gap-2.5 items-start">
+                                <div className="w-2 h-2 rounded-full bg-slate-300 mt-1.5 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-slate-800 m-0 leading-normal">{log.action}</p>
+                                  <div className="flex items-center gap-3 mt-1.5 text-[9px] font-mono text-slate-450 font-bold">
+                                    <span className="bg-slate-150 px-1.5 py-0.5 rounded-sm">{log.timestamp}</span>
+                                    <span>•</span>
+                                    <span className="text-indigo-600 font-black font-mono">IP: {log.ip}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="py-8 bg-slate-50/30 border border-dashed border-slate-200 rounded-2xl text-center text-slate-450">
+                              <span className="text-[10px] font-black uppercase tracking-wider block">Nenhum log disponível</span>
+                              <p className="text-[9px] font-bold mt-1">Utilize o botão acima para simular interações e conexões.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Drawer Footer Status indicator */}
+                  <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+                    <span className="text-[10px] text-slate-450 font-black uppercase font-mono">Dispositivo Operando via SSL</span>
+                    <button
+                      onClick={() => setSelectedWorkerId(null)}
+                      className="px-5 py-2 bg-indigo-950 hover:bg-slate-900 text-white font-black text-[10px] uppercase tracking-wider rounded-xl cursor-pointer transition-all border-0"
+                    >
+                      Concluído
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
       </div>
     );
   }
@@ -1088,14 +1942,26 @@ export function GovContactsContent({
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value as any)}
                   className={`bg-transparent border-0 outline-none text-xs font-black uppercase cursor-pointer pr-4 transition-colors ${
-                    filterStatus === 'Aprovado' ? 'text-emerald-600' :
-                    filterStatus === 'Pendente' ? 'text-orange-500' :
-                    'text-red-500'
+                    filterStatus === 'Pendente de Validação' ? 'text-orange-500 font-bold' :
+                    filterStatus === 'Em Análise pela IA' ? 'text-purple-500 font-bold' :
+                    filterStatus === 'Em Revisão Administrativa' ? 'text-amber-500 font-bold' :
+                    filterStatus === 'Aprovado Automaticamente' ? 'text-emerald-500 font-bold' :
+                    filterStatus === 'Aprovado Manualmente' ? 'text-teal-500 font-bold' :
+                    filterStatus === 'Rejeitado' ? 'text-rose-500 font-bold' :
+                    filterStatus === 'Bloqueado' ? 'text-slate-450 font-bold' :
+                    filterStatus === 'Ativo' ? 'text-emerald-600 font-bold' :
+                    'text-indigo-600 font-bold'
                   }`}
                 >
-                  <option value="Pendente" className="text-orange-500 font-semibold font-sans">Pendentes</option>
-                  <option value="Aprovado" className="text-emerald-600 font-semibold font-sans">Aprovados</option>
-                  <option value="Não Aprovado" className="text-red-650 font-semibold font-sans">Não Aprovados</option>
+                  <option value="Todas" className="text-slate-800 font-sans font-semibold">Todas Tríades</option>
+                  <option value="Pendente de Validação" className="text-orange-500 font-sans font-semibold">Pendente de Validação</option>
+                  <option value="Em Análise pela IA" className="text-purple-500 font-sans font-semibold">Em Análise pela IA</option>
+                  <option value="Em Revisão Administrativa" className="text-amber-500 font-sans font-semibold">Em Revisão Administrativa</option>
+                  <option value="Aprovado Automaticamente" className="text-emerald-500 font-sans font-semibold">Aprovado Automaticamente</option>
+                  <option value="Aprovado Manualmente" className="text-teal-500 font-sans font-semibold">Aprovado Manualmente</option>
+                  <option value="Rejeitado" className="text-rose-500 font-sans font-semibold">Rejeitados</option>
+                  <option value="Bloqueado" className="text-slate-400 font-sans font-semibold">Bloqueados</option>
+                  <option value="Ativo" className="text-emerald-650 font-sans font-semibold">Ativos</option>
                 </select>
               </div>
             </div>
@@ -1106,19 +1972,19 @@ export function GovContactsContent({
             <div className="py-16 text-center animate-fadeIn">
               <div className="max-w-md mx-auto space-y-3">
                 <div className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto border ${
-                  filterStatus === 'Aprovado' ? 'bg-emerald-50 text-emerald-400 border-emerald-100' :
-                  filterStatus === 'Pendente' ? 'bg-orange-50 text-orange-400 border-orange-100' :
-                  'bg-red-50 text-red-400 border-red-100'
+                  filterStatus.toLowerCase().includes('aprovado') || filterStatus === 'Ativo' ? 'bg-emerald-50 text-emerald-400 border-emerald-100' :
+                  filterStatus.toLowerCase().includes('pendente') || filterStatus.toLowerCase().includes('análise') || filterStatus.toLowerCase().includes('revisão') ? 'bg-orange-50 text-orange-400 border-orange-100' :
+                  'bg-red-50 text-red-500 border-red-100'
                 }`}>
                   <Users size={26} />
                 </div>
                 <h5 className="font-extrabold text-slate-950 text-sm uppercase">Nenhum Usuário Corresponde</h5>
                 <p className="text-xs text-slate-400 leading-normal max-w-sm mx-auto">
                   De momento, não existem dados para exibir na categoria <strong className="text-slate-800">{selectedCategory}</strong> com o estado de validação <strong className={`font-black ${
-                    filterStatus === 'Aprovado' ? 'text-emerald-600' :
-                    filterStatus === 'Pendente' ? 'text-orange-500' :
-                    'text-red-600'
-                  }`}>{filterStatus.toUpperCase()}S</strong> nas províncias/municípios selecionados.
+                    filterStatus.toLowerCase().includes('aprovado') || filterStatus === 'Ativo' ? 'text-emerald-600' :
+                    filterStatus.toLowerCase().includes('pendente') || filterStatus.toLowerCase().includes('análise') || filterStatus.toLowerCase().includes('revisão') ? 'text-orange-500' :
+                    'text-red-655 font-bold'
+                  }`}>{filterStatus.toUpperCase()}</strong> nas províncias/municípios selecionados.
                 </p>
               </div>
             </div>
@@ -1137,20 +2003,21 @@ export function GovContactsContent({
                     <th className="py-4 px-5 text-center rounded-r-2xl">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
+                <tbody>
                   {filteredCitizens.map((citizen) => (
                     <tr 
                       key={citizen.id}
                       onClick={() => {
                         setSelectedReviewCitizen(citizen);
-                        if (citizen.status === 'Pendente') {
+                        setModalActiveTab('validation');
+                        if (citizen.status === 'Pendente de Validação' || citizen.status === 'Em Análise pela IA') {
                           setAiEvaluationState('idle');
                           setAiMatchScore(null);
                           setRejectionReason('');
                           setIsRejecting(false);
                         } else {
                           setAiEvaluationState('completed');
-                          setAiMatchScore(citizen.verificationScore || 95.0);
+                          setAiMatchScore(citizen.verificationScore || citizen.facialMatch || 95.0);
                           setRejectionReason(citizen.reason || '');
                           setIsRejecting(false);
                         }
@@ -1170,11 +2037,11 @@ export function GovContactsContent({
                               <span className="font-extrabold text-[8.5px] text-indigo-650 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
                                 {citizen.category}
                               </span>
-                              <span className="text-[9px] font-mono font-bold text-slate-400">ID: {citizen.id.toUpperCase()}</span>
+                              <span className="text-[9px] font-mono font-bold text-slate-400 font-sans">REGISTO: {citizen.id.toUpperCase()}</span>
                             </div>
-                            {citizen.reason && citizen.status === 'Não Aprovado' && (
+                            {citizen.reason && (citizen.status === 'Rejeitado' || citizen.status === 'Bloqueado') && (
                               <p className="text-[9.5px] text-rose-600 line-clamp-1 italic mt-1 font-semibold" title={citizen.reason}>
-                                Rejeitado: {citizen.reason}
+                                Observação: {citizen.reason}
                               </p>
                             )}
                           </div>
@@ -1186,8 +2053,11 @@ export function GovContactsContent({
                           <span>{citizen.biNumber}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-5 font-mono text-slate-600 font-bold">
-                        {citizen.contact}
+                      <td className="py-4 px-5 font-sans text-slate-600 font-bold">
+                        <div className="leading-tight">
+                          <div>{citizen.phone || citizen.contact}</div>
+                          <div className="text-[10px] text-slate-400 font-normal mt-0.5">{citizen.email}</div>
+                        </div>
                       </td>
                       <td className="py-4 px-5 font-bold text-slate-705">
                         <div className="flex items-center gap-1.5">
@@ -1198,49 +2068,87 @@ export function GovContactsContent({
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-5 text-center font-mono font-black text-emerald-600">
-                        {citizen.verificationScore && citizen.status !== 'Não Aprovado' ? (
-                          <span>{citizen.verificationScore}%</span>
+                      <td className="py-4 px-5 text-center font-mono font-black">
+                        {citizen.facialMatch !== undefined ? (
+                          <div className="flex flex-col items-center justify-center">
+                            <span className={citizen.facialMatch >= 90 ? 'text-emerald-600' : citizen.facialMatch >= 70 ? 'text-amber-500' : 'text-rose-600'}>
+                              {citizen.facialMatch}%
+                            </span>
+                            <span className="text-[8px] font-sans text-slate-450 uppercase font-black uppercase tracking-widest mt-0.5">coerência: {citizen.coherenceLevel}%</span>
+                          </div>
+                        ) : citizen.verificationScore !== undefined ? (
+                          <div className="flex flex-col items-center justify-center">
+                            <span className="text-emerald-600">{citizen.verificationScore}%</span>
+                            <span className="text-[8px] font-sans text-slate-400 tracking-wider">OK</span>
+                          </div>
                         ) : (
                           <span className="text-slate-300">&mdash;</span>
                         )}
                       </td>
                       <td className="py-4 px-5 text-center">
-                        {citizen.status === 'Aprovado' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-black uppercase tracking-wider select-none">
-                            <ShieldCheck size={11} /> Aprovado
-                          </span>
-                        )}
-                        {citizen.status === 'Pendente' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-655 border border-orange-100 text-[9px] font-black uppercase tracking-wider animate-pulse select-none">
-                            <Scan size={11} /> Pendente
-                          </span>
-                        )}
-                        {citizen.status === 'Não Aprovado' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-50 text-red-650 border border-red-150 text-[9px] font-black uppercase tracking-wider select-none">
-                            <ShieldAlert size={11} /> Rejeitado
-                          </span>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          {citizen.status === 'Pendente de Validação' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-655 border border-orange-100 text-[8.5px] font-black uppercase tracking-wider animate-pulse select-none">
+                              <Scan size={10} /> Pendente Validação
+                            </span>
+                          )}
+                          {citizen.status === 'Em Análise pela IA' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 text-purple-650 border border-purple-150 text-[8.5px] font-black uppercase tracking-wider animate-bounce select-none">
+                              <Scan size={10} /> Processamento IA
+                            </span>
+                          )}
+                          {citizen.status === 'Em Revisão Administrativa' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-750 border border-amber-200 text-[8.5px] font-black uppercase tracking-wider select-none">
+                              <Users size={10} /> Triagem Humana
+                            </span>
+                          )}
+                          {citizen.status === 'Aprovado Automaticamente' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-150 text-[8.5px] font-black uppercase tracking-wide select-none" title="Verificado automaticamente pela IA nacional">
+                              <Zap size={10} className="text-yellow-550 fill-yellow-550 shrink-0 animate-pulse" /> IA Aprovou
+                            </span>
+                          )}
+                          {citizen.status === 'Aprovado Manualmente' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-150 text-[8.5px] font-black uppercase tracking-wider select-none">
+                              <UserCheck size={10} /> Aprovado Manual
+                            </span>
+                          )}
+                          {citizen.status === 'Rejeitado' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-650 border border-rose-150 text-[8.5px] font-black uppercase tracking-wider select-none">
+                              <ShieldAlert size={10} /> Rejeitado
+                            </span>
+                          )}
+                          {citizen.status === 'Bloqueado' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-650 border border-slate-200 text-[8.5px] font-black uppercase tracking-wider select-none">
+                              <Lock size={10} /> Bloqueado
+                            </span>
+                          )}
+                          {citizen.status === 'Ativo' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[8.5px] font-black uppercase tracking-wider select-none">
+                              <ShieldCheck size={10} /> Ativo
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-4 px-5 text-center">
-                        <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-1 bg-slate-50 border border-slate-205 rounded-lg p-1.5 py-0.5 text-[9.5px] font-bold text-slate-600 shadow-3xs" title="Fotocópia do B.I. integrada">
-                            <FileText size={10} className="text-indigo-650" />
-                            <span className="font-mono text-[8px]">BI.pdf</span>
+                        <div className="flex flex-col items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-1 bg-slate-50 border border-slate-205 rounded-lg p-1 px-1.5 py-0.5 text-[9px] font-bold text-slate-600 shadow-3xs" title="Ficheiros de documentos digitais">
+                            <FileText size={9} className="text-indigo-650" />
+                            <span className="font-mono text-[7.5px] uppercase">{citizen.numDigitalDocs || 2} Docs</span>
                           </div>
-                          <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-lg p-1 py-0.5 text-[9.5px] font-bold text-indigo-655 shadow-3xs" title="Auto-captura biométrica certificada">
-                            <Scan size={10} className="text-indigo-650" />
-                            <span className="font-mono text-[8px]">Face.raw</span>
+                          <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100 rounded-lg p-1 px-1.5 py-0.5 text-[9px] font-bold text-indigo-655 shadow-3xs" title="Histórico de correspondência digital">
+                            <Mail size={9} className="text-indigo-650" />
+                            <span className="font-mono text-[7.5px] uppercase">{citizen.numCorrespondences || 0} Msg</span>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-5 text-center">
                         <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          {citizen.status === 'Pendente' ? (
+                          {citizen.status === 'Pendente de Validação' || citizen.status === 'Em Análise pela IA' || citizen.status === 'Em Revisão Administrativa' ? (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedReviewCitizen(citizen);
+                                setModalActiveTab('validation');
                                 setAiEvaluationState('idle');
                                 setAiMatchScore(null);
                                 setRejectionReason('');
@@ -1260,19 +2168,29 @@ export function GovContactsContent({
                                   facial: true
                                 });
                                 setRejectionStep('geral');
+                                // pre-fill edit inputs
+                                setEditName(citizen.name);
+                                setEditBi(citizen.biNumber || '');
+                                setEditEmail(citizen.email || '');
+                                setEditPhone(citizen.phone || citizen.contact || '');
+                                setEditAddress(citizen.address || '');
+                                setEditCategory(citizen.category || '');
+                                setEditProvince(citizen.province || '');
+                                setEditMunicipio(citizen.municipio || '');
                               }}
-                              className="bg-indigo-600 hover:bg-indigo-750 text-white font-black text-[9px] uppercase tracking-wide py-1.5 px-2.5 rounded-lg cursor-pointer border-0 transition-colors shadow-xs active:scale-95 flex items-center justify-center gap-1"
+                              className="bg-indigo-600 hover:bg-indigo-750 text-white font-black text-[9px] uppercase tracking-wide py-1.5 px-2.5 rounded-lg cursor-pointer border-0 transition-colors shadow-xs active:scale-95 flex items-center justify-center gap-1 shrink-0"
                             >
                               <Scan size={11} /> Analisar
                             </button>
                           ) : (
-                            <div className="flex gap-1 justify-center">
+                            <div className="flex gap-1 justify-center shrink-0">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedReviewCitizen(citizen);
+                                  setModalActiveTab('validation');
                                   setAiEvaluationState('completed');
-                                  setAiMatchScore(citizen.verificationScore || 95.0);
+                                  setAiMatchScore(citizen.verificationScore || citizen.facialMatch || 95.0);
                                   setRejectionReason(citizen.reason || '');
                                   setIsRejecting(false);
                                   setReviewStepTab(1);
@@ -1290,26 +2208,35 @@ export function GovContactsContent({
                                     facial: true
                                   });
                                   setRejectionStep('geral');
+                                  // pre-fill edit inputs
+                                  setEditName(citizen.name);
+                                  setEditBi(citizen.biNumber || '');
+                                  setEditEmail(citizen.email || '');
+                                  setEditPhone(citizen.phone || citizen.contact || '');
+                                  setEditAddress(citizen.address || '');
+                                  setEditCategory(citizen.category || '');
+                                  setEditProvince(citizen.province || '');
+                                  setEditMunicipio(citizen.municipio || '');
                                 }}
                                 className="bg-white hover:bg-slate-50 text-slate-705 font-black text-[9px] uppercase tracking-wide py-1.5 px-2 rounded-lg cursor-pointer border border-slate-205 transition-colors flex items-center justify-center gap-0.5"
                               >
                                 <Eye size={11} /> Revisar
                               </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (confirm(`Remover usuário "${citizen.name}" permanentemente do cadastro?`)) {
-                                    setCitizens(prev => prev.filter(c => c.id !== citizen.id));
-                                    addAuditLog?.(`Remoção: Usuário "${citizen.name}" removido permanentemente.`, 'critical');
-                                  }
-                                }}
-                                className="bg-rose-50 hover:bg-rose-105 text-rose-650 border border-slate-200 p-1.5 rounded-lg cursor-pointer transition-colors"
-                                title="Eliminar permanentemente"
-                              >
-                                <Trash2 size={11} />
-                              </button>
                             </div>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Remover usuário "${citizen.name}" permanentemente do cadastro?`)) {
+                                setCitizens(prev => prev.filter(c => c.id !== citizen.id));
+                                addAuditLog?.(`Remoção: Usuário "${citizen.name}" removido permanentemente.`, 'critical');
+                              }
+                            }}
+                            className="bg-rose-50 hover:bg-rose-105 text-rose-650 border border-slate-200 p-1.5 rounded-lg cursor-pointer transition-colors"
+                            title="Eliminar permanentemente"
+                          >
+                            <Trash2 size={11} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1361,9 +2288,46 @@ export function GovContactsContent({
                 </div>
               </div>
 
-              {/* Corpo de Análise em Grid de Duas Partes */}
+              {/* Corpo de Análise em Grid de Duas Partes ou Formulários */}
               <div className="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-grow">
                 
+                {/* Modal Navigation Sub-Tabs */}
+                <div className="flex border-b border-slate-250 bg-slate-50 p-2 rounded-2xl gap-2 flex-shrink-0 font-sans">
+                  <button
+                    onClick={() => setModalActiveTab('validation')}
+                    className={`flex items-center gap-1.5 py-1.5 px-3 text-[10px] font-black uppercase tracking-wider transition-all rounded-xl border-b-0 cursor-pointer ${
+                      modalActiveTab === 'validation'
+                        ? 'bg-indigo-950 text-white shadow-xs'
+                        : 'text-slate-505 hover:text-indigo-950 hover:bg-slate-100 bg-transparent'
+                    }`}
+                    type="button"
+                  >
+                    <ShieldCheck size={13} /> Validação Biométrica & IA
+                  </button>
+                  <button
+                    onClick={() => setModalActiveTab('activity')}
+                    className={`flex items-center gap-1.5 py-1.5 px-3 text-[10px] font-black uppercase tracking-wider transition-all rounded-xl border-b-0 cursor-pointer ${
+                      modalActiveTab === 'activity'
+                        ? 'bg-indigo-950 text-white shadow-xs'
+                        : 'text-slate-505 hover:text-indigo-950 hover:bg-slate-100 bg-transparent'
+                    }`}
+                    type="button"
+                  >
+                    <Activity size={13} /> Histórico & Auditoria
+                  </button>
+                  <button
+                    onClick={() => setModalActiveTab('edit')}
+                    className={`flex items-center gap-1.5 py-1.5 px-3 text-[10px] font-black uppercase tracking-wider transition-all rounded-xl border-b-0 cursor-pointer ${
+                      modalActiveTab === 'edit'
+                        ? 'bg-indigo-950 text-white shadow-xs'
+                        : 'text-slate-505 hover:text-indigo-950 hover:bg-slate-100 bg-transparent'
+                    }`}
+                    type="button"
+                  >
+                    <UserCheck size={13} /> Editar Dados Digitais
+                  </button>
+                </div>
+
                 {/* Alerta de status ou instruções */}
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex gap-3 text-left">
                   <Activity size={18} className="text-indigo-650 shrink-0 mt-0.5" />
@@ -1375,7 +2339,9 @@ export function GovContactsContent({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {modalActiveTab === 'validation' && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              {/* Painel Esquerdo: Fotocópia do BI Digitalizado (com abas de Frente/Verso ou imagens reais do Supabase) */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -1688,6 +2654,181 @@ export function GovContactsContent({
                     />
                   </motion.div>
                 )}
+                  </>
+                )}
+
+                {modalActiveTab === 'activity' && (
+                  <div className="space-y-6 font-sans">
+                    {/* Estatísticas de Utilização */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <span className="text-[8px] font-black text-slate-450 uppercase block tracking-wider">Documentos Submetidos</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <FileText size={16} className="text-slate-650" />
+                          <span className="text-sm font-black font-mono text-slate-800">{selectedReviewCitizen.numDigitalDocs || 4} Ficheiros</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <span className="text-[8px] font-black text-slate-450 uppercase block tracking-wider">Volume Correspondência</span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Mail size={16} className="text-slate-650" />
+                          <span className="text-sm font-black font-mono text-slate-800">{selectedReviewCitizen.numCorrespondences || 2} Mensagens</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <span className="text-[8px] font-black text-slate-450 uppercase block tracking-wider">Data de Registo</span>
+                        <div className="flex items-center gap-1.5 mt-1 font-mono text-xs font-bold text-slate-800 uppercase">
+                          <IdCard size={15} className="text-slate-650" />
+                          <span>{selectedReviewCitizen.registrationDate || "15/03/2026"}</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                        <span className="text-[8px] font-black text-slate-450 uppercase block tracking-wider">Último Acesso</span>
+                        <div className="flex items-center gap-1.5 mt-1 font-mono text-xs font-bold text-slate-800 uppercase">
+                          <Activity size={15} className="text-slate-650" />
+                          <span>{selectedReviewCitizen.lastAccess || "12/06/2026"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Histórico Recente */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight">Monitorização de Atividade do Cidadão & IP Logs</h4>
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl divide-y divide-slate-150 overflow-hidden text-left">
+                        {(selectedReviewCitizen.activityHistory || [
+                          { action: 'Acesso à Carteira Digital e Despacho', timestamp: '12/06/2026 10:15', ip: '197.231.42.15' },
+                          { action: 'Consulta de Correspondência Governamental', timestamp: '10/06/2026 14:22', ip: '197.231.40.89' },
+                          { action: 'Download de Cédula de Nascimento Digital', timestamp: '08/06/2026 16:30', ip: '197.231.40.89' }
+                        ]).map((log, idx) => (
+                          <div key={idx} className="p-3 sm:px-4 flex items-center justify-between text-[11px] hover:bg-slate-100/50 transition-colors font-sans">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-indigo-650 animate-pulse shrink-0" />
+                              <span className="font-extrabold text-slate-800 uppercase">{log.action}</span>
+                            </div>
+                            <div className="flex items-center gap-4 text-slate-450 font-semibold font-mono text-[9px] uppercase leading-none">
+                              <span>IP: {log.ip || '197.231.42.15'}</span>
+                              <span className="text-slate-500 font-bold">{log.timestamp}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {modalActiveTab === 'edit' && (
+                  <div className="space-y-4 text-left font-sans animate-fadeIn">
+                    <p className="text-[10px] text-slate-450 font-black uppercase tracking-wider mb-2">Edição Cadastral do Cidadão & Ajustes Civis</p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1 font-sans font-sans">
+                        <label className="block text-[8.5px] font-black text-slate-450 uppercase tracking-widest">Nome Completo</label>
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-600 transition-all font-semibold uppercase"
+                        />
+                      </div>
+                      <div className="space-y-1 font-sans font-sans">
+                        <label className="block text-[8.5px] font-black text-slate-450 uppercase tracking-widest">Número do BI</label>
+                        <input
+                          type="text"
+                          value={editBi}
+                          onChange={(e) => setEditBi(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-600 transition-all font-semibold font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1 font-sans font-sans">
+                        <label className="block text-[8.5px] font-black text-slate-450 uppercase tracking-widest">Correio Eletrónico (Email)</label>
+                        <input
+                          type="email"
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-600 transition-all font-semibold"
+                        />
+                      </div>
+                      <div className="space-y-1 font-sans font-sans">
+                        <label className="block text-[8.5px] font-black text-slate-450 uppercase tracking-widest">Contacto Telefónico</label>
+                        <input
+                          type="text"
+                          value={editPhone}
+                          onChange={(e) => setEditPhone(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-600 transition-all font-semibold font-mono"
+                        />
+                      </div>
+                      <div className="col-span-1 sm:col-span-2 space-y-1 font-sans">
+                        <label className="block text-[8.5px] font-black text-slate-450 uppercase tracking-widest">Residência Habitual</label>
+                        <input
+                          type="text"
+                          value={editAddress}
+                          onChange={(e) => setEditAddress(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-600 transition-all font-semibold"
+                        />
+                      </div>
+                      <div className="space-y-1 font-sans">
+                        <label className="block text-[8.5px] font-black text-slate-450 uppercase tracking-widest">Província</label>
+                        <select
+                          value={editProvince}
+                          onChange={(e) => {
+                            setEditProvince(e.target.value);
+                            setEditMunicipio('Todos');
+                          }}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                        >
+                          {PROVINCES.map((prov) => (
+                            <option key={prov} value={prov}>{prov}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1 font-sans">
+                        <label className="block text-[8.5px] font-black text-slate-450 uppercase tracking-widest">Município</label>
+                        <select
+                          value={editMunicipio}
+                          onChange={(e) => setEditMunicipio(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 outline-none focus:ring-2 focus:ring-indigo-600 font-bold"
+                        >
+                          {(MUNICIPALITIES_BY_PROVINCE[editProvince] || ['Todos']).map((m) => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!editName.trim() || !editBi.trim() || !editEmail.trim()) {
+                            alert('Existem campos obrigatórios em falta.');
+                            return;
+                          }
+                          setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? {
+                            ...c,
+                            name: editName,
+                            biNumber: editBi,
+                            bi: editBi,
+                            email: editEmail,
+                            phone: editPhone,
+                            contact: editPhone,
+                            address: editAddress,
+                            province: editProvince,
+                            municipio: editMunicipio,
+                            activityHistory: [
+                              { action: 'Edição de Dados Pessoais por Admin', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: 'Consola_Operador' },
+                              ...(c.activityHistory || [])
+                            ]
+                          } : c));
+                          setSelectedReviewCitizen(null);
+                          addAuditLog?.(`Cadastro: Dados do cidadão "${editName}" atualizados administrativamente com sucesso.`, 'success');
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-750 text-white font-black text-[10px] uppercase tracking-widest px-6 py-2.5 rounded-xl cursor-pointer border-0 shadow-md transition-all active:scale-95 font-sans"
+                      >
+                        Gravar Alterações
+                      </button>
+                    </div>
+                  </div>
+                )}
 
               </div>
 
@@ -1704,24 +2845,102 @@ export function GovContactsContent({
                     onClick={() => {
                       setSelectedReviewCitizen(null);
                     }}
-                    className="px-5 py-3 bg-white border border-slate-205 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all cursor-pointer font-bold w-full sm:w-auto text-center"
+                    className="px-5 py-3 bg-white border border-slate-205 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all cursor-pointer font-bold w-full sm:w-auto text-center font-sans"
                   >
-                    Cancelar / Sair
+                    Sair / Fechar
                   </button>
 
-                  {/* Se for Pendente e avaliado (ou não avaliado, permitimos a aprovação também) */}
-                  {selectedReviewCitizen.status === 'Pendente' && (
+                  {/* Bloquear / Desbloquear Conta */}
+                  {selectedReviewCitizen.status === 'Bloqueado' ? (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
+                          ...c, 
+                          status: 'Ativo',
+                          reason: undefined,
+                          activityHistory: [
+                            { action: 'Desbloqueio de Conta por Admin', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: 'Consola_Operador' },
+                            ...(c.activityHistory || [])
+                          ]
+                        } : c));
+
+                        if (selectedReviewCitizen.dbUUID || selectedReviewCitizen.id.length > 20) {
+                          try {
+                            const { error } = await supabase
+                              .from('solicitacoes_registo')
+                              .update({ status: 'Aprovado', observacoes: 'Conta reativada pelo Administrador.' })
+                              .eq('id', selectedReviewCitizen.dbUUID || selectedReviewCitizen.id);
+                            if (error) console.error(error);
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }
+
+                        addAuditLog?.(`Auditoria: Conta de "${selectedReviewCitizen.name}" DESBLOQUEADA com sucesso.`, 'success');
+                        setSelectedReviewCitizen(null);
+                      }}
+                      className="px-5 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0 font-sans"
+                    >
+                      Desbloquear Conta
+                    </button>
+                  ) : (
+                    (selectedReviewCitizen.status === 'Ativo' || selectedReviewCitizen.status === 'Aprovado Automaticamente' || selectedReviewCitizen.status === 'Aprovado Manualmente') && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const mot = prompt('Indique o motivo de segurança do bloqueamento da conta:');
+                          if (mot === null) return;
+                          if (!mot.trim()) {
+                            alert('Motivo obrigatório.');
+                            return;
+                          }
+
+                          setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
+                            ...c, 
+                            status: 'Bloqueado',
+                            reason: mot,
+                            activityHistory: [
+                              { action: 'Bloqueio Preventivo por Suspeita', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: 'Consola_Operador' },
+                              ...(c.activityHistory || [])
+                            ]
+                          } : c));
+
+                          if (selectedReviewCitizen.dbUUID || selectedReviewCitizen.id.length > 20) {
+                            try {
+                              const { error } = await supabase
+                                .from('solicitacoes_registo')
+                                .update({ status: 'Bloqueado', observacoes: 'Bloqueio preventivo: ' + mot })
+                                .eq('id', selectedReviewCitizen.dbUUID || selectedReviewCitizen.id);
+                              if (error) console.error(error);
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }
+
+                          addAuditLog?.(`Auditoria: Conta de "${selectedReviewCitizen.name}" BLOQUEADA preventivamente por: "${mot}".`, 'warning');
+                          setSelectedReviewCitizen(null);
+                        }}
+                        className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0 font-sans"
+                      >
+                        Bloquear Conta
+                      </button>
+                    )
+                  )}
+
+                  {/* Homologar / Indeferir Cadastro Pendente */}
+                  {(selectedReviewCitizen.status === 'Pendente de Validação' || selectedReviewCitizen.status === 'Em Análise pela IA' || selectedReviewCitizen.status === 'Em Revisão Administrativa') && (
                     <>
                       {!isRejecting ? (
                         <button
                           type="button"
                           onClick={() => {
                             setIsRejecting(true);
-                            setRejectionReason('Divergência de dados: Os dados dactiloscópicos ou imagem facial não estão de acordo com as regras.');
+                            setRejectionReason('Coerência facial ou validade documental em desacordo com as regras.');
                           }}
-                          className="px-5 py-3 bg-red-50 hover:bg-red-100 text-red-650 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0"
+                          className="px-5 py-3 bg-red-50 hover:bg-red-100 text-red-650 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0 font-sans"
                         >
-                          Sinalizar Pendência / Rejeitar
+                          Recusar Cadastro
                         </button>
                       ) : (
                         <button
@@ -1733,8 +2952,12 @@ export function GovContactsContent({
                             }
                             setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
                               ...c, 
-                              status: 'Não Aprovado', 
-                              reason: rejectionReason 
+                              status: 'Rejeitado', 
+                              reason: rejectionReason,
+                              activityHistory: [
+                                { action: 'Cadastro Recusado de Forma Manual', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: 'Consola_Operador' },
+                                ...(c.activityHistory || [])
+                              ]
                             } : c));
 
                             // Supabase update if synced
@@ -1753,10 +2976,10 @@ export function GovContactsContent({
                               }
                             }
 
-                            addAuditLog?.(`Auditoria: Registo de "${selectedReviewCitizen.name}" REJEITADO do sistema CDA. Motivo: ${rejectionReason}`, 'critical');
+                            addAuditLog?.(`Auditoria: Registo de "${selectedReviewCitizen.name}" REJEITADO do sistema CDA. Parecer: "${rejectionReason}"`, 'critical');
                             setSelectedReviewCitizen(null);
                           }}
-                          className="px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0"
+                          className="px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0 font-sans"
                         >
                           Confirmar Rejeição
                         </button>
@@ -1765,11 +2988,17 @@ export function GovContactsContent({
                       <button
                         type="button"
                         onClick={async () => {
-                          const score = aiMatchScore || 98.4;
+                          const score = aiMatchScore || selectedReviewCitizen.facialMatch || 98.4;
                           setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
                             ...c, 
-                            status: 'Aprovado', 
-                            verificationScore: score
+                            status: 'Aprovado Manualmente', 
+                            verificationScore: score,
+                            facialMatch: score,
+                            coherenceLevel: score + 1,
+                            activityHistory: [
+                              { action: 'Cadastro Homologado Manualmente', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: 'Consola_Operador' },
+                              ...(c.activityHistory || [])
+                            ]
                           } : c));
 
                           // Supabase update if synced
@@ -1791,23 +3020,27 @@ export function GovContactsContent({
                           addAuditLog?.(`Auditoria: Cadastro do cidadão "${selectedReviewCitizen.name}" homologado e ativado biometricamente pelo agente Admin.`, 'success');
                           setSelectedReviewCitizen(null);
                         }}
-                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold block shadow-lg shadow-emerald-600/10 w-full sm:w-auto text-center border-0"
+                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold block shadow-lg shadow-emerald-600/10 w-full sm:w-auto text-center border-0 font-sans"
                       >
-                        Aprovar Cadastro
+                        Homologar Cadastro
                       </button>
                     </>
                   )}
 
-                  {/* Se já estiver Aprovado ou Já Não Aprovado, podemos dar opção de Revogar ou Re-avaliar */}
-                  {selectedReviewCitizen.status !== 'Pendente' && (
+                  {/* Reabrir para Revisão se já estiver Homologado ou Rejeitado */}
+                  {selectedReviewCitizen.status !== 'Pendente de Validação' && selectedReviewCitizen.status !== 'Em Análise pela IA' && selectedReviewCitizen.status !== 'Em Revisão Administrativa' && selectedReviewCitizen.status !== 'Bloqueado' && (
                     <button
                       type="button"
                       onClick={async () => {
                         setCitizens(prev => prev.map(c => c.id === selectedReviewCitizen.id ? { 
                           ...c, 
-                          status: 'Pendente', 
+                          status: 'Pendente de Validação', 
                           reason: undefined,
-                          verificationScore: undefined 
+                          verificationScore: undefined,
+                          activityHistory: [
+                            { action: 'Processo de Cadastro Reaberto', timestamp: '12/06/2026 ' + new Date().toTimeString().slice(0, 5), ip: 'Consola_Operador' },
+                            ...(c.activityHistory || [])
+                          ]
                         } : c));
 
                         // Supabase update if synced
@@ -1829,7 +3062,7 @@ export function GovContactsContent({
                         addAuditLog?.(`Auditoria: Cadastro de "${selectedReviewCitizen.name}" reaberto para nova revisão e testes dactiloscópicos.`, 'info');
                         setSelectedReviewCitizen(null);
                       }}
-                      className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0"
+                      className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer font-bold w-full sm:w-auto text-center border-0 font-sans"
                     >
                       Reabrir para Revisão
                     </button>

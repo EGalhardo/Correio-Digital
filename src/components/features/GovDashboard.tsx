@@ -30,6 +30,8 @@ import {
   Brain,
   QrCode,
   Bell,
+  Building2,
+  Users,
 } from "lucide-react";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -860,6 +862,84 @@ export function GovDashboard({
               </div>
             </div>
           </div>
+
+          {/* NOVOS CONTAINERS DE RESUMO GERAL ADICIONAIS - IGUAL À IMAGEM ANEXADA */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            {/* Instituições Ativadas */}
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 hover:border-[#0c2340]/25 transition-all flex items-start gap-4">
+              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 border border-indigo-100/40 shadow-xs">
+                <Building2 size={22} className="stroke-[2.2]" />
+              </div>
+              <div className="flex-1 min-w-0 text-left space-y-1">
+                <div className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+                  Instituições Ativadas
+                </div>
+                <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5 leading-none mt-1 min-w-0">
+                  <span className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight italic shrink-0">342</span>
+                  <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-wider truncate max-w-full">instituições</span>
+                </div>
+                <div className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-emerald-600 pt-1">
+                  ↑ 12 este mês
+                </div>
+              </div>
+            </div>
+
+            {/* Cidadãos Registados */}
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 hover:border-[#0c2340]/25 transition-all flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0 border border-blue-100/40 shadow-xs">
+                <Users size={22} className="stroke-[2.2]" />
+              </div>
+              <div className="flex-1 min-w-0 text-left space-y-1">
+                <div className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+                  Cidadãos Registados
+                </div>
+                <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5 leading-none mt-1 min-w-0">
+                  <span className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight italic shrink-0">2.3M</span>
+                  <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-wider truncate max-w-full">cidadãos</span>
+                </div>
+                <div className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-emerald-600 pt-1">
+                  ↑ 85.230 este mês
+                </div>
+              </div>
+            </div>
+
+            {/* Tempo Médio de Resposta */}
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 hover:border-[#0c2340]/25 transition-all flex items-start gap-4">
+              <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shrink-0 border border-amber-100/40 shadow-xs">
+                <Clock size={22} className="stroke-[2.2]" />
+              </div>
+              <div className="flex-1 min-w-0 text-left space-y-1">
+                <div className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+                  Tempo Médio de Resposta
+                </div>
+                <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5 leading-none mt-1">
+                  <span className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight italic shrink-0">2h 35m</span>
+                </div>
+                <div className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[#10b981] pt-1">
+                  ↓ -18% vs mês anterior
+                </div>
+              </div>
+            </div>
+
+            {/* Pendentes */}
+            <div className="bg-white border border-[#0c2340]/12 rounded-[20px] p-6 hover:border-[#0c2340]/25 transition-all flex items-start gap-4 min-w-0">
+              <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center shrink-0 border border-rose-100/40 shadow-xs">
+                <Mail size={22} className="stroke-[2.2]" />
+              </div>
+              <div className="flex-1 min-w-0 text-left space-y-1 min-w-0">
+                <div className="text-[11px] md:text-xs font-bold text-slate-500 uppercase tracking-wider truncate">
+                  Pendentes
+                </div>
+                <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5 leading-none mt-1 min-w-0">
+                  <span className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight italic shrink-0">12.540</span>
+                  <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-wider truncate max-w-full block">correspondências</span>
+                </div>
+                <div className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-rose-600 pt-1">
+                  ↓ -6,7% vs mês anterior
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Anti-Fraud Registry Updates - Exclusive for Operators */}
@@ -1535,14 +1615,18 @@ export function GovDashboard({
                 <div className="flex items-center justify-center gap-2 mb-6 pb-2 border-b border-slate-100 w-full">
                   <div className="w-1 h-5 bg-red-650 rounded-full" />
                   <h3 className="text-xs font-black text-slate-955 uppercase tracking-[0.15em] italic">
-                    Segurança e Integridade
+                    Login Biometrico
                   </h3>
                 </div>
 
-                {/* Styled enlarge centered Shield Container */}
-                <div className="w-24 h-24 rounded-2xl bg-emerald-50 border border-emerald-100 text-[#10b981] flex items-center justify-center mb-5 shrink-0 shadow-sm relative overflow-hidden">
-                  <div className="absolute inset-0 bg-emerald-100/30 scale-75 rounded-full animate-pulse" />
-                  <Shield size={42} className="text-emerald-600 relative z-10" />
+                {/* Styled enlarge centered Face mesh image container */}
+                <div className="w-28 h-28 flex items-center justify-center mb-4 shrink-0 relative overflow-hidden group rounded-2xl">
+                  <img
+                    src="https://i.postimg.cc/x88pJx9X/Login-Biometrico.jpg"
+                    alt="Login Biométrico"
+                    className="w-full h-full object-cover relative z-10 transition-transform duration-300 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
 
                 <div className="space-y-2 flex flex-col items-center">
