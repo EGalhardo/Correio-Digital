@@ -50,6 +50,7 @@ import {
 
 import { Document, AppMode, UserRequest } from "../../types";
 import { GOV_HIGHLIGHT_SLIDES } from "../../constants/data";
+import { useInstitutions } from "../../services/institutionStore";
 
 interface Institution {
   name: string;
@@ -241,6 +242,7 @@ export function GovDashboard({
   setUserMaritalStatus,
   addAuditLog,
 }: GovDashboardProps & { appMode?: AppMode }) {
+  const { institutions: masterInstitutions } = useInstitutions();
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
@@ -776,17 +778,17 @@ export function GovDashboard({
             <div className="hidden md:block" />
           </div>
           <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
-            {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Ministerios", "Polícia Nacional", "Notário", "Registo Civil", "Seguro Social", "Administradoras", "INE"].map((name) => (
+            {masterInstitutions.map((inst) => (
               <button 
-                key={name}
+                key={inst.id}
                 type="button" 
                 onClick={() => {
                   onNavigate?.('gov-interoperabilidade');
                 }}
                 className="px-4 py-2 rounded-xl text-[10px] md:text-xs font-black bg-[#0c2340] hover:bg-[#152e4d] text-white border border-[#1c3c66] whitespace-nowrap transition-all cursor-pointer shrink-0"
-                title="Visualizar status de interoperabilidade"
+                title={`Visualizar status de interoperabilidade de ${inst.fullName}`}
               >
-                {name}
+                {inst.name}
               </button>
             ))}
           </div>
@@ -875,11 +877,15 @@ export function GovDashboard({
                   Instituições Ativadas
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5 leading-none mt-1 min-w-0">
-                  <span className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight italic shrink-0">342</span>
-                  <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-wider truncate max-w-full">instituições</span>
+                  <span className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight italic shrink-0">
+                    {masterInstitutions.filter(i => i.status === 'Ativa').length}
+                  </span>
+                  <span className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-wider truncate max-w-full">
+                    de {masterInstitutions.length} integradas
+                  </span>
                 </div>
                 <div className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-emerald-600 pt-1">
-                  ↑ 12 este mês
+                  ↑ 100% operacional
                 </div>
               </div>
             </div>

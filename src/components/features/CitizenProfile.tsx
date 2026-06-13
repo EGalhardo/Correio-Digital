@@ -19,6 +19,10 @@ interface CitizenProfileProps {
   setIsConfiguringSecurity: (configuring: boolean) => void;
   setTab: (tab: string) => void;
   profileName: string;
+  bi: string;
+  phone: string;
+  email?: string;
+  userFiliation?: string;
 }
 
 export const CitizenProfile: React.FC<CitizenProfileProps> = ({
@@ -28,15 +32,24 @@ export const CitizenProfile: React.FC<CitizenProfileProps> = ({
   setIsConfiguringSecurity,
   setTab,
   profileName,
+  bi,
+  phone,
+  email,
+  userFiliation = 'António Galhardo & Maria Conceição',
 }) => {
+  const parents = userFiliation ? userFiliation.split('&').map(p => p.trim()) : [];
+  const contact1Name = parents[1] || 'Maria Conceição';
+  const contact2Name = parents[0] || 'António Galhardo';
+  const derivedEmail = email || `${profileName.toLowerCase().replace(/\s+/g, '.')}@cidadao.ao`;
+
   return (
-    <section className="space-y-6 text-slate-900 animate-fade-in font-sans">
+    <section className="space-y-6 text-slate-950 animate-fade-in font-sans">
       
       {/* Header row as seen in screenshot 3 */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-100 pb-5 mb-2 gap-4">
         <div>
           <span className="text-xs uppercase font-bold tracking-widest text-slate-400">Minha Conta</span>
-          <h1 className="text-3xl font-black text-slate-950 tracking-tight">Bem-vindo, Edlasio</h1>
+          <h1 className="text-3xl font-black text-slate-950 tracking-tight">Bem-vindo, {profileName.split(' ')[0]}</h1>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full text-emerald-700 font-extrabold text-[11px] uppercase tracking-wider">
           <CheckCircle2 size={14} className="text-emerald-600 fill-emerald-100" />
@@ -48,7 +61,7 @@ export const CitizenProfile: React.FC<CitizenProfileProps> = ({
         {/* Left Column */}
         <div className="lg:col-span-1 space-y-6 text-left">
           
-          {/* Photo Card with JOÃO SILVA profile stats */}
+          {/* Photo Card with profile stats */}
           <div className="bg-white border border-slate-200 rounded-[32px] p-6 flex flex-col items-center text-center relative overflow-hidden shadow-sm">
             <div className="absolute top-0 inset-x-0 h-2 bg-slate-900" />
             
@@ -56,7 +69,7 @@ export const CitizenProfile: React.FC<CitizenProfileProps> = ({
               <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border border-slate-150 p-1 bg-white relative">
                 <img 
                   src={userProfilePhoto} 
-                  alt="João Silva" 
+                  alt={profileName} 
                   className="w-full h-full rounded-[22px] object-cover"
                   referrerPolicy="no-referrer"
                 />
@@ -66,7 +79,7 @@ export const CitizenProfile: React.FC<CitizenProfileProps> = ({
               </div>
             </div>
 
-            <h3 className="text-xl font-black text-slate-950 tracking-tight mb-1 uppercase">JOÃO SILVA</h3>
+            <h3 className="text-xl font-black text-slate-950 tracking-tight mb-1 uppercase">{profileName}</h3>
             <div className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider mb-6 border border-emerald-100">
               <ShieldCheck size={11} className="text-emerald-600" />
               CIDADÃO VERIFICADO
@@ -181,10 +194,10 @@ export const CitizenProfile: React.FC<CitizenProfileProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { label: 'Nome Completo', value: 'João Silva', type: 'text' },
-                { label: 'B.I. (Nº Bilhete de Identidade)', value: '123456789', type: 'mono' },
-                { label: 'Email Registado', value: 'joao@cidadao.ao', type: 'email', verified: true },
-                { label: 'Telemóvel Registado', value: '+244 923 111 222', type: 'phone', verified: true },
+                { label: 'Nome Completo', value: profileName, type: 'text' },
+                { label: 'B.I. (Nº Bilhete de Identidade)', value: bi, type: 'mono' },
+                { label: 'Email Registado', value: derivedEmail, type: 'email', verified: true },
+                { label: 'Telemóvel Registado', value: phone, type: 'phone', verified: true },
                 { label: 'Morada Residencial', value: 'Rua do Papel, 45, Luanda, Angola', type: 'text', colSpan: 'md:col-span-2' },
                 { label: 'Registo do Sistema Central', value: 'Conta criada em: 16 de Junho de 2025', type: 'text', colSpan: 'md:col-span-2', subtle: true }
               ].map((field, index) => (
@@ -258,8 +271,8 @@ export const CitizenProfile: React.FC<CitizenProfileProps> = ({
                 <div className="space-y-4 py-2">
                   <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <div>
-                      <p className="text-xs font-extrabold text-slate-800">Maria Silva</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Esposa</p>
+                      <p className="text-xs font-extrabold text-slate-800">{contact1Name}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Familiar (Pai/Mãe)</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
                       <Smartphone size={14} />
@@ -268,8 +281,8 @@ export const CitizenProfile: React.FC<CitizenProfileProps> = ({
 
                   <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                     <div>
-                      <p className="text-xs font-extrabold text-slate-800">João Silva</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Irmão</p>
+                      <p className="text-xs font-extrabold text-slate-800">{contact2Name}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Familiar (Pai/Mãe)</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
                       <Smartphone size={14} />

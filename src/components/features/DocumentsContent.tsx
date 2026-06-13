@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import { useInstitutions } from '../../services/institutionStore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
@@ -122,6 +123,7 @@ export function DocumentsContent({
   bi,
   isInst
 }: DocumentsContentProps) {
+  const { institutions } = useInstitutions();
   const [selectedInst, setSelectedInst] = useState<string>('Todas');
   const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<any | null>(null);
 
@@ -429,8 +431,8 @@ export function DocumentsContent({
                       className="w-full bg-slate-50 border border-line rounded-2xl px-5 py-3.5 md:py-4 text-xs md:text-sm font-bold text-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
                     >
                       <option value="">Selecione uma instituição...</option>
-                      {["SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Registo Civil", "INE"].map(org => (
-                        <option key={org} value={org}>{org}</option>
+                      {institutions.map(inst => (
+                        <option key={inst.id} value={inst.name}>{inst.name} - {inst.fullName}</option>
                       ))}
                     </select>
                     <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
@@ -851,7 +853,7 @@ export function DocumentsContent({
          </div>
         
         <div className="flex flex-nowrap gap-2 md:gap-3 overflow-x-auto custom-scrollbar-h pb-2">
-          {["Todas", "SME", "AGT", "ENDE", "EPAL", "Tribunal", "Hospital", "Registo Civil", "INE", "Ministérios"].map((name) => {
+          {["Todas", ...institutions.map(inst => inst.name)].map((name) => {
             const isActive = selectedInst === name;
             const countForInst = getCountForInst(name);
             return (

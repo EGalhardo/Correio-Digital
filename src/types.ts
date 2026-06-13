@@ -296,5 +296,76 @@ export interface Correspondence {
   delayDays?: number;
 }
 
+export interface SessionUser {
+  id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  bi: string;
+  nif: string;
+  passport: string;
+  phone: string;
+  email: string;
+  birthDate: string;
+  filiation: string;
+  maritalStatus: string;
+  avatarUrl: string;
+  verificationLevel: 'Verificado' | 'Totalmente Verificado' | 'Pendente';
+  confidenceScore: number;
+  lastAccess: string;
+}
+
+export interface ActiveProfile {
+  mode: AppMode;
+  role: string;
+  institutionName?: string;
+  departmentName?: string;
+  permissions: string[];
+}
+
+export enum InstitutionCategory {
+  FINANCAS = "Finanças",
+  INFRAESTRUTURA = "Infraestrutura",
+  SERVICOS = "Serviços",
+  SEGURANCA = "Segurança",
+  SAUDE = "Saúde",
+  JUSTICA = "Justiça",
+  EDUCACAO = "Educação"
+}
+
+export enum InstitutionStatus {
+  ATIVA = "Ativa",
+  INATIVA = "Inativa"
+}
+
+export interface Institution {
+  id: string;
+  name: string;
+  fullName: string;
+  category: InstitutionCategory | string;
+  province: string;
+  municipio: string;
+  status: InstitutionStatus | string;
+  totalCorrespondence: number;
+  totalAgents: number;
+  lastActivity: string;
+  responseRate: string;
+  typeInst?: string;
+  cidade?: string;
+  comuna?: string;
+  address?: string;
+  registrationDate: string;
+  aiUsageRate: string;
+  performanceScore: string;
+  contactEmail: string;
+  contactPhone: string;
+  responsibleName: string;
+  responsibleRole: string;
+  logoUrl?: string;
+  instCode?: string;
+}
+
+
+
 
 

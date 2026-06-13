@@ -6,6 +6,8 @@
 import { Home, Mail, QrCode, Users, User, LogOut, Trash2, Landmark, BarChart3, Shield, Activity, Settings, Scan, Folder, Receipt, FileText, Bot } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Message, Document, AppMode } from '../../types';
+import { useSession } from '../../services/sessionStore';
+
 
 interface MenuItem {
   id: string;
@@ -59,10 +61,12 @@ export function Sidebar({
   setSelectedMessage, 
   setSelectedDoc, 
   handleLogout,
-  appMode,
-  setAppMode,
+  appMode: _propsAppMode,
+  setAppMode: _propsSetAppMode,
   setStage
 }: SidebarProps) {
+  const { appMode, setAppMode } = useSession();
+
   
   const getItemsForMode = () => {
     switch (appMode) {

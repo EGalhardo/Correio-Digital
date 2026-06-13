@@ -58,6 +58,8 @@ import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocR
 import { ensureProtocolOnMessage, ensureProtocolOnDocument, generateProtocol } from './utils/protocolGenerator';
 import { OfflineManager, OfflineAction } from './utils/offlineManager';
 import { supabaseService, hasValidSupabaseKeys } from './services/supabaseService';
+import { useSession } from './services/sessionStore';
+
 
 export default function App() {
   const [stage, setStage] = useState('splash');
@@ -486,10 +488,23 @@ export default function App() {
   
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [appMode, setAppMode] = useState<AppMode>('user');
+  const { user, appMode, setAppMode, activeProfile } = useSession();
   const isGovMode = appMode === 'admin';
   const isInstMode = appMode === 'institution';
   
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name);
+      setBi(user.bi);
+      setPhone(user.phone);
+      setNif(user.nif);
+      setPassport(user.passport);
+      setUserBirthDate(user.birthDate);
+      setUserFiliation(user.filiation);
+      setUserMaritalStatus(user.maritalStatus);
+    }
+  }, [user]);
+
   useEffect(() => {
     setLoginError(null);
   }, [loginSubMode, appMode]);

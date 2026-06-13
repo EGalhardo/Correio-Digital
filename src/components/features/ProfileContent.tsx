@@ -18,6 +18,8 @@ import { Message, Document, Contact, UserRequest, DocRequest } from '../../types
 import { supabaseService, hasValidSupabaseKeys } from '../../services/supabaseService';
 import { CitizenProfile } from './CitizenProfile';
 import { InstitutionProfile } from './InstitutionProfile';
+import { useSession } from '../../services/sessionStore';
+
 
 interface ProfileContentProps {
   isInst?: boolean;
@@ -94,6 +96,7 @@ export function ProfileContent({
   auditLogs: passedAuditLogs = [],
   addAuditLog
 }: ProfileContentProps) {
+  const { user, activeProfile } = useSession();
   // Modal states
   const [isVerifying, setIsVerifying] = useState(false);
   const [isConfiguringSecurity, setIsConfiguringSecurity] = useState(false);
@@ -358,25 +361,30 @@ export function ProfileContent({
     if (!isInst) {
       return (
         <CitizenProfile
-          userProfilePhoto={USER_PROFILE_PHOTO}
+          userProfilePhoto={user.avatarUrl}
           setIsPrefsOpen={setIsPrefsOpen}
           setPrefSubTab={setPrefSubTab}
           setIsConfiguringSecurity={setIsConfiguringSecurity}
           setTab={setTab}
-          profileName={profileName || 'João Silva'}
+          profileName={user.name}
+          bi={user.bi}
+          phone={user.phone}
+          userFiliation={user.filiation}
         />
       );
     }
 
     return (
       <InstitutionProfile
-        userProfilePhoto={USER_PROFILE_PHOTO}
+        userProfilePhoto={user.avatarUrl}
         setIsPrefsOpen={setIsPrefsOpen}
         setPrefSubTab={setPrefSubTab}
         setIsConfiguringSecurity={setIsConfiguringSecurity}
-        profileName={profileName || 'Marta Domingos'}
-        nif={nif}
+        profileName={user.name}
+        nif={user.nif}
         showSensitiveData={showSensitiveData}
+        phone={user.phone}
+        bi={user.bi}
       />
     );
   };

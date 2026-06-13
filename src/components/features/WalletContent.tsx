@@ -7,8 +7,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, QrCode, ShieldCheck, Info, CreditCard, Globe, Car, FileText, ArrowLeft, Plus, Clock, CheckCircle2, XCircle, Building2, ChevronRight, X } from 'lucide-react';
 import { Document, DocRequest } from '../../types';
+import { useInstitutions } from '../../services/institutionStore';
 
-interface WalletContentProps {
+export interface WalletContentProps {
   filteredDocs: Document[];
   searchDoc: string;
   setSearchDoc: (search: string) => void;
@@ -19,6 +20,22 @@ interface WalletContentProps {
   onCreateRequest: (docType: string, institution: string) => void;
   emergencyMode?: boolean;
 }
+
+const CANONICAL_DOC_TYPES: Record<string, string[]> = {
+  'AGT': ['NIF Digital', 'Certidão de Contribuinte', 'IPU Simplificado', 'Liquidação de Impostos'],
+  'SME': ['Passaporte Digital', 'Autorização de Residência', 'Visto Consular Digital'],
+  'ENDE': ['Contrato de Fornecimento', 'Certidão de Quitação ENDE', 'Histórico de Consumos'],
+  'EPAL': ['Contrato de Água', 'Certidão de Quitação EPAL', 'Declaração de Abastecimento'],
+  'MINJUS': ['Registo Criminal Eletrónico', 'Cédula Pessoal Digital', 'B.I. Digital'],
+  'MINSA': ['Cartão de Vacinação Digital', 'Boletim de Saúde', 'Histórico Clínico Unificado'],
+  'PNA': ['Carta de Condução', 'Livrete Digital', 'Registo de Propriedade Automóvel'],
+  'INSS': ['Extrato de Contribuições', 'Guia de Segurança Social', 'Comprovativo de Pensionista'],
+  'CNE': ['Cartão de Eleitor Digital', 'Atestado de Cadastramento'],
+  'Registo Civil': ['Assento de Nascimento', 'Certidão de Casamento', 'Certificado de Óbito'],
+  'Notariado': ['Escritura Pública Digital', 'Procuração Notarial', 'Reconhecimento de Assinatura'],
+  'Tribunal de Comarca': ['Certidão Judicial', 'Sentença Homologada', 'Consulta de Processo'],
+  'Universidade Pública': ['Diploma Digital', 'Certificado de Habilitações', 'Cartão de Estudante Digital']
+};
 
 export function WalletContent({
   filteredDocs,
@@ -31,17 +48,14 @@ export function WalletContent({
   onCreateRequest,
   emergencyMode = false,
 }: WalletContentProps) {
+  const { institutions } = useInstitutions();
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestData, setRequestData] = useState({ institution: 'AGT', docType: '' });
 
-  const INSTITUTIONS = ['AGT', 'SME', 'MINFIN', 'PNA', 'Conservatória', 'INE'];
-  const DOC_TYPES = {
-    'AGT': ['NIF Digital', 'Certidão de Contribuinte'],
-    'SME': ['Passaporte Digital', 'Autorização de Residência'],
-    'MINFIN': ['Comprovativo de IRT', 'Taxa de Circulação'],
-    'PNA': ['Carta de Condução', 'Livrete Digital'],
-    'Conservatória': ['Assento de Nascimento', 'Certidão de Casamento'],
-    'INE': ['Certificação Estatística', 'Inquérito de Agregado Familiar']
+  const INSTITUTIONS = institutions.map(i => i.name);
+  
+  const getDocTypes = (inst: string): string[] => {
+    return CANONICAL_DOC_TYPES[inst] || ['Certidão Oficial', 'Declaração Electrónica', 'Guia de Carga'];
   };
 
   const handleRequestSubmit = () => {
@@ -319,7 +333,7 @@ export function WalletContent({
                 <div className="space-y-5">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Instituição Governamental</label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto p-2 bg-slate-100 border border-slate-200 rounded-xl scrollbar-thin">
                        {INSTITUTIONS.map(inst => (
                          <button
                            key={inst}
@@ -345,7 +359,7 @@ export function WalletContent({
                         className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3.5 text-xs font-black uppercase tracking-widest text-slate-900 focus:ring-4 focus:ring-primary/5 focus:bg-white focus:border-primary transition-all outline-none appearance-none cursor-pointer"
                       >
                         <option value="" disabled>Selecione o documento...</option>
-                        {DOC_TYPES[requestData.institution as keyof typeof DOC_TYPES].map(type => (
+                        {getDocTypes(requestData.institution).map(type => (
                           <option key={type} value={type}>{type}</option>
                         ))}
                       </select>

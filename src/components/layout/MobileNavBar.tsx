@@ -7,6 +7,8 @@ import { motion } from 'motion/react';
 import { Home, Mail, QrCode, Users, User, BarChart3, Shield, Activity, Scan, Folder, Receipt, FileText, Landmark, Settings, Bot } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 import { Message, Document, AppMode } from '../../types';
+import { useSession } from '../../services/sessionStore';
+
 
 interface MenuItem {
   id: string;
@@ -55,8 +57,10 @@ export function MobileNavBar({
   setTab, 
   setSelectedMessage, 
   setSelectedDoc,
-  appMode 
+  appMode: _propsAppMode
 }: MobileNavBarProps) {
+  const { appMode } = useSession();
+
   
   const getItemsForMode = () => {
     switch (appMode) {

@@ -5,7 +5,7 @@
 
 import { motion } from 'motion/react';
 import { Mic } from 'lucide-react';
-import { USER_PROFILE_PHOTO } from '../../constants/data';
+import { useSession } from '../../services/sessionStore';
 import { AppNotification, AppMode } from '../../types';
 import type { JSX } from 'react';
 
@@ -45,10 +45,12 @@ export function Header({
   onClickConnectivity,
   offlineQueueLength
 }: HeaderProps) {
+  const { user, activeProfile } = useSession();
   const isGov = appMode !== 'user';
   const isAdmin = appMode === 'admin';
   const isInst = appMode === 'institution';
   const hasEmergencyBanner = emergencyMode && isGov;
+
 
   const handleMicClick = () => {
     if (!isChatOpen) {
@@ -135,7 +137,7 @@ export function Header({
           
           <div className="relative flex items-center justify-center">
             <img 
-              src={USER_PROFILE_PHOTO} 
+              src={user.avatarUrl} 
               alt="Perfil" 
               onClick={() => setShowNotifications(!showNotifications)}
               className={`w-8 h-8 rounded-full object-cover border shadow-sm ml-1 cursor-pointer transition-all border-slate-100 ring-2 ring-primary/5 hover:ring-primary/20`}
@@ -162,12 +164,12 @@ export function Header({
           <small className={`text-[10px] md:text-sm font-black uppercase tracking-[0.1em] block mb-0.5 ${
             isAdmin ? 'text-slate-600' : 'text-slate-600'
           }`}>
-            {isAdmin ? 'Administração Central' : 'Oi,'}
+            {isAdmin ? 'Administração Central' : isInst ? activeProfile.institutionName : 'Área do Cidadão'}
           </small>
           <h2 className={`text-lg md:text-3xl font-black leading-none tracking-tight ${
             isAdmin ? 'text-slate-900' : 'text-primary'
           }`}>
-            {isAdmin ? 'Painel de Administração' : 'Edlasio'}
+            {isAdmin ? activeProfile.role : `Olá, ${user.firstName}`}
           </h2>
         </div>
         
@@ -217,7 +219,7 @@ export function Header({
           
           <div className="relative flex items-center">
             <img 
-              src={USER_PROFILE_PHOTO} 
+              src={user.avatarUrl} 
               alt="Perfil" 
               onClick={() => setShowNotifications(!showNotifications)}
               className={`w-10 h-10 rounded-full object-cover border-2 shadow-sm cursor-pointer transition-all border-white ring-2 ring-primary/10 hover:ring-primary/30`}

@@ -16,6 +16,12 @@ interface InstitutionProfileProps {
   profileName: string;
   nif: string;
   showSensitiveData: boolean;
+  phone?: string;
+  bi?: string;
+  email?: string;
+  role?: string;
+  department?: string;
+  institution?: string;
 }
 
 export const InstitutionProfile: React.FC<InstitutionProfileProps> = ({
@@ -26,7 +32,16 @@ export const InstitutionProfile: React.FC<InstitutionProfileProps> = ({
   profileName,
   nif,
   showSensitiveData,
+  phone = '+244 923 111 222',
+  bi = '123456789',
+  email,
+  role = 'Gestor de Contas Digital',
+  department = 'Direcção de Modernização Administrativa',
+  institution = 'Ministério das Telecomunicações, Tecnologias de Informação e Comunicação Social (MINTTICS)',
 }) => {
+  const derivedEmail = email || `${profileName.toLowerCase().replace(/\s+/g, '.')}@minttics.gov.ao`;
+  const derivedPersonalEmail = `${profileName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
+
   return (
     <section className="space-y-6 text-slate-950 animate-fade-in font-sans">
       
@@ -53,7 +68,7 @@ export const InstitutionProfile: React.FC<InstitutionProfileProps> = ({
             <div className="w-32 h-32 md:w-36 md:h-36 rounded-[28px] border border-slate-150 p-1 bg-white relative">
               <img 
                 src={userProfilePhoto} 
-                alt="Marta Domingos" 
+                alt={profileName} 
                 className="w-full h-full rounded-[22px] object-cover animate-fade-in"
                 referrerPolicy="no-referrer"
               />
@@ -63,8 +78,8 @@ export const InstitutionProfile: React.FC<InstitutionProfileProps> = ({
             </div>
           </div>
 
-          <h3 className="text-xl font-black text-slate-950 tracking-tight text-center uppercase mb-1">MARTA DOMINGOS</h3>
-          <p className="text-[#2563eb] font-extrabold text-[10px] uppercase text-center tracking-wider mb-2 leading-none">Técnica Administrativa</p>
+          <h3 className="text-xl font-black text-slate-950 tracking-tight text-center uppercase mb-1">{profileName}</h3>
+          <p className="text-[#2563eb] font-extrabold text-[10px] uppercase text-center tracking-wider mb-2 leading-none">{role}</p>
           
           <div className="inline-flex mx-auto items-center gap-1 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider mb-6 border border-emerald-100">
             <Check size={10} strokeWidth={3} />
@@ -76,11 +91,11 @@ export const InstitutionProfile: React.FC<InstitutionProfileProps> = ({
           {/* Utilizador details stack */}
           <div className="w-full space-y-4 text-left p-2">
             {[
-              { label: 'ID do Utilizador', value: 'MADP-TAD-2026-0158', type: 'mono' },
-              { label: 'Departamento', value: 'Departamento de Administração Geral', type: 'text' },
-              { label: 'Cargo Oficial', value: 'Técnica Administrativa', type: 'text' },
-              { label: 'Email Institucional', value: 'marta.domingos@maptss.gov.ao', type: 'text' },
-              { label: 'Telefone do Estado', value: '+244 923 456 789', type: 'mono' },
+              { label: 'ID do Utilizador', value: `CDA-MINTTICS-2026-${bi.slice(-4)}`, type: 'mono' },
+              { label: 'Departamento', value: department, type: 'text' },
+              { label: 'Cargo Oficial', value: role, type: 'text' },
+              { label: 'Email Institucional', value: derivedEmail, type: 'text' },
+              { label: 'Telefone do Estado', value: phone, type: 'mono' },
               { label: 'Data de Adesão', value: '12 de Março de 2024', type: 'text' },
               { label: 'Último Acesso', value: 'Hoje às 18:45', type: 'text', bold: true }
             ].map((detail, idx) => (
@@ -117,14 +132,14 @@ export const InstitutionProfile: React.FC<InstitutionProfileProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { label: 'Nome Completo', value: 'Marta Domingos' },
-                { label: 'Função no Sistema', value: 'Técnica Administrativa' },
+                { label: 'Nome Completo', value: profileName },
+                { label: 'Função no Sistema', value: role },
                 { label: 'Nível de Acesso', value: 'Padrão', highlight: true },
                 { label: 'Perfil de Permissões', value: 'Operacional' },
-                { label: 'Instituição Sincronizada', value: 'Ministério da Administração Pública, Trabalho e Segurança Social', colSpan: 'md:col-span-2' },
-                { label: 'Departamento / Repartição', value: 'Departamento de Administração Geral', colSpan: 'md:col-span-2' },
-                { label: 'Email Alternativo (Pessoal)', value: 'marta.domingos@gmail.com' },
-                { label: 'Telefone Pessoal', value: '+244 932 987 654' }
+                { label: 'Instituição Sincronizada', value: institution, colSpan: 'md:col-span-2' },
+                { label: 'Departamento / Repartição', value: department, colSpan: 'md:col-span-2' },
+                { label: 'Email Alternativo (Pessoal)', value: derivedPersonalEmail },
+                { label: 'Telefone Pessoal', value: phone }
               ].map((field, idx) => (
                 <div key={idx} className={`bg-slate-50/50 border border-slate-150 p-4 rounded-2xl flex flex-col justify-center ${field.colSpan || ''}`}>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">{field.label}</span>

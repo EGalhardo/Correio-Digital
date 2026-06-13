@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useInstitutions } from '../../services/institutionStore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -108,6 +109,7 @@ export function GovCorrespondenciasContent({
   onAddCorrespondence,
   onUpdateStatus
 }: GovCorrespondenciasContentProps) {
+  const { institutions } = useInstitutions();
   const [localCorrespondences, setLocalCorrespondences] = useState<Correspondence[]>([]);
   const rawCorrespondences = propsCorrespondences || localCorrespondences;
 
@@ -1124,12 +1126,9 @@ export function GovCorrespondenciasContent({
                       value={formData.institution}
                       onChange={(e) => setFormData(prev => ({ ...prev, institution: e.target.value }))}
                     >
-                      <option value="AGT">AGT</option>
-                      <option value="SME">SME</option>
-                      <option value="Tribunal Supremo">Tribunal Supremo</option>
-                      <option value="Registo Civil">Registo Civil</option>
-                      <option value="ENDE">ENDE</option>
-                      <option value="EPAL">EPAL</option>
+                      {institutions.map(inst => (
+                        <option key={inst.id} value={inst.name}>{inst.name}</option>
+                      ))}
                     </select>
                   </label>
                 </div>
