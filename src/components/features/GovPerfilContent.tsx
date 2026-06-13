@@ -58,14 +58,14 @@ export function GovPerfilContent({
   logs, 
   emergencyMode, 
   onToggleEmergency,
-  bi = '009874562LA041',
-  phone = '+244 923 888 777',
+  bi = '001928374LA092',
+  phone = '+244 925 555 777',
   nif = '5401328901',
-  passport = 'AO-P123456',
-  profileName = 'Edlasio Galhardo',
-  userBirthDate = '12/03/1995',
-  userFiliation = 'António Galhardo & Maria Conceição',
-  userMaritalStatus = 'Solteiro',
+  passport = 'AO-P987654',
+  profileName = 'Carlos Afonso Alberto',
+  userBirthDate = '15/08/1978',
+  userFiliation = 'Afonso Alberto & Teresa Carlos Alberto',
+  userMaritalStatus = 'Casado',
   hasFacialAuth = true,
   hasTwoFactor = false,
   govPin = '1234'
@@ -156,7 +156,7 @@ export function GovPerfilContent({
               {/* Email */}
               <div className="bg-white border border-slate-200 p-4 rounded-2xl">
                 <span className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Funcional</span>
-                <span className="text-xs font-bold text-slate-800 block mb-1">edlasio.galhardo@mindis.gov.ao</span>
+                <span className="text-xs font-bold text-slate-800 block mb-1 font-mono">carlos.alberto@mindis.gov.ao</span>
                 <span className="text-[9px] text-amber-600 font-bold bg-amber-50 rounded-lg px-2 py-0.5 border border-amber-100 italic block w-fit">
                   Não é possível alterar o email funcional
                 </span>

@@ -86,6 +86,25 @@ export function GovRelatorioContent({
   const [executiveTitle, setExecutiveTitle] = useState<string>('MEMÓRIA DESCRITIVA INTEGRADA DE RESULTADOS');
   const [executiveDepartment, setExecutiveDepartment] = useState<string>('Direção Unificada de Auditoria e Tecnologia do CDA');
 
+  // Calculate selected date range in days for dynamic indicators scaling
+  const dateRangeDays = useMemo(() => {
+    try {
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 30;
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+      return diffDays;
+    } catch {
+      return 30;
+    }
+  }, [customStartDate, customEndDate]);
+
+  // Scaling factor: Base comparison assumes 30 days. Scale metrics proportionally!
+  const scaleFactor = useMemo(() => {
+    return Math.max(0.1, Math.min(5, dateRangeDays / 30));
+  }, [dateRangeDays]);
+
   // Trigger processing effect when configs modify
   useEffect(() => {
     setIsLoading(true);
@@ -385,25 +404,6 @@ export function GovRelatorioContent({
     window.print();
   };
 
-  // Calculate selected date range in days for dynamic indicators scaling
-  const dateRangeDays = useMemo(() => {
-    try {
-      const start = new Date(customStartDate);
-      const end = new Date(customEndDate);
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 30;
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-      return diffDays;
-    } catch {
-      return 30;
-    }
-  }, [customStartDate, customEndDate]);
-
-  // Scaling factor: Base comparison assumes 30 days. Scale metrics proportionally!
-  const scaleFactor = useMemo(() => {
-    return Math.max(0.1, Math.min(5, dateRangeDays / 30));
-  }, [dateRangeDays]);
-
   return (
     <div className="pb-24 text-left animate-fadeIn space-y-6 w-full max-w-none mx-auto px-1 sm:px-2">
       
@@ -429,24 +429,24 @@ export function GovRelatorioContent({
       </AnimatePresence>
 
       {/* top general filters / Control Dashboard Panel */}
-      <div id="reporting-central-header" className="bg-white border border-slate-200 text-slate-800 rounded-[24px] p-6 shadow-xs relative overflow-hidden">
+      <div id="reporting-central-header" className="bg-white border-2 border-slate-200 text-slate-800 rounded-[24px] p-6 shadow-sm relative overflow-hidden transition-all duration-300">
         {/* Background abstract decoration elements */}
-        <div className="absolute right-0 top-0 w-80 h-80 bg-blue-50/40 rounded-full blur-3xl -z-1" />
-        <div className="absolute left-1/3 bottom-0 w-60 h-60 bg-emerald-50/30 rounded-full blur-3xl -z-1" />
+        <div className="absolute right-0 top-0 w-80 h-80 bg-slate-50/60 rounded-full blur-3xl -z-1" />
+        <div className="absolute left-1/3 bottom-0 w-60 h-60 bg-emerald-50/20 rounded-full blur-3xl -z-1" />
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-[9px] font-mono tracking-widest uppercase font-black text-slate-700">
-                <Globe size={10} className="text-[#00A859]" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-[10px] font-sans tracking-wider uppercase font-black text-slate-600">
+                <Globe size={11} className="text-[#00A859] animate-pulse" />
                 Conselho Digital de Angola
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-[#0c2340] tracking-tight m-0 font-sans mt-2">
+            <h1 className="text-2xl md:text-3.5xl font-black text-[#0c2340] tracking-tight m-0 font-sans mt-2">
               Centro de Análise Estratégica e Relatórios
             </h1>
-            <p className="text-xs md:text-sm text-slate-500 font-medium leading-relaxed max-w-2xl m-0">
-              Produção executiva de inteligência e auditorias consulares para fiscalização de identidade dactiloscópica civil, trâmites de correios governamentais e fluxos operacionais consolidados.
+            <p className="text-xs md:text-sm text-slate-500 font-semibold leading-relaxed max-w-3xl m-0">
+              Produção executiva de inteligência e auditorias consulares para fiscalização de identidade dactiloscópica civil, trâmites de correios governamentais e fluxos operacionais consolidados de Angola.
             </p>
           </div>
 
@@ -455,29 +455,39 @@ export function GovRelatorioContent({
             <button
               id="btn-produce-executive-report"
               onClick={() => {
-                playInteractionSound('click');
+                playInteractionSound('success');
                 setIsExecutiveModalOpen(true);
+                setToastMessage("Memória Descritiva aberta para edição!");
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
               }}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-[#00A859] hover:bg-[#00c267] text-white rounded-[16px] text-xs font-black uppercase tracking-wider transition-all duration-200 hover:shadow-lg active:scale-95 cursor-pointer border-0 shadow-xs"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#00A859] hover:bg-[#00c267] text-white rounded-[16px] text-xs font-black uppercase tracking-wider transition-all duration-200 hover:shadow-lg active:scale-95 cursor-pointer border-0 shadow-sm"
             >
               <FileCheck size={16} className="stroke-[2.5]" />
-              <span>Memória Descritiva / Relatório</span>
+              <span>Memória Descritiva</span>
             </button>
             
             {/* Custom Print Button */}
             <button
               id="btn-direct-print"
-              onClick={handleTriggerPrint}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-slate-50 hover:bg-slate-100 text-[#0c2340] border border-slate-200 rounded-[16px] text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-xs"
+              onClick={() => {
+                setToastMessage("Preparando documento para impressão...");
+                setShowToast(true);
+                setTimeout(() => {
+                  setShowToast(false);
+                  handleTriggerPrint();
+                }, 1000);
+              }}
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#0c2340] hover:bg-[#1a3a60] text-white rounded-[16px] text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-sm active:scale-95 border-0"
             >
               <Printer size={16} />
-              <span>Imprimir Consolidação</span>
+              <span>Imprimir</span>
             </button>
           </div>
         </div>
 
         {/* Separator line */}
-        <div className="h-[1px] bg-slate-100 my-5 print:hidden" />
+        <div className="h-[1px] bg-slate-200/80 my-5 print:hidden" />
 
         {/* Dynamic configurations line (Comparison Selector, Date Presets) */}
         <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between font-sans print:hidden">
@@ -487,13 +497,13 @@ export function GovRelatorioContent({
             <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-[16px] p-1 shadow-inner">
               <button 
                 onClick={() => { playInteractionSound('click'); setComparePeriod(true); }}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border-0 cursor-pointer ${comparePeriod ? 'bg-[#0c2340] text-white shadow-3xs' : 'bg-transparent text-slate-500 hover:text-slate-800'}`}
+                className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border-0 cursor-pointer ${comparePeriod ? 'bg-[#0c2340] text-white shadow-sm' : 'bg-transparent text-slate-500 hover:text-slate-800'}`}
               >
                 Comparação Ativa
               </button>
               <button 
                 onClick={() => { playInteractionSound('click'); setComparePeriod(false); }}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border-0 cursor-pointer ${!comparePeriod ? 'bg-[#0c2340] text-white shadow-3xs' : 'bg-transparent text-slate-500 hover:text-[#0c2340]'}`}
+                className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border-0 cursor-pointer ${!comparePeriod ? 'bg-[#0c2340] text-white shadow-sm' : 'bg-transparent text-slate-500 hover:text-[#0c2340]'}`}
               >
                 Evolução Absoluta
               </button>
@@ -501,12 +511,18 @@ export function GovRelatorioContent({
 
             {/* Comparison Scope Presets */}
             {comparePeriod && (
-              <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200/60 p-1.5 px-3 rounded-xl">
+              <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 p-2 rounded-xl shadow-2xs">
                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest pl-1">Escopo:</span>
                 <select
                   value={comparisonPreset}
-                  onChange={(e) => { playInteractionSound('click'); setComparisonPreset(e.target.value as any); }}
-                  className="bg-transparent border-0 text-slate-800 font-black text-[10px] uppercase tracking-wider select-none outline-none cursor-pointer focus:ring-0 pr-6"
+                  onChange={(e) => { 
+                    playInteractionSound('click'); 
+                    setComparisonPreset(e.target.value as any);
+                    setToastMessage(`Escopo de período alterado para: ${e.target.value === 'month' ? 'Mês Corrente' : 'Últimos 30 Dias'}`);
+                    setShowToast(true);
+                    setTimeout(() => setShowToast(false), 2500);
+                  }}
+                  className="bg-transparent border-0 text-slate-800 font-extrabold text-[10px] uppercase tracking-wider outline-none cursor-pointer focus:ring-0 pr-6"
                 >
                   <option value="month" className="text-slate-800 bg-white">Mês Corrente vs Mês Anterior</option>
                   <option value="30days" className="text-slate-800 bg-white">Últimos 30 Dias vs Meses Passados</option>
@@ -517,32 +533,44 @@ export function GovRelatorioContent({
 
           {/* Calendar Picker Custom Panel */}
           <div className="flex items-center gap-2.5 self-end md:self-auto">
-            <span className="text-[10px] text-slate-500 font-mono tracking-widest font-bold uppercase hidden sm:inline">Intervalo Customizado:</span>
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-[11px] text-slate-800 font-mono font-bold shadow-3xs">
+            <span className="text-[10px] text-slate-500 font-mono tracking-widest font-black uppercase hidden sm:inline">Intervalo Customizado:</span>
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[11px] text-slate-800 font-mono font-bold shadow-2xs">
               <input 
                 type="date" 
                 value={customStartDate} 
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="bg-transparent border-0 outline-none text-slate-850 focus:ring-0 w-28 text-center cursor-pointer text-xs font-mono font-bold"
+                onChange={(e) => {
+                  setCustomStartDate(e.target.value);
+                  playInteractionSound('click');
+                  setToastMessage("Data inicial alterada com sucesso!");
+                  setShowToast(true);
+                  setTimeout(() => setShowToast(false), 2000);
+                }}
+                className="bg-transparent border-0 outline-none text-slate-800 focus:ring-0 w-32 text-center cursor-pointer text-xs font-mono font-bold"
               />
-              <span className="text-slate-400 font-sans">até</span>
+              <span className="text-slate-400 font-sans font-bold">até</span>
               <input 
                 type="date" 
                 value={customEndDate} 
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="bg-transparent border-0 outline-none text-slate-850 focus:ring-0 w-28 text-center cursor-pointer text-xs font-mono font-bold"
+                onChange={(e) => {
+                  setCustomEndDate(e.target.value);
+                  playInteractionSound('click');
+                  setToastMessage("Data final alterada com sucesso!");
+                  setShowToast(true);
+                  setTimeout(() => setShowToast(false), 2000);
+                }}
+                className="bg-transparent border-0 outline-none text-slate-800 focus:ring-0 w-32 text-center cursor-pointer text-xs font-mono font-bold"
               />
-              <Calendar size={12} className="text-slate-500 ml-1.5 pointer-events-none" />
+              <Calendar size={13} className="text-slate-500 ml-1.5 pointer-events-none" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Structural Layout: Left sidebar (7 Tabs) and Right panels (Metrics, Charts, Table) */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start font-sans">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start font-sans">
         
         {/* Navigation Sidebar Drawer Panel */}
-        <div id="side-reports-navigation" className="lg:col-span-1 bg-white border border-slate-200 rounded-[24px] p-4 shadow-3xs space-y-4 print:hidden">
+        <div id="side-reports-navigation" className="lg:col-span-1 bg-white border border-slate-200 rounded-[24px] p-4.5 shadow-3xs space-y-4 print:hidden">
           <div className="pb-2 border-b border-slate-100 flex items-center justify-between">
             <span className="text-[10px] font-black uppercase text-slate-450 tracking-widest block font-sans">Menu de Relatórios</span>
             <span className="text-[9px] px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold rounded-md uppercase font-mono tracking-wider">
@@ -600,7 +628,7 @@ export function GovRelatorioContent({
         </div>
 
         {/* Content Panel Area (Adaptive Report and Graphs) */}
-        <div className="lg:col-span-3 print:col-span-4 space-y-6">
+        <div className="lg:col-span-4 print:col-span-5 space-y-6">
           
           <AnimatePresence mode="wait">
             {isLoading ? (
@@ -732,7 +760,7 @@ export function GovRelatorioContent({
                   </div>
 
                   {/* Combined Chart wrapper (ComposedChart handles Area + Bar + Line) */}
-                  <div className="h-[280px] sm:h-[340px] w-full">
+                  <div className="h-[300px] sm:h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart 
                         data={kpiData.chart}

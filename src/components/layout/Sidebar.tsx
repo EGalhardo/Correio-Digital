@@ -48,6 +48,7 @@ const adminItems: MenuItem[] = [
   { id: 'gov-contatos', label: 'Cidadãos', icon: User },
   { id: 'gov-trabalhadores', label: 'Trabalhadores', icon: Users },
   { id: 'gov-relatorio', label: 'Relatórios', icon: FileText },
+  { id: 'gov-ia', label: 'IA', icon: Bot },
   { id: 'gov-seguranca', label: 'Auditoria', icon: Shield },
   { id: 'gov-perfil', label: 'Conta', icon: Settings },
 ];

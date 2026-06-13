@@ -16,6 +16,8 @@ import { OfflineManager } from '../../utils/offlineManager';
 import { motion, AnimatePresence } from 'motion/react';
 import { Message, Document, Contact, UserRequest, DocRequest } from '../../types';
 import { supabaseService, hasValidSupabaseKeys } from '../../services/supabaseService';
+import { CitizenProfile } from './CitizenProfile';
+import { InstitutionProfile } from './InstitutionProfile';
 
 interface ProfileContentProps {
   isInst?: boolean;
@@ -353,6 +355,33 @@ export function ProfileContent({
   const [passwordError, setPasswordError] = useState('');
 
   const renderProfileBody = () => {
+    if (!isInst) {
+      return (
+        <CitizenProfile
+          userProfilePhoto={USER_PROFILE_PHOTO}
+          setIsPrefsOpen={setIsPrefsOpen}
+          setPrefSubTab={setPrefSubTab}
+          setIsConfiguringSecurity={setIsConfiguringSecurity}
+          setTab={setTab}
+          profileName={profileName || 'João Silva'}
+        />
+      );
+    }
+
+    return (
+      <InstitutionProfile
+        userProfilePhoto={USER_PROFILE_PHOTO}
+        setIsPrefsOpen={setIsPrefsOpen}
+        setPrefSubTab={setPrefSubTab}
+        setIsConfiguringSecurity={setIsConfiguringSecurity}
+        profileName={profileName || 'Marta Domingos'}
+        nif={nif}
+        showSensitiveData={showSensitiveData}
+      />
+    );
+  };
+
+  const old_renderProfileBody = () => {
     if (!isInst) {
       return (
         <section className="space-y-6">

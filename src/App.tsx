@@ -41,6 +41,7 @@ import {
   InstitutionDetail,
   InstQrCodeContent,
   InstAiAssistantContent,
+  GovIaContent,
 } from './components';
 
 // Constants & Types
@@ -1849,6 +1850,10 @@ Ficha civil do titular:
             correspondences={correspondences}
             auditLogs={auditLogs}
           />
+        );
+      case 'gov-ia':
+        return (
+          <GovIaContent onLog={addAuditLog} />
         );
       case 'gov-seguranca':
         return (
