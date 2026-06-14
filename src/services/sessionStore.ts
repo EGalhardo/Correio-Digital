@@ -1,48 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { SessionUser, ActiveProfile, AppMode } from "../types";
+import { MOCK_SESSION_USER, MOCK_SESSION_PROFILES } from "../constants/mocks";
 
 // Canonical Session User: Edlasio Galhardo
-export const CANONICAL_USER: SessionUser = {
-  id: "USR-009874562-EDL",
-  name: "Edlasio Galhardo",
-  firstName: "Edlasio",
-  lastName: "Galhardo",
-  bi: "009874562LA041",
-  nif: "5401329188",
-  passport: "AO-P129384",
-  phone: "+244 923 000 111",
-  email: "edlasio.galhardo@gmail.com",
-  birthDate: "12/03/1995",
-  filiation: "António Galhardo & Maria Conceição",
-  maritalStatus: "Solteiro",
-  avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200",
-  verificationLevel: "Totalmente Verificado",
-  confidenceScore: 98,
-  lastAccess: "Hoje às 18:45"
-};
+export const CANONICAL_USER: SessionUser = MOCK_SESSION_USER;
 
 // Available profiles mapped to user
-export const PROFILES_MAP: Record<AppMode, ActiveProfile> = {
-  user: {
-    mode: "user",
-    role: "Cidadão Autenticado",
-    permissions: ["read_documents", "request_documents", "receive_correspondence", "manage_contacts"],
-  },
-  institution: {
-    mode: "institution",
-    role: "Gestor de Contas Digital",
-    institutionName: "Ministério das Telecomunicações, Tecnologias de Informação e Comunicação Social (MINTTICS)",
-    departmentName: "Direcção Nacional de Correios e Telecomunicações",
-    permissions: ["read_institution_data", "issue_correspondence", "validate_documents", "manage_operations"],
-  },
-  admin: {
-    mode: "admin",
-    role: "Administrador de Sistemas Geral",
-    institutionName: "Direcção de Tecnologia e Segurança Digital do Estado",
-    departmentName: "Gabinete de Operações de Segurança (SOC)",
-    permissions: ["all_access", "audit_logs", "system_controls", "emergency_trigger", "admin_workers"],
-  }
-};
+export const PROFILES_MAP: Record<AppMode, ActiveProfile> = MOCK_SESSION_PROFILES;
 
 interface SessionContextType {
   user: SessionUser;
