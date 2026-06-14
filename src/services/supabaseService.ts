@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
-import { Message, Document, Contact, UserRequest, DocRequest } from '../types';
+import { Message, Document, Contact, UserRequest, DocRequest, Correspondence } from '../types';
 
 /**
  * Service to connect and synchronize state with the Supabase database.
@@ -569,6 +569,72 @@ export const supabaseService = {
       }));
     } catch (e) {
       console.error('Supabase getAuditLogs error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Insert or update official government correspondence
+   */
+  async insertCorrespondence(cor: Correspondence) {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const payload = {
+        id: parseInt(cor.id.replace(/\D/g, '')) || Math.floor(Math.random() * 1000000),
+        sender_bi: cor.sender,
+        recipient_bi: cor.recipient,
+        org: cor.institution,
+        preview: cor.subject,
+        unread: false,
+        status: cor.priority || 'Normal',
+        subject: cor.subject,
+        body: cor.body,
+        deadline_text: cor.originProvince, 
+        state_indicator: cor.destinationProvince,
+        actions: [cor.status] // Store current status value in text array
+      };
+      const { data, error } = await supabase
+        .from('messages')
+        .upsert([payload])
+        .select();
+      if (error) throw error;
+      return data;
+    } catch (e) {
+      console.error('Supabase insertCorrespondence error:', e);
+      return null;
+    }
+  },
+
+  /**
+   * Fetch all official government correspondences
+   */
+  async getCorrespondences(): Promise<Correspondence[] | null> {
+    if (!hasValidSupabaseKeys()) return null;
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('id', { ascending: false });
+      if (error) throw error;
+      if (!data) return [];
+      
+      // Filter out messages that represent general personal messages of citizen
+      // General citizen messages are filtered where they match citizen's id format
+      return data.map((item: any) => ({
+        id: `COR-${item.id}`,
+        sender: item.sender_bi,
+        recipient: item.recipient_bi,
+        subject: item.subject,
+        originProvince: item.deadline_text || 'Luanda',
+        destinationProvince: item.state_indicator || 'Uíge',
+        institution: item.org,
+        status: item.actions?.[0] || 'Enviada',
+        date: new Date(item.created_at).toLocaleDateString('pt-AO'),
+        body: item.body,
+        priority: item.status
+      }));
+    } catch (e) {
+      console.error('Supabase getCorrespondences error:', e);
       return null;
     }
   },

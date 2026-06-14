@@ -64,12 +64,14 @@ import { Message, Document, Contact, AppNotification, AppMode, UserRequest, DocR
 import { ensureProtocolOnMessage, ensureProtocolOnDocument, generateProtocol } from './utils/protocolGenerator';
 import { OfflineManager, OfflineAction } from './utils/offlineManager';
 import { supabaseService, hasValidSupabaseKeys } from './services/supabaseService';
+import { supabase } from './lib/supabaseClient';
 import { useSession } from './services/sessionStore';
 import { startImagePreloading, subscribeToPreload } from './utils/imagePreloader';
 
 
 export default function App() {
   const [stage, setStage] = useState('splash');
+  const [triggerRefetch, setTriggerRefetch] = useState(0);
   const [tab, setTab] = useState('home');
   const [selectedInstitution, setSelectedInstitution] = useState<string | null>(null);
   const [showAccessModal, setShowAccessModal] = useState(false);
@@ -294,19 +296,19 @@ export default function App() {
     return [...MOCK_DOC_REQUESTS];
   });
 
-  const [bi, setBi] = useState(() => {
+  const [bi, setBiLocal] = useState(() => {
     return localStorage.getItem('correio_digital_bi') || '009874562LA041';
   });
 
-  const [phone, setPhone] = useState(() => {
+  const [phone, setPhoneLocal] = useState(() => {
     return localStorage.getItem('correio_digital_phone') || '+244 923 000 111';
   });
 
-  const [nif, setNif] = useState(() => {
+  const [nif, setNifLocal] = useState(() => {
     return localStorage.getItem('correio_digital_nif') || '5401329188';
   });
 
-  const [passport, setPassport] = useState(() => {
+  const [passport, setPassportLocal] = useState(() => {
     return localStorage.getItem('correio_digital_passport') || 'AO-P129384';
   });
 
@@ -326,21 +328,70 @@ export default function App() {
     return localStorage.getItem('correio_digital_gov_pin') || '1234';
   });
 
-  const [profileName, setProfileName] = useState(() => {
+  const [profileName, setProfileNameLocal] = useState(() => {
     return localStorage.getItem('correio_digital_profile_name') || 'Edlasio Galhardo';
   });
 
-  const [userBirthDate, setUserBirthDate] = useState(() => {
+  const [userBirthDate, setUserBirthDateLocal] = useState(() => {
     return localStorage.getItem('correio_digital_birth_date') || '12/03/1995';
   });
 
-  const [userFiliation, setUserFiliation] = useState(() => {
+  const [userFiliation, setUserFiliationLocal] = useState(() => {
     return localStorage.getItem('correio_digital_filiation') || 'António Galhardo & Maria Conceição';
   });
 
-  const [userMaritalStatus, setUserMaritalStatus] = useState(() => {
+  const [userMaritalStatus, setUserMaritalStatusLocal] = useState(() => {
     return localStorage.getItem('correio_digital_marital_status') || 'Solteiro';
   });
+
+  // Wrapper functions to keep local states synced to master SessionStore
+  const setBi = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(bi) : val;
+    setBiLocal(resolved);
+    if (updateUserFields) updateUserFields({ bi: resolved });
+  };
+
+  const setPhone = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(phone) : val;
+    setPhoneLocal(resolved);
+    if (updateUserFields) updateUserFields({ phone: resolved });
+  };
+
+  const setNif = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(nif) : val;
+    setNifLocal(resolved);
+    if (updateUserFields) updateUserFields({ nif: resolved });
+  };
+
+  const setPassport = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(passport) : val;
+    setPassportLocal(resolved);
+    if (updateUserFields) updateUserFields({ passport: resolved });
+  };
+
+  const setProfileName = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(profileName) : val;
+    setProfileNameLocal(resolved);
+    if (updateUserFields) updateUserFields({ name: resolved });
+  };
+
+  const setUserBirthDate = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(userBirthDate) : val;
+    setUserBirthDateLocal(resolved);
+    if (updateUserFields) updateUserFields({ birthDate: resolved });
+  };
+
+  const setUserFiliation = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(userFiliation) : val;
+    setUserFiliationLocal(resolved);
+    if (updateUserFields) updateUserFields({ filiation: resolved });
+  };
+
+  const setUserMaritalStatus = (val: string | ((prev: string) => string)) => {
+    const resolved = typeof val === 'function' ? (val as Function)(userMaritalStatus) : val;
+    setUserMaritalStatusLocal(resolved);
+    if (updateUserFields) updateUserFields({ maritalStatus: resolved });
+  };
 
   useEffect(() => {
     localStorage.setItem('correio_digital_bi', bi);
@@ -416,44 +467,19 @@ export default function App() {
   const isGovMode = appMode === 'admin';
   const isInstMode = appMode === 'institution';
   
-  // Sincronização Bidirecional Robusta entre useSession e os estados locais do App.tsx
+  // Sincronização Unidirecional de Session para os estados locais do App.tsx
   useEffect(() => {
     if (user) {
-      // 1. Sincronizar de Session para os estados locais (apenas se alterados externamente ou no load inicial)
-      if (user.name !== profileName && profileName === 'Edlasio Galhardo') setProfileName(user.name);
-      if (user.bi !== bi && bi === '005432109LA088') setBi(user.bi);
-      if (user.phone !== phone && phone === '+244 923 000 111') setPhone(user.phone);
-      if (user.nif !== nif && nif === '5401329188') setNif(user.nif);
-      if (user.passport !== passport && passport === 'AO-P129384') setPassport(user.passport);
-      if (user.birthDate !== userBirthDate && userBirthDate === '12/03/1995') setUserBirthDate(user.birthDate);
-      if (user.filiation !== userFiliation && userFiliation === 'António Galhardo & Maria Conceição') setUserFiliation(user.filiation);
-      if (user.maritalStatus !== userMaritalStatus && userMaritalStatus === 'Solteiro') setUserMaritalStatus(user.maritalStatus);
-
-      // 2. Sincronizar de estados locais para o Session (quando o utilizador edita as definições de perfil)
-      const needsSessionUpdate = 
-        user.name !== profileName ||
-        user.bi !== bi ||
-        user.phone !== phone ||
-        user.nif !== nif ||
-        user.passport !== passport ||
-        user.birthDate !== userBirthDate ||
-        user.filiation !== userFiliation ||
-        user.maritalStatus !== userMaritalStatus;
-        
-      if (needsSessionUpdate && updateUserFields) {
-        updateUserFields({
-          name: profileName,
-          bi: bi,
-          phone: phone,
-          nif: nif,
-          passport: passport,
-          birthDate: userBirthDate,
-          filiation: userFiliation,
-          maritalStatus: userMaritalStatus
-        });
-      }
+      setBiLocal(prev => prev !== user.bi ? user.bi : prev);
+      setPhoneLocal(prev => prev !== user.phone ? user.phone : prev);
+      setNifLocal(prev => prev !== user.nif ? user.nif : prev);
+      setPassportLocal(prev => prev !== user.passport ? user.passport : prev);
+      setProfileNameLocal(prev => prev !== user.name ? user.name : prev);
+      setUserBirthDateLocal(prev => prev !== user.birthDate ? user.birthDate : prev);
+      setUserFiliationLocal(prev => prev !== user.filiation ? user.filiation : prev);
+      setUserMaritalStatusLocal(prev => prev !== user.maritalStatus ? user.maritalStatus : prev);
     }
-  }, [user, profileName, bi, phone, nif, passport, userBirthDate, userFiliation, userMaritalStatus, updateUserFields]);
+  }, [user]);
 
   useEffect(() => {
     setLoginError(null);
@@ -529,6 +555,30 @@ export default function App() {
       }, 150);
     }
   }, [successProtocolModal]);
+
+  // Synchronize local profile state shifts to Supabase in real-time
+  useEffect(() => {
+    if (stage !== 'app' || !isOnline || !hasValidSupabaseKeys()) return;
+    
+    const handler = setTimeout(() => {
+      console.log('CADA: Gravando actualizações de perfil no Supabase...');
+      supabaseService.upsertProfile({
+        bi,
+        name: profileName,
+        phone,
+        nif,
+        passport,
+        birth_date: userBirthDate,
+        filiation: userFiliation,
+        marital_status: userMaritalStatus,
+        role: appMode === 'admin' ? 'admin' : appMode === 'institution' ? 'institution' : 'user'
+      }).catch(err => {
+        console.error('Erro ao sincronizar perfil com o Supabase:', err);
+      });
+    }, 1000); // 1-second debounce to avoid excessive writes while typing
+    
+    return () => clearTimeout(handler);
+  }, [profileName, phone, nif, passport, userBirthDate, userFiliation, userMaritalStatus, appMode, bi, isOnline]);
 
   // Face Scan simulated progress for login screen
   useEffect(() => {
@@ -731,6 +781,34 @@ export default function App() {
       try {
         console.log('CADA: Carregando dados integrados do Supabase...');
         
+        // Auto-seed check: Check if messages are empty for this user, seed all default data if database is fresh
+        const dbMessagesTest = await supabaseService.getMessages(bi);
+        if (dbMessagesTest === null || dbMessagesTest.length === 0) {
+          console.log('CADA: Nenhum dado de mensagens encontrado para este utilizador no Supabase. Efetuando semeadura automática...');
+          const seedPayload = {
+            profile: {
+              bi,
+              name: profileName,
+              phone,
+              nif,
+              passport,
+              birthDate: userBirthDate,
+              filiation: userFiliation,
+              maritalStatus: userMaritalStatus
+            },
+            inbox,
+            docInbox,
+            sentMessages,
+            contacts,
+            documents,
+            userRequests,
+            docRequests,
+            auditLogs
+          };
+          await supabaseService.seedAll(seedPayload);
+          console.log('CADA: Semeadura automática para o Supabase concluída!');
+        }
+
         // 1. Fetch Profile
         const dbProfile = await supabaseService.getProfile(bi);
         if (dbProfile && isSubscribed) {
@@ -751,7 +829,7 @@ export default function App() {
 
         // 2. Fetch Messages
         const dbMessages = await supabaseService.getMessages(bi);
-        if (dbMessages && dbMessages.length > 0 && isSubscribed) {
+        if (dbMessages && isSubscribed) {
           const incoming = dbMessages.filter(m => m.id < 10000);
           const docs = dbMessages.filter(m => m.id >= 10000);
 
@@ -761,38 +839,44 @@ export default function App() {
 
         // 3. Fetch Documents
         const dbDocs = await supabaseService.getDocuments(bi);
-        if (dbDocs && dbDocs.length > 0 && isSubscribed) {
+        if (dbDocs && isSubscribed) {
           setDocuments(dbDocs);
         }
 
         // 4. Fetch Contacts
         const dbContacts = await supabaseService.getContacts(bi);
-        if (dbContacts && dbContacts.length > 0 && isSubscribed) {
+        if (dbContacts && isSubscribed) {
           setContacts(dbContacts);
         }
 
         // 5. Fetch User requests
         const dbUserRequests = await supabaseService.getUserRequests(bi);
-        if (dbUserRequests && dbUserRequests.length > 0 && isSubscribed) {
+        if (dbUserRequests && isSubscribed) {
           setUserRequests(dbUserRequests);
         }
 
         // 6. Fetch Doc Requests
         const dbDocRequests = await supabaseService.getDocRequests(bi);
-        if (dbDocRequests && dbDocRequests.length > 0 && isSubscribed) {
+        if (dbDocRequests && isSubscribed) {
           setDocRequests(dbDocRequests);
         }
 
         // 7. Fetch Notifications
         const dbNotifs = await supabaseService.getNotifications(bi);
-        if (dbNotifs && dbNotifs.length > 0 && isSubscribed) {
+        if (dbNotifs && isSubscribed) {
           setNotifications(dbNotifs);
         }
 
         // 8. Fetch Audit Logs
         const dbLogs = await supabaseService.getAuditLogs();
-        if (dbLogs && dbLogs.length > 0 && isSubscribed) {
+        if (dbLogs && isSubscribed) {
           setAuditLogs(dbLogs);
+        }
+
+        // 9. Fetch Official Correspondences
+        const dbCorrespondences = await supabaseService.getCorrespondences();
+        if (dbCorrespondences && isSubscribed) {
+          setCorrespondences(dbCorrespondences);
         }
 
         console.log('CADA: Sincronização e carregamento do Supabase efectuados com sucesso!');
@@ -803,10 +887,44 @@ export default function App() {
 
     loadSupabaseData();
 
+    // Subscribe to all changes in Supabase realtime
+    const channel = supabase
+      .channel('schema-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        console.log('CADA: Supabase Realtime detectou alteração em mensagens!');
+        setTriggerRefetch(t => t + 1);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'documents' }, () => {
+        console.log('CADA: Supabase Realtime detectou alteração em documentos!');
+        setTriggerRefetch(t => t + 1);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'document_requests' }, () => {
+        console.log('CADA: Supabase Realtime detectou alteração em document_requests!');
+        setTriggerRefetch(t => t + 1);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_requests' }, () => {
+        console.log('CADA: Supabase Realtime detectou alteração em user_requests!');
+        setTriggerRefetch(t => t + 1);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        console.log('CADA: Supabase Realtime detectou alteração em perfis!');
+        setTriggerRefetch(t => t + 1);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contacts' }, () => {
+        console.log('CADA: Supabase Realtime detectou alteração em contactos!');
+        setTriggerRefetch(t => t + 1);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+        console.log('CADA: Supabase Realtime detectou alteração em notificações!');
+        setTriggerRefetch(t => t + 1);
+      })
+      .subscribe();
+
     return () => {
       isSubscribed = false;
+      supabase.removeChannel(channel);
     };
-  }, [stage, bi, isOnline]);
+  }, [stage, bi, isOnline, triggerRefetch]);
 
   const runAuditAndSincronizacaoCompleta = () => {
     let fixesCount = 0;
@@ -1460,6 +1578,15 @@ export default function App() {
       setActiveFallback({ channel: 'PUSH', message: fallback.message, protocol: fallback.protocol });
       addAuditLog(`Ação Offline: Emissão de ${doc.name} enfileirada. Fallback Push ativo.`, 'warning');
     } else {
+      // Sync document, companion message, and notification alert to Supabase
+      if (hasValidSupabaseKeys()) {
+        supabaseService.insertDocument(doc, doc.number).catch(err => console.error(err));
+        supabaseService.insertMessage(newMessage, doc.number).catch(err => console.error(err));
+        supabaseService.insertNotification({
+          title: notification.title,
+          message: notification.message
+        }, doc.number).catch(err => console.error(err));
+      }
       addAuditLog(`Emissão de Acto: ${doc.name} para ${doc.holder} (BI: ${doc.number})`, 'success');
       OfflineManager.createAutomaticBackup();
     }
@@ -1495,6 +1622,14 @@ export default function App() {
       setActiveFallback({ channel: 'USSD', message: fallback.message, protocol: fallback.protocol });
       addAuditLog(`Ação Offline: Pedido de ${type} anexado ao buffer. Fallback USSD físico iniciado (*141*9#).`, 'warning');
     } else {
+      // Sync query request and notification alert to Supabase
+      if (hasValidSupabaseKeys()) {
+        supabaseService.insertUserRequest(newReq).catch(err => console.error(err));
+        supabaseService.insertNotification({
+          title: newNotif.title,
+          message: newNotif.message
+        }, bi).catch(err => console.error(err));
+      }
       addAuditLog(`Nova solicitação de ${type} enviada à AGT`, 'info');
       OfflineManager.createAutomaticBackup();
     }
@@ -1568,6 +1703,17 @@ Ficha civil do titular:
 
     setDocRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: newStatus } : r));
     
+    // Persist request status update directly on Supabase
+    if (isOnline && hasValidSupabaseKeys()) {
+      supabase
+        .from('document_requests')
+        .update({ status: newStatus === 'Aprovado' ? 'aprovado' : 'rejeitado' })
+        .eq('id', requestId)
+        .then(({ error }) => {
+          if (error) console.error('Erro ao atualizar estado da solicitação no Supabase:', error);
+        });
+    }
+
     if (newStatus === 'Aprovado') {
       const newDoc: Document = {
         name: request.docType,
@@ -1607,6 +1753,16 @@ Ficha civil do titular:
         }, ...prev]);
       }
       
+      // Persist documents, companion messages, and alerts in Supabase for the citizen
+      if (isOnline && hasValidSupabaseKeys()) {
+        supabaseService.insertDocument(newDoc, request.userBi).catch(err => console.error(err));
+        supabaseService.insertMessage(systemMsg, request.userBi).catch(err => console.error(err));
+        supabaseService.insertNotification({
+          title: 'Documento Aprovado',
+          message: `O seu pedido de ${request.docType} foi aprovado e emitido.`
+        }, request.userBi).catch(err => console.error(err));
+      }
+      
       addAuditLog(`DOC_APPROVED: ${request.docType} para ${request.userName} emitido via sistema.`, 'success');
     } else {
       addAuditLog(`DOC_REJECTED: Solicitação de ${request.docType} para ${request.userName} rejeitada.`, 'warning');
@@ -1624,6 +1780,12 @@ Ficha civil do titular:
       status: 'Pendente'
     };
     setDocRequests(prev => [newReq, ...prev]);
+
+    // Persist new document request on Supabase
+    if (isOnline && hasValidSupabaseKeys()) {
+      supabaseService.insertDocRequest(newReq).catch(err => console.error('Erro ao salvar nova solicitação no Supabase:', err));
+    }
+
     addAuditLog(`SOLICITATION_SENT: Pedido de ${docType} à ${institution} enviado pelo cidadão.`, 'info');
   };
 
@@ -1919,6 +2081,10 @@ Ficha civil do titular:
               setCorrespondences(prev => [newCor, ...prev]);
               addAuditLog(`Novo Expediente Enviado: ${newCor.id} de ${newCor.sender} para ${newCor.recipient}`, 'success');
               
+              if (isOnline && hasValidSupabaseKeys()) {
+                supabaseService.insertCorrespondence(newCor).catch(err => console.error('Erro ao salvar expediente no Supabase:', err));
+              }
+
               if (newCor.recipient.toLowerCase().includes('edlasio')) {
                 const newMailMessage: Message = {
                   id: parseInt(newCor.id.replace(/\D/g, '')) || Math.floor(Math.random() * 1000000),
@@ -1952,11 +2118,25 @@ Ficha civil do titular:
                   }
                 };
                 setInbox(prev => [newMailMessage, ...prev]);
+
+                if (isOnline && hasValidSupabaseKeys()) {
+                  supabaseService.insertMessage(newMailMessage, bi).catch(err => console.error('Erro ao sincronizar expediente com caixa de entrada de cidadão:', err));
+                  supabaseService.insertNotification({
+                    title: 'Nova Correspondência Civil',
+                    message: `Recebeu um novo expediente oficial da instituição ${newCor.sender}.`
+                  }, bi).catch(err => console.error(err));
+                }
               }
             }}
             onUpdateStatus={(id, newStatus) => {
               setCorrespondences(prev => prev.map(c => c.id === id ? { ...c, status: newStatus as any } : c));
               addAuditLog(`Expediente ${id} marcado como ${newStatus}`, 'info');
+
+              const matchedCor = correspondences.find(c => c.id === id);
+              if (matchedCor && isOnline && hasValidSupabaseKeys()) {
+                const updated = { ...matchedCor, status: newStatus };
+                supabaseService.insertCorrespondence(updated).catch(err => console.error('Erro ao atualizar estado do expediente no Supabase:', err));
+              }
             }}
           />
         );
@@ -2795,6 +2975,7 @@ Ficha civil do titular:
         <div className={emergencyMode && isGovMode ? 'md:mt-0' : ''}>
           <Header 
             setTab={setTab} 
+            tab={tab}
             iaLiveActive={iaLiveActive} 
             startIaVoice={startIaVoice} 
             stopIaVoice={stopIaVoice} 

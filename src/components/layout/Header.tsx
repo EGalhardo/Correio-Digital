@@ -26,6 +26,7 @@ interface HeaderProps {
   isOnline: boolean;
   onClickConnectivity: () => void;
   offlineQueueLength: number;
+  tab?: string;
 }
 
 export function Header({ 
@@ -43,7 +44,8 @@ export function Header({
   emergencyMode = false,
   isOnline,
   onClickConnectivity,
-  offlineQueueLength
+  offlineQueueLength,
+  tab
 }: HeaderProps) {
   const { user, activeProfile } = useSession();
   const isGov = appMode !== 'user';
@@ -164,7 +166,7 @@ export function Header({
           <small className={`text-[10px] md:text-sm font-black uppercase tracking-[0.1em] block mb-0.5 ${
             isAdmin ? 'text-slate-600' : 'text-slate-600'
           }`}>
-            {isAdmin ? 'Administração Central' : isInst ? activeProfile.institutionName : 'Área do Cidadão'}
+            {isAdmin ? 'Administração Central' : isInst ? (tab === 'home' ? 'Área Institucional' : activeProfile.institutionName) : 'Área do Cidadão'}
           </small>
           <h2 className={`text-lg md:text-3xl font-black leading-none tracking-tight ${
             isAdmin ? 'text-slate-900' : 'text-primary'
